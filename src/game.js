@@ -10,7 +10,10 @@ export const W = 13,
   ENTRY = { x: 0, z: 4 },
   EXIT = { x: 12, z: 4 };
 
-// The five buildable pieces, with their price, combat numbers, and help text.
+// How fast enemy hit points grow per stage. Raised from 1.43 in r2.
+export const HP_GROWTH = 1.46;
+
+// The seven buildable pieces, with their price, combat numbers, and help text.
 export const TOWERS = {
   thorn: {
     name: 'Thorn',
@@ -73,28 +76,356 @@ export const TOWERS = {
     tip: 'Build longer routes past your towers, while leaving an exit open.',
     symbol: '▦',
   },
+  ember: {
+    name: 'Ember',
+    cost: 80,
+    damage: 9,
+    range: 2.9,
+    rate: 1.2,
+    color: '#e2a05c',
+    desc: 'Sets enemies alight. Burning ignores armor.',
+    effect:
+      'Each hit adds 5 seconds of burning. Burning damage ignores armor and warden shields,' +
+      ' and it keeps working after the enemy leaves range.',
+    tip: 'The answer to wardens and to thick shells. One Ember covers a whole bend.',
+    symbol: '❋',
+  },
+  lantern: {
+    name: 'Lantern',
+    cost: 90,
+    damage: 0,
+    range: 2.5,
+    rate: 1,
+    color: '#f2d884',
+    desc: 'Does not attack. Nearby towers fire faster.',
+    effect:
+      'Attacking towers inside its ring fire 30 percent faster, 40 at level 2 and 50 at level 3.' +
+      ' The Lantern never shoots by itself.',
+    tip: 'Drop it in the middle of a tight cluster of towers, not out on its own.',
+    symbol: '✦',
+  },
+};
+
+// Enemy kinds: base hit points at stage 1, walking speed, coins paid, and special rules.
+export const ENEMIES = {
+  grub: { name: 'Grub', hp: 24, speed: 1.05, reward: 4 },
+  runner: { name: 'Runner', hp: 18, speed: 1.85, reward: 4 },
+  armor: { name: 'Beetle', hp: 52, speed: 0.76, reward: 4 },
+  moth: { name: 'Moth', hp: 30, speed: 1.05, reward: 5, flying: true },
+  brood: { name: 'Brood sac', hp: 88, speed: 0.7, reward: 7, splits: 3 },
+  grubling: { name: 'Grubling', hp: 9, speed: 1.35, reward: 1 },
+  warden: {
+    name: 'Warden',
+    hp: 104,
+    speed: 0.82,
+    reward: 8,
+    steady: true,
+    shield: 0.35,
+    aura: 2.1,
+  },
+  boss: { name: 'Guardian', hp: 400, speed: 0.55, reward: 55 },
+};
+
+// How much of a hit an armored beetle absorbs from anything that is not a Sunstone.
+export const ARMOR_RESIST = 0.55;
+
+// The two player abilities, with the key that fires them and the seconds they take to recharge.
+export const ABILITIES = {
+  rootgrip: {
+    name: 'Rootgrip',
+    key: 'Q',
+    cooldown: 45,
+    hold: 3,
+    symbol: '⊻',
+    desc: 'Roots every walking enemy in place for 3 seconds. Moths keep flying.',
+  },
+  sunburst: {
+    name: 'Sunburst',
+    key: 'E',
+    cooldown: 38,
+    radius: 3,
+    damage: 70,
+    growth: 0.24,
+    symbol: '✷',
+    desc: 'Pick a square. Everything within 3 squares of it takes a burst that ignores armor.',
+  },
 };
 
 // The four garden plots in unlock order, with their prices and output per collection.
 export const MATERIALS = [
   { id: 'wood', name: 'Wood', buy: 25, unlock: 0, upgrade: 35, yield: 3, symbol: '♧' },
-  { id: 'rock', name: 'Rock', buy: 45, unlock: 80, upgrade: 55, yield: 3, symbol: '⬟' },
-  { id: 'iron', name: 'Iron', buy: 70, unlock: 160, upgrade: 80, yield: 2, symbol: '▰' },
-  { id: 'diamond', name: 'Diamond', buy: 100, unlock: 300, upgrade: 120, yield: 1, symbol: '◇' },
+  { id: 'rock', name: 'Rock', buy: 45, unlock: 60, upgrade: 55, yield: 3, symbol: '⬟' },
+  { id: 'iron', name: 'Iron', buy: 70, unlock: 110, upgrade: 80, yield: 2, symbol: '▰' },
+  { id: 'diamond', name: 'Diamond', buy: 100, unlock: 180, upgrade: 120, yield: 1, symbol: '◇' },
 ];
 
 // The ten stages, each as a title, a line of flavour text, and a short theme label.
 export const STAGES = [
-  ['First roots', 'A few curious visitors. Give them the scenic route.', 'Grubs'],
+  ['First roots', 'A few curious visitors. A longer route means more shots.', 'Grubs'],
   ['A stirring below', 'Runners arrive. A longer maze buys precious time.', 'Runners'],
   ['Shell season', 'Armored beetles. Sunstone cuts through their shells.', 'Armor'],
   ['On the breeze', 'Moths fly over your maze. Cover the direct route.', 'Flying'],
-  ['The long evening', 'Larger groups. Bloom towers thrive in a crowd.', 'Swarms'],
+  ['The long evening', 'Brood sacs burst into grubs. Bloom answers a crowd.', 'Swarms'],
   ['Old growth', 'An ancient guardian leads the final wave.', 'Boss'],
-  ['Restless soil', 'Quick feet and thick shells arrive together.', 'Mixed'],
-  ['Night garden', 'More moths take to the sky. Keep the heart covered.', 'Air raid'],
-  ['The wild tide', 'Dense, relentless waves test your entire garden.', 'Surge'],
-  ['Heart of the wild', 'One last stand. Protect the home you have grown.', 'Finale'],
+  [
+    'Restless soil',
+    'Wardens ignore sap and shield their neighbours. Ember burns through.',
+    'Mixed',
+  ],
+  ['Night garden', 'Moths fill the sky. Keep the straight line covered.', 'Air raid'],
+  ['The wild tide', 'Dense, relentless waves, and a guardian at the end.', 'Surge'],
+  ['Heart of the wild', 'One last stand. Two guardians walk with the horde.', 'Finale'],
+];
+
+// The thirty waves, hand written, three per stage in stage order. Each wave lists the
+// creatures in the order they walk out, the seconds between releases, and how many are
+// released at once. The stage text above says what each stage sends, so keep them together.
+export const WAVES = [
+  // Stage 1, First roots. Grubs only, slow enough to read the route.
+  { enemies: [['grub', 6]], gap: 1.05 },
+  { enemies: [['grub', 9]], gap: 0.95 },
+  { enemies: [['grub', 12]], gap: 0.85 },
+  // Stage 2, A stirring below. Runners mixed into the grubs.
+  {
+    enemies: [
+      ['grub', 8],
+      ['runner', 3],
+    ],
+    gap: 0.95,
+  },
+  {
+    enemies: [
+      ['runner', 6],
+      ['grub', 6],
+    ],
+    gap: 0.9,
+  },
+  {
+    enemies: [
+      ['grub', 6],
+      ['runner', 5],
+      ['grub', 6],
+    ],
+    gap: 0.85,
+  },
+  // Stage 3, Shell season. Armored beetles arrive.
+  {
+    enemies: [
+      ['grub', 6],
+      ['armor', 3],
+    ],
+    gap: 0.9,
+  },
+  {
+    enemies: [
+      ['armor', 5],
+      ['grub', 6],
+      ['runner', 3],
+    ],
+    gap: 0.85,
+  },
+  {
+    enemies: [
+      ['grub', 5],
+      ['armor', 6],
+      ['runner', 4],
+    ],
+    gap: 0.8,
+  },
+  // Stage 4, On the breeze. Moths fly straight over the maze, so the direct line matters.
+  {
+    enemies: [
+      ['moth', 7],
+      ['grub', 6],
+    ],
+    gap: 0.85,
+  },
+  {
+    enemies: [
+      ['grub', 5],
+      ['moth', 9],
+      ['runner', 4],
+    ],
+    gap: 0.8,
+  },
+  {
+    enemies: [
+      ['moth', 12],
+      ['armor', 4],
+      ['grub', 5],
+    ],
+    gap: 0.75,
+  },
+  // Stage 5, The long evening. Brood sacs, and the first waves that come in pairs.
+  {
+    enemies: [
+      ['grub', 10],
+      ['brood', 2],
+    ],
+    gap: 0.9,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['brood', 3],
+      ['runner', 6],
+      ['moth', 5],
+    ],
+    gap: 0.9,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['brood', 4],
+      ['grub', 10],
+      ['moth', 6],
+    ],
+    gap: 0.85,
+    burst: 2,
+  },
+  // Stage 6, Old growth. One guardian closes the stage.
+  {
+    enemies: [
+      ['armor', 6],
+      ['moth', 5],
+      ['grub', 6],
+    ],
+    gap: 0.75,
+  },
+  {
+    enemies: [
+      ['runner', 8],
+      ['armor', 5],
+      ['moth', 6],
+    ],
+    gap: 0.7,
+  },
+  {
+    enemies: [
+      ['grub', 8],
+      ['armor', 5],
+      ['brood', 3],
+      ['boss', 1],
+    ],
+    gap: 0.7,
+  },
+  // Stage 7, Restless soil. Wardens shield whatever walks beside them.
+  {
+    enemies: [
+      ['warden', 2],
+      ['armor', 5],
+      ['runner', 6],
+    ],
+    gap: 0.75,
+  },
+  {
+    enemies: [
+      ['warden', 3],
+      ['moth', 6],
+      ['armor', 5],
+    ],
+    gap: 0.7,
+  },
+  {
+    enemies: [
+      ['warden', 3],
+      ['runner', 8],
+      ['brood', 3],
+      ['moth', 5],
+    ],
+    gap: 0.7,
+  },
+  // Stage 8, Night garden. The sky raid, released two at a time.
+  {
+    enemies: [
+      ['moth', 10],
+      ['grub', 8],
+    ],
+    gap: 0.7,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['moth', 12],
+      ['warden', 3],
+      ['runner', 8],
+    ],
+    gap: 0.65,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['moth', 16],
+      ['armor', 8],
+      ['brood', 4],
+    ],
+    gap: 0.55,
+    burst: 2,
+  },
+  // Stage 9, The wild tide. Everything at once, and a guardian at the end.
+  {
+    enemies: [
+      ['grub', 12],
+      ['runner', 9],
+      ['brood', 3],
+    ],
+    gap: 0.65,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['armor', 9],
+      ['warden', 3],
+      ['moth', 10],
+      ['grub', 9],
+    ],
+    gap: 0.55,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['brood', 4],
+      ['runner', 10],
+      ['armor', 8],
+      ['moth', 7],
+      ['boss', 1],
+    ],
+    gap: 0.6,
+    burst: 2,
+  },
+  // Stage 10, Heart of the wild. Two guardians walk in with the last wave.
+  {
+    enemies: [
+      ['warden', 2],
+      ['armor', 5],
+      ['grub', 7],
+      ['moth', 5],
+    ],
+    gap: 0.85,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['brood', 2],
+      ['runner', 7],
+      ['moth', 6],
+      ['warden', 2],
+    ],
+    gap: 0.8,
+    burst: 2,
+  },
+  {
+    enemies: [
+      ['armor', 4],
+      ['warden', 2],
+      ['brood', 2],
+      ['moth', 4],
+      ['runner', 4],
+      ['boss', 2],
+    ],
+    gap: 0.75,
+    burst: 2,
+  },
 ];
 
 // Shortest walking route from a square to the exit, or null when the maze is sealed.
@@ -136,7 +467,7 @@ export function path(towers, start = ENTRY) {
 
 // One expedition: coins, materials, towers, garden plots, enemies, and campaign progress.
 export class Game {
-  // Start a fresh settlement, or restore one from a saved object, migrating version 1 saves.
+  // Start a fresh settlement, or restore a saved one, migrating version 1 and version 2 saves.
   constructor(data) {
     // Migrate the old garden without discarding an existing expedition.
     if (data?.version === 1) {
@@ -158,8 +489,12 @@ export class Game {
       delete data.leaves;
       delete data.ore;
     }
+    // Version 2 saves keep every tower, farm, stage and coin. They only gain the ability clocks.
+    if (data?.version === 2) {
+      data = { ...data, version: 3, cooldowns: { rootgrip: 0, sunburst: 0 }, root: 0 };
+    }
     const defaults = {
-      version: 2,
+      version: 3,
       coins: 200,
       wood: 0,
       rock: 0,
@@ -180,6 +515,8 @@ export class Game {
       won: false,
       lost: false,
       time: 0,
+      cooldowns: { rootgrip: 0, sunburst: 0 },
+      root: 0,
     };
     Object.assign(this, defaults, data);
     this.events = [];
@@ -237,22 +574,51 @@ export class Game {
   stats(tower) {
     const base = TOWERS[tower.type];
     return {
-      damage: base.damage * (1 + (tower.level - 1) * 0.75) * (tower.branch === 'power' ? 1.45 : 1),
+      damage: base.damage * (1 + (tower.level - 1) * 1.0) * (tower.branch === 'power' ? 1.55 : 1),
       range: base.range + (tower.level - 1) * 0.25 + (tower.branch === 'reach' ? 1.1 : 0),
       rate: base.rate / (1 + (tower.level - 1) * 0.12),
     };
   }
 
   // Coins and materials the next upgrade of this tower would cost.
+  // The level 1 to 2 step is coins only, so a player who has not found the garden can still grow.
   upgradeCost(tower) {
     const advanced = tower.level >= 2;
     return {
       coins: Math.round(TOWERS[tower.type].cost * 0.7 * tower.level),
-      wood: 5 * tower.level,
+      wood: advanced ? 5 * tower.level : 0,
       rock: advanced ? 4 : 0,
-      iron: advanced && ['bloom', 'prism'].includes(tower.type) ? 3 : 0,
+      iron: advanced && ['bloom', 'prism', 'ember'].includes(tower.type) ? 3 : 0,
       diamond: advanced && tower.type === 'prism' ? 1 : 0,
     };
+  }
+
+  // What the player is short of for the next upgrade, so the panel can name the missing material.
+  upgradeShortfall(tower) {
+    const cost = this.upgradeCost(tower);
+    const names = { coins: 'coins', ...Object.fromEntries(MATERIALS.map((m) => [m.id, m.name])) };
+    return Object.entries(cost)
+      .filter(([resource, amount]) => amount > 0 && this[resource] < amount)
+      .map(([resource, amount]) => ({
+        id: resource,
+        name: names[resource],
+        need: amount,
+        have: Math.floor(this[resource]),
+        short: Math.ceil(amount - this[resource]),
+      }));
+  }
+
+  // How much faster a tower fires because of the Lanterns whose rings cover it.
+  rateBonus(tower) {
+    if (tower.type === 'hedge' || tower.type === 'lantern') return 1;
+    let bonus = 0;
+    for (const lamp of this.towers) {
+      if (lamp.type !== 'lantern' || lamp.id === tower.id) continue;
+      const reach = this.stats(lamp).range;
+      if (Math.hypot(lamp.x - tower.x, lamp.z - tower.z) > reach) continue;
+      bonus += 0.2 + lamp.level * 0.1;
+    }
+    return 1 + Math.min(0.9, bonus);
   }
 
   // Grow a tower one level, picking a power or reach branch the first time. Returns null on success.
@@ -316,33 +682,41 @@ export class Game {
     return null;
   }
 
+  // The hand written wave entry for a stage and a wave number, or null past the campaign.
+  waveEntry(stage = this.stage, wave = this.wave) {
+    return WAVES[stage * 3 + (wave - 1)] || null;
+  }
+
+  // The creature list of a wave, flattened into the order they walk out of the gate.
+  waveQueue(stage = this.stage, wave = this.wave) {
+    const entry = this.waveEntry(stage, wave);
+    if (!entry) return [];
+    const list = [];
+    for (const [kind, count] of entry.enemies) for (let i = 0; i < count; i++) list.push(kind);
+    return list;
+  }
+
+  // How many creatures the next wave sends, for the counter in the interface.
+  waveSize(stage = this.stage, wave = this.wave) {
+    return this.waveQueue(stage, wave).length;
+  }
+
   // Begin the next wave and fill the spawn queue. Returns false when a wave is already running.
   start() {
     if (this.active || this.won || this.lost) return false;
     this.active = true;
     this.wave++;
     this.spawn = 0;
-    const count = 7 + this.stage * 2 + this.wave * 2;
-    for (let i = 0; i < count; i++) {
-      let kind = 'grub';
-      if (this.stage >= 1 && i % 4 === 2) kind = 'runner';
-      if (this.stage >= 2 && i % 5 === 3) kind = 'armor';
-      if (this.stage >= 3 && i % 6 === 4) kind = 'moth';
-      if (this.stage >= 7 && i % 3 === 1) kind = 'moth';
-      if ((this.stage === 5 || this.stage === 9) && this.wave === 3 && i === count - 1) {
-        kind = 'boss';
-      }
-      this.queue.push(kind);
-    }
+    this.queue.push(...this.waveQueue());
     return true;
   }
 
   // Build one enemy of the given kind, scaled up by the current stage and wave.
   enemy(kind) {
     const stage = this.stage,
-      scale = Math.pow(1.43, stage) * (1 + 0.13 * (this.wave - 1));
-    const hp = { grub: 24, runner: 18, armor: 52, moth: 25, boss: 450 }[kind] * scale;
-    const baseSpeed = { grub: 1.05, runner: 1.85, armor: 0.76, moth: 1.05, boss: 0.55 }[kind];
+      scale = Math.pow(HP_GROWTH, stage) * (1 + 0.13 * (this.wave - 1));
+    const base = ENEMIES[kind] || ENEMIES.grub;
+    const hp = base.hp * scale;
     return {
       id: this.nextId++,
       kind,
@@ -350,11 +724,57 @@ export class Game {
       z: 4,
       hp,
       maxHp: hp,
-      speed: baseSpeed * (1 + stage * 0.025),
-      flying: kind === 'moth',
+      speed: base.speed * (1 + stage * 0.025),
+      flying: !!base.flying,
       slow: 0,
+      burn: 0,
+      burnTime: 0,
       target: null,
     };
+  }
+
+  // How much damage a burst or a burn is reduced by the Wardens standing beside this enemy.
+  shieldFactor(enemy) {
+    for (const other of this.enemies) {
+      const aura = ENEMIES[other.kind]?.aura;
+      if (!aura || other === enemy || other.hp <= 0) continue;
+      if (Math.hypot(other.x - enemy.x, other.z - enemy.z) <= aura) {
+        return 1 - ENEMIES[other.kind].shield;
+      }
+    }
+    return 1;
+  }
+
+  // Seconds left before an ability can be used again, and whether it is ready now.
+  abilityState(id) {
+    const left = Math.max(0, this.cooldowns[id] || 0);
+    return { id, name: ABILITIES[id].name, left: Math.ceil(left), ready: left <= 0 };
+  }
+
+  // Fire a player ability. Sunburst needs a tile. Returns null on success or a refusal message.
+  useAbility(id, tile = null) {
+    const ability = ABILITIES[id];
+    if (!ability) return 'Unknown ability.';
+    if (this.lost || this.won) return 'This expedition has ended.';
+    if ((this.cooldowns[id] || 0) > 0) {
+      return `${ability.name} is still gathering. ${Math.ceil(this.cooldowns[id])} seconds left.`;
+    }
+    if (id === 'rootgrip') {
+      this.root = Math.max(this.root, ability.hold);
+      this.emit('ability', { id, x: 6, z: 4 });
+    } else {
+      const onBoard =
+        tile && Number.isInteger(tile.x) && Number.isInteger(tile.z) && tile.x >= 0 && tile.x < W;
+      if (!onBoard || tile.z < 0 || tile.z >= H) return 'Pick a square on the meadow first.';
+      const damage = ability.damage * (1 + this.stage * ability.growth);
+      for (const enemy of this.enemies) {
+        if (Math.hypot(enemy.x - tile.x, enemy.z - tile.z) > ability.radius) continue;
+        enemy.hp -= damage * this.shieldFactor(enemy);
+      }
+      this.emit('ability', { id, x: tile.x, z: tile.z });
+    }
+    this.cooldowns[id] = ability.cooldown;
+    return null;
   }
 
   // Advance the whole game by dt seconds: gardens, spawns, movement, shooting, and wave endings.
@@ -372,19 +792,37 @@ export class Game {
       }
     }
 
+    // Abilities recharge whether or not a wave is running.
+    for (const id of Object.keys(ABILITIES)) {
+      this.cooldowns[id] = Math.max(0, (this.cooldowns[id] || 0) - dt);
+    }
+    this.root = Math.max(0, this.root - dt);
+
     if (!this.active) return;
 
-    // Release the next queued enemy once the spawn timer runs out.
+    // Release the next group of queued enemies once this wave's spawn timer runs out.
     this.spawn -= dt;
     if (this.queue.length && this.spawn <= 0) {
-      this.enemies.push(this.enemy(this.queue.shift()));
-      this.spawn = Math.max(0.35, 0.95 - this.stage * 0.045);
+      const entry = this.waveEntry() || { gap: 0.8, burst: 1 };
+      for (let i = 0; i < (entry.burst || 1) && this.queue.length; i++) {
+        this.enemies.push(this.enemy(this.queue.shift()));
+      }
+      this.spawn = entry.gap;
+    }
+
+    // Burning keeps working wherever the enemy is, and it ignores armor and warden shields.
+    for (const enemy of this.enemies) {
+      if (enemy.burnTime > 0) {
+        enemy.burnTime = Math.max(0, enemy.burnTime - dt);
+        enemy.hp -= enemy.burn * dt;
+      }
     }
 
     // Walk every enemy along the route, spending its movement budget square by square.
     for (const enemy of this.enemies) {
       enemy.slow = Math.max(0, enemy.slow - dt);
-      let move = dt * enemy.speed * (enemy.slow > 0 ? 0.48 : 1);
+      const held = this.root > 0 && !enemy.flying;
+      let move = held ? 0 : dt * enemy.speed * (enemy.slow > 0 ? 0.48 : 1);
       while (move > 0) {
         if (!enemy.target) {
           if (enemy.x >= 12 && Math.abs(enemy.z - 4) < 0.01) {
@@ -416,7 +854,7 @@ export class Game {
 
     // Every ready tower shoots the enemy closest to the exit inside its range.
     for (const tower of this.towers) {
-      if (tower.type === 'hedge') continue;
+      if (tower.type === 'hedge' || tower.type === 'lantern') continue;
       tower.cool -= dt;
       if (tower.cool > 0) continue;
       const stats = this.stats(tower);
@@ -426,7 +864,7 @@ export class Game {
       const distanceToExit = (enemy) => Math.hypot(12 - enemy.x, 4 - enemy.z);
       const target = inRange.sort((a, b) => distanceToExit(a) - distanceToExit(b))[0];
       if (!target) continue;
-      tower.cool = stats.rate;
+      tower.cool = stats.rate / this.rateBonus(tower);
       this.emit('shot', { tower: tower.id, x: target.x, z: target.z, towerType: tower.type });
       // Bloom splashes onto everything near the target. Every other tower hits one enemy.
       const hits =
@@ -437,20 +875,30 @@ export class Game {
           : [target];
       for (const hit of hits) {
         const armored = hit.kind === 'armor' && tower.type !== 'prism';
-        hit.hp -= stats.damage * (armored ? 0.55 : 1);
-        if (tower.type === 'sap') hit.slow = 2.2;
+        hit.hp -= stats.damage * (armored ? ARMOR_RESIST : 1) * this.shieldFactor(hit);
+        if (tower.type === 'sap' && !ENEMIES[hit.kind]?.steady) hit.slow = 2.2;
+        // Ember leaves a burn that outlives the shot and ignores shells and shields.
+        if (tower.type === 'ember') {
+          hit.burn = Math.max(hit.burn || 0, stats.damage * 1.4);
+          hit.burnTime = 5;
+        }
       }
     }
 
-    // Pay out the dead, then clear them from the board.
+    // Pay out the dead, split any brood sac into its litter, then clear them from the board.
+    const litter = [];
     for (const enemy of this.enemies) {
       if (enemy.hp <= 0) {
-        this.coins += enemy.kind === 'boss' ? 55 : 4;
+        this.coins += ENEMIES[enemy.kind]?.reward ?? 4;
         this.kills++;
         this.emit('kill', { x: enemy.x, z: enemy.z, kind: enemy.kind });
+        for (let i = 0; i < (ENEMIES[enemy.kind]?.splits || 0); i++) {
+          litter.push({ ...this.enemy('grubling'), x: enemy.x, z: enemy.z });
+        }
       }
     }
     this.enemies = this.enemies.filter((enemy) => enemy.hp > 0);
+    this.enemies.push(...litter);
 
     if (this.lives <= 0) {
       this.lives = 0;

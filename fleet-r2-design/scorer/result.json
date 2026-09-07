@@ -1,0 +1,23 @@
+{
+  "state": "done",
+  "taskId": "66337C59-9FA8-4DDA-AD26-C44567F82F97",
+  "model": {
+    "requested": "claude-fable-5",
+    "effective": "claude-fable-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "fleet-r2-design/scorer/SCORE.md",
+    "fleet-r2-design/scorer/score.json",
+    "fleet-r2-design/scorer/result.json"
+  ],
+  "verify": {
+    "cmd": "cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && npm test && node tests/golden.mjs && node tests/balance-gate.mjs && git diff --quiet a81309a -- tests/balance-gate.mjs && npx prettier --check \"src/**/*.{js,css}\" \"tests/*.{js,mjs}\" && awk 'length>110{f=1} END{exit f}' src/*.js && test -s CHANGELOG.md",
+    "exit": 0
+  },
+  "unverified": [
+    "tests/browser.mjs was not run by the scorer because it writes screenshots into the frozen lane directory fleet-r2-design/design/shots/. The 44 px phone button assertion rests on the CSS and the builder's report.",
+    "FROZEN.sha could not be recomputed because the command that produced it is not recorded.",
+    "No human, including the scorer, has played the rendered build. Balance evidence is simulator only."
+  ]
+}

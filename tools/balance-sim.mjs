@@ -5,7 +5,7 @@
 // stepped to its end. No game logic is copied here; the only import is ../src/game.js.
 // Usage: node tools/balance-sim.mjs [--json] [--experiments] [--strategy=name]
 
-import { Game, TOWERS, MATERIALS, path } from '../src/game.js';
+import { Game, TOWERS, MATERIALS, HP_GROWTH, path } from '../src/game.js';
 
 const DT = 1 / 30;
 const TICKS_PER_SECOND = 30;
@@ -26,12 +26,12 @@ class TunedGame extends Game {
     this.tuning = tuning || {};
   }
 
-  // Rescales enemy hit points when the tuning changes the 1.43 per stage growth base.
+  // Rescales enemy hit points when the tuning changes the shipped per stage growth base.
   enemy(kind) {
     const made = super.enemy(kind);
     const base = this.tuning.hpBase;
-    if (base && base !== 1.43) {
-      const factor = Math.pow(base / 1.43, this.stage);
+    if (base && base !== HP_GROWTH) {
+      const factor = Math.pow(base / HP_GROWTH, this.stage);
       made.hp *= factor;
       made.maxHp *= factor;
     }
@@ -54,22 +54,24 @@ class TunedGame extends Game {
     if (this.tuning.firstUpgradeFree && tower.level === 1) {
       for (const key of materials) cost[key] = 0;
     }
+    // r2 made the first upgrade coins only. This puts the r1 wood bill back for comparison.
+    if (this.tuning.r1FirstUpgrade && tower.level === 1) cost.wood = 5 * tower.level;
     if (this.tuning.upgradeCoinScale) {
       cost.coins = Math.round(cost.coins * this.tuning.upgradeCoinScale);
     }
     return cost;
   }
 
-  // Rescales the upgrade damage step (0.75 per level) and the power branch bonus (1.45).
+  // Rescales the upgrade damage step (1.0 per level) and the power branch bonus (1.55).
   stats(tower) {
     const base = super.stats(tower);
     const step = this.tuning.upgradeStep;
     if (step && tower.level > 1) {
-      base.damage *= (1 + (tower.level - 1) * step) / (1 + (tower.level - 1) * 0.75);
+      base.damage *= (1 + (tower.level - 1) * step) / (1 + (tower.level - 1) * 1.0);
     }
     const power = this.tuning.powerBranch;
     if (power && tower.branch === 'power') {
-      base.damage *= power / 1.45;
+      base.damage *= power / 1.55;
     }
     return base;
   }
@@ -121,7 +123,30 @@ function makeApi(game) {
     unlockPlot: (index) => game.unlockPlot(index) === null,
     guns: () => game.towers.filter((t) => t.type !== 'hedge'),
     routeLength: () => (path(game.towers) || []).length,
+    ability: (id, tile) => game.useAbility(id, tile) === null,
   };
+}
+
+// The board square with the most enemies within 3 of it, which is where Sunburst should land.
+function densestTile(game) {
+  let best = null;
+  for (let x = 0; x < 13; x++) {
+    for (let z = 0; z < 9; z++) {
+      const count = game.enemies.filter((e) => Math.hypot(e.x - x, e.z - z) <= 3).length;
+      if (!best || count > best.count) best = { x, z, count };
+    }
+  }
+  return best;
+}
+
+// A shared in wave policy: root the crowd when it builds up, then burst the thickest cluster.
+function useAbilities(game, api, floor = 6) {
+  const alive = game.enemies.length;
+  if (alive >= floor) api.ability('rootgrip');
+  if (alive >= floor) {
+    const tile = densestTile(game);
+    if (tile && tile.count >= floor) api.ability('sunburst', { x: tile.x, z: tile.z });
+  }
 }
 
 // Buys and upgrades the wood plot, then rock, iron and diamond, up to the given levels.
@@ -202,6 +227,21 @@ const MAZE_GUNS = [
   ['thorn', 10, 5],
 ];
 
+// The same maze slots, but built with the r2 pieces: two Embers for shells and wardens,
+// and one Lantern sitting where its ring covers three neighbours.
+const KIT_GUNS = [
+  ['thorn', 2, 3],
+  ['thorn', 4, 5],
+  ['sap', 6, 3],
+  ['ember', 8, 5],
+  ['prism', 10, 3],
+  ['sap', 2, 5],
+  ['lantern', 4, 3],
+  ['prism', 6, 5],
+  ['ember', 8, 3],
+  ['thorn', 10, 5],
+];
+
 // Open meadow spots beside the straight route, used by the strategies that do not maze.
 const OPEN_GUNS = [
   ['thorn', 3, 3],
@@ -227,10 +267,10 @@ function wavesPlayed(game) {
 
 // The shared maze build order: guns first, then a growing number of hedges, then upgrades.
 // deepGarden also buys the iron and diamond plots, which is what a level 3 Sunstone needs.
-function mazePolicy(game, api, branch, deepGarden = false) {
+function mazePolicy(game, api, branch, deepGarden = false, guns = MAZE_GUNS) {
   const played = wavesPlayed(game);
   growFarms(game, api, [1, 0, 0, 0]);
-  buildPlan(game, api, MAZE_GUNS.slice(0, 2 + played), 0);
+  buildPlan(game, api, guns.slice(0, 2 + played), 0);
   buildHedges(game, api, hedgePlan(WALLS).slice(0, 6 + played * 3), 0);
   if (game.stage >= 2) growFarms(game, api, [3, 2, 0, 0]);
   if (deepGarden && game.stage >= 4) growFarms(game, api, [3, 2, 2, 2]);
@@ -291,6 +331,34 @@ const STRATEGIES = [
       mazePolicy(game, api, 'reach');
     },
   },
+  {
+    name: 'kit-maze',
+    note: 'The r2 maze: the same walls and slots, but with two Embers and a Lantern. No abilities.',
+    policy(game, api) {
+      mazePolicy(game, api, 'power', true, KIT_GUNS);
+    },
+  },
+  {
+    name: 'kit-abilities',
+    note: 'The r2 maze plus Rootgrip and Sunburst, fired whenever six or more creatures are alive.',
+    policy(game, api) {
+      mazePolicy(game, api, 'power', true, KIT_GUNS);
+    },
+    duringWave(game, api) {
+      useAbilities(game, api);
+    },
+  },
+  {
+    name: 'naive-abilities',
+    note: 'The naive open field build, but the player does remember the two abilities.',
+    policy(game, api) {
+      buildPlan(game, api, OPEN_GUNS);
+      upgradeGuns(game, api, 'power');
+    },
+    duringWave(game, api) {
+      useAbilities(game, api);
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -298,12 +366,13 @@ const STRATEGIES = [
 // ---------------------------------------------------------------------------
 
 // Steps one wave to its end and reports lives lost, seconds taken and whether it stalled.
-function playWave(game, tuning) {
+function playWave(game, tuning, strategy, api) {
   const budget = MAX_WAVE_SECONDS * TICKS_PER_SECOND;
   let livesLost = 0;
   let ticks = 0;
   while (game.active && ticks < budget) {
     const before = game.lives;
+    if (strategy.duringWave) strategy.duringWave(game, api);
     game.tick(DT);
     if (game.lives < before) livesLost += before - game.lives;
     applyCoinOverlay(game, tuning);
@@ -347,7 +416,7 @@ function runStrategy(strategy, tuning = {}) {
       const stageIndex = game.stage;
       const waveNumber = game.wave + 1;
       if (!game.start()) break;
-      const wave = playWave(game, tuning);
+      const wave = playWave(game, tuning, strategy, api);
       record.livesLost += wave.livesLost;
       record.waves.push({
         wave: waveNumber,
@@ -400,45 +469,40 @@ function runAll(tuning = {}, only = null) {
 // Experiments: one constant change each, so the report can quote a simulated effect.
 // ---------------------------------------------------------------------------
 
-// Plot unlock prices used by more than one experiment.
-const CHEAP_UNLOCKS = { 1: { unlock: 60 }, 2: { unlock: 110 }, 3: { unlock: 180 } };
+// Plot unlock prices, as they were before r2 cut them.
+const R1_UNLOCKS = { 1: { unlock: 80 }, 2: { unlock: 160 }, 3: { unlock: 300 } };
 
 const EXPERIMENTS = [
-  { name: 'baseline', note: 'Current constants, for comparison.', tuning: {} },
+  { name: 'baseline', note: 'The shipped r2 constants, for comparison.', tuning: {} },
   {
-    name: 'hp-base-1.34',
-    note: 'Enemy growth 1.43 -> 1.34 per stage.',
-    tuning: { hpBase: 1.34 },
+    name: 'r1-hp-1.43',
+    note: 'Enemy growth back to the r1 value of 1.43 per stage.',
+    tuning: { hpBase: 1.43 },
   },
   {
-    name: 'hp-base-1.28',
-    note: 'Enemy growth 1.43 -> 1.28 per stage.',
-    tuning: { hpBase: 1.28 },
+    name: 'hp-1.50',
+    note: 'Enemy growth 1.46 -> 1.50 per stage.',
+    tuning: { hpBase: 1.5 },
   },
   {
-    name: 'upgrade-step-1.1',
-    note: 'Upgrade damage step 0.75 -> 1.1 per level.',
-    tuning: { upgradeStep: 1.1 },
+    name: 'r1-upgrade-step',
+    note: 'Upgrade damage step back to the r1 value of 0.75 per level.',
+    tuning: { upgradeStep: 0.75 },
   },
   {
-    name: 'power-branch-1.9',
-    note: 'Power branch bonus 1.45 -> 1.9.',
-    tuning: { powerBranch: 1.9 },
+    name: 'r1-power-branch',
+    note: 'Power branch bonus back to the r1 value of 1.45.',
+    tuning: { powerBranch: 1.45 },
   },
   {
-    name: 'kill-coins-7',
-    note: 'Coins per non boss kill 4 -> 7.',
-    tuning: { killCoins: 3 },
+    name: 'r1-garden-prices',
+    note: 'Plot unlocks back to the r1 prices of 80/160/300.',
+    tuning: { materials: R1_UNLOCKS },
   },
   {
-    name: 'free-upgrade-mats',
-    note: 'Tower upgrades cost coins only, no wood or rock.',
-    tuning: { upgradeMaterialScale: 0 },
-  },
-  {
-    name: 'thorn-damage-13',
-    note: 'Thorn base damage 10 -> 13.',
-    tuning: { towers: { thorn: { damage: 13 } } },
+    name: 'r1-upgrade-mats',
+    note: 'The level 1 to 2 upgrade asks for wood again, as it did in r1.',
+    tuning: { r1FirstUpgrade: true },
   },
   {
     name: 'no-rare-mats',
@@ -446,24 +510,24 @@ const EXPERIMENTS = [
     tuning: { upgradeMaterialScale: { iron: 0, diamond: 0 } },
   },
   {
-    name: 'first-upgrade-free',
-    note: 'The level 1 to 2 upgrade costs coins only. Level 3 still needs the garden.',
-    tuning: { firstUpgradeFree: true },
+    name: 'kill-coins-7',
+    note: 'Coins per non boss kill 4 -> 7.',
+    tuning: { killCoins: 3 },
   },
   {
-    name: 'cheap-garden',
-    note: 'Plot unlocks 80/160/300 -> 60/110/180.',
-    tuning: { materials: CHEAP_UNLOCKS },
+    name: 'thorn-damage-13',
+    note: 'Thorn base damage 10 -> 13.',
+    tuning: { towers: { thorn: { damage: 13 } } },
+  },
+  {
+    name: 'ember-damage-12',
+    note: 'Ember base damage 9 -> 12, which also makes its burn hotter.',
+    tuning: { towers: { ember: { damage: 12 } } },
   },
   {
     name: 'idle-20s',
     note: 'Twenty seconds of build time between waves, so the garden produces off the clock.',
     tuning: { idleSeconds: 20 },
-  },
-  {
-    name: 'recommended',
-    note: 'Free first upgrade, cheaper plot unlocks, enemy growth 1.43 -> 1.46. The package the report proposes.',
-    tuning: { firstUpgradeFree: true, materials: CHEAP_UNLOCKS, hpBase: 1.46 },
   },
 ];
 
@@ -495,7 +559,8 @@ function measureArmorResist() {
   return dealt / game.stats(game.towers[0]).damage;
 }
 
-// Reads one wave off the engine: the real enemy list, their real hit points, the real spawn gap.
+// Reads one wave off the engine: the real enemy list, their real hit points, and the real
+// pacing. Waves that release in bursts are measured per group, not per creature.
 function measureWave(stage, wave) {
   const game = new Game();
   game.stage = stage;
@@ -503,14 +568,9 @@ function measureWave(stage, wave) {
   game.start();
   const kinds = game.queue.slice();
   const points = kinds.map((kind) => game.enemy(kind).hp);
-  let firstSpawn = 0;
-  let secondSpawn = 0;
-  for (let i = 0; i < 200 && secondSpawn === 0; i++) {
-    game.tick(DT);
-    if (game.enemies.length === 1 && firstSpawn === 0) firstSpawn = game.time;
-    if (game.enemies.length === 2) secondSpawn = game.time;
-  }
-  return { kinds, points, gap: secondSpawn - firstSpawn };
+  const entry = game.waveEntry(stage, wave);
+  const burst = entry.burst || 1;
+  return { kinds, points, gap: entry.gap, burst, window: (entry.gap * kinds.length) / burst };
 }
 
 // Damage per second of a tower at a given level and branch, using the engine stats method.
@@ -526,7 +586,7 @@ function printNumbers() {
   console.log('Armored enemies take this share of a non Sunstone hit:', resist.toFixed(2));
   console.log('\nTower damage per second (engine stats method):');
   console.log('tower   L1      L2 power  L3 power  L3 reach');
-  for (const type of ['thorn', 'sap', 'bloom', 'prism']) {
+  for (const type of ['thorn', 'sap', 'bloom', 'prism', 'ember']) {
     const row = [
       type.padEnd(7),
       towerDps(type, 1).toFixed(1).padEnd(8),
@@ -537,7 +597,7 @@ function printNumbers() {
     console.log(row.join(''));
   }
   console.log('\nWave pressure. effHP counts armor at its real damage cost against a Thorn.');
-  console.log('stage wave enemies  rawHP   effHP   spawnGap  window  effHP/s');
+  console.log('stage wave enemies  rawHP   effHP   gap  burst  window  effHP/s');
   for (const stage of [0, 4, 5, 8, 9]) {
     for (const wave of [1, 3]) {
       const measured = measureWave(stage, wave);
@@ -546,14 +606,15 @@ function printNumbers() {
         (sum, hp, i) => sum + hp / (measured.kinds[i] === 'armor' ? resist : 1),
         0
       );
-      const window = measured.gap * measured.kinds.length;
+      const window = measured.window;
       const row = [
         String(stage + 1).padStart(5),
         String(wave).padStart(5),
         String(measured.kinds.length).padStart(8),
         String(Math.round(raw)).padStart(7),
         String(Math.round(effective)).padStart(8),
-        measured.gap.toFixed(3).padStart(10),
+        measured.gap.toFixed(2).padStart(5),
+        String(measured.burst).padStart(7),
         `${window.toFixed(1)}s`.padStart(8),
         String(Math.round(effective / window)).padStart(9),
       ];

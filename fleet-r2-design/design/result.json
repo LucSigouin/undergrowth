@@ -1,0 +1,45 @@
+{
+  "state": "done",
+  "taskId": "BA71E15B-5D06-4CDD-8A75-A8B25E69DEA0",
+  "model": {
+    "requested": "claude-opus-5",
+    "effective": "claude-opus-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "src/game.js",
+    "src/main.js",
+    "src/world.js",
+    "src/style.css",
+    "tests/game.test.js",
+    "tests/sim.test.js",
+    "tests/browser.mjs",
+    "tests/mobile-layout.mjs",
+    "tests/mobile-live.mjs",
+    "tests/golden.json",
+    "tools/balance-sim.mjs",
+    "CHANGELOG.md",
+    "README.md",
+    ".prettierignore",
+    "fleet-r2-design/design/REPORT.md",
+    "fleet-r2-design/design/result.json",
+    "fleet-r2-design/design/shots/desktop-new-towers.png",
+    "fleet-r2-design/design/shots/desktop-missing-material.png",
+    "fleet-r2-design/design/shots/desktop-ability-in-use.png",
+    "fleet-r2-design/design/shots/phone-new-towers.png",
+    "fleet-r2-design/design/shots/phone-abilities.png",
+    "fleet-r2-design/design/shots/phone-missing-material.png"
+  ],
+  "verify": {
+    "cmd": "cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && npm test && node tests/golden.mjs && node tests/balance-gate.mjs && git diff --quiet a81309a -- tests/balance-gate.mjs && npx prettier --check \"src/**/*.{js,css}\" \"tests/*.{js,mjs}\" && awk 'length>110{f=1} END{exit f}' src/*.js && test -s CHANGELOG.md && test -s fleet-r2-design/design/REPORT.md && node -e \"const r=require('./fleet-r2-design/design/result.json');if(r.state!=='done'||!r.model||!r.taskId)process.exit(1)\"",
+    "exit": 0
+  },
+  "unverified": [
+    "The rendered game was never watched running. Only single headless Chromium frames exist, so animation, the shot beams, the ability spark ring and the new models in motion are unchecked.",
+    "No human has played this build. Every balance number comes from the simulator playing fixed scripted policies.",
+    "The winners lose lives in stages 8, 9 and 10 rather than from the mid game. The reason is explained in REPORT.md section A: nothing in the game currently scales with route length, so a maze cannot be made to leak earlier without killing the naive strategy before stage 7.",
+    "Tower placement in the simulator is one hand picked maze layout, so every late stage number would shift with a different layout.",
+    "Whether the Sunburst arming flow (press E, then tap a square) reads clearly to a person, especially on a phone where the same tap places towers, is unknown.",
+    "npm run build was not run, per the brief."
+  ]
+}

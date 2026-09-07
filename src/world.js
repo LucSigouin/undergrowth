@@ -323,6 +323,25 @@ export class World {
       this.mesh(new THREE.OctahedronGeometry(0.34), '#c4b9e4', head, 0, 1.12, 0);
       this.cylinder(0.3, 0.3, 0.06, '#e8d79f', head, 0, 0.84, 0);
     }
+    // Ember is a stone brazier with a small fire sitting in it.
+    if (tower.type === 'ember') {
+      this.cylinder(0.34, 0.22, 0.5, '#9a8368', head, 0, 0.6, 0);
+      this.cylinder(0.36, 0.3, 0.16, '#7d6a55', head, 0, 0.9, 0);
+      this.sphere(0.2, color, head, 0, 1.03, 0);
+      for (let i = 0; i < 3; i++) {
+        const angle = (i * Math.PI * 2) / 3;
+        const flame = this.cylinder(0.01, 0.11, 0.34, '#f6d17a', head, 0, 1.2, 0);
+        flame.position.set(Math.cos(angle) * 0.12, 1.22, Math.sin(angle) * 0.12);
+      }
+    }
+    // Lantern is a tall post with a glass box on top and a bright core inside it.
+    if (tower.type === 'lantern') {
+      this.cylinder(0.07, 0.1, 0.75, '#8d7a58', head, 0, 0.72, 0);
+      this.box(0.34, 0.36, 0.34, '#efe4bb', head, 0, 1.22, 0);
+      this.sphere(0.15, color, head, 0, 1.22, 0);
+      this.cylinder(0.05, 0.22, 0.18, '#8d7a58', head, 0, 1.47, 0);
+      this.sphere(0.07, '#f7ecc2', head, 0, 1.6, 0);
+    }
 
     for (let i = 1; i < tower.level; i++) {
       this.box(0.12, 0.06, 0.12, '#f0cf76', group, -0.23 + (i - 1) * 0.23, 0.29, 0.42);
@@ -420,9 +439,32 @@ export class World {
           armor: '#788798',
           moth: '#d8cee6',
           boss: '#7d668b',
+          brood: '#a86a86',
+          grubling: '#c98f76',
+          warden: '#5f7f74',
         }[enemy.kind];
-        const body = this.sphere(enemy.kind === 'boss' ? 0.48 : 0.23, color, group, 0, 0.28, 0);
+        const size = { boss: 0.48, brood: 0.34, grubling: 0.14, warden: 0.27 }[enemy.kind] || 0.23;
+        const body = this.sphere(size, color, group, 0, 0.28, 0);
         body.scale.z = 1.25;
+        // A brood sac wears the litter it is about to release on its back.
+        if (enemy.kind === 'brood') {
+          for (const [x, z] of [
+            [-0.16, -0.1],
+            [0.16, -0.1],
+            [0, -0.24],
+          ]) {
+            this.sphere(0.12, '#d8a08c', group, x, 0.5, z);
+          }
+        }
+        // A warden carries three shield plates that ride around it.
+        if (enemy.kind === 'warden') {
+          for (let i = 0; i < 3; i++) {
+            const angle = (i * Math.PI * 2) / 3;
+            const plate = this.box(0.05, 0.3, 0.26, '#9fc0ac', group, 0, 0.34, 0);
+            plate.position.set(Math.cos(angle) * 0.36, 0.34, Math.sin(angle) * 0.36);
+            plate.rotation.y = -angle;
+          }
+        }
         for (const x of [-0.085, 0.085]) {
           this.sphere(0.048, '#fbf3dd', group, x, 0.37, 0.22);
           this.sphere(0.024, '#3e4338', group, x, 0.37, 0.257);
@@ -443,6 +485,8 @@ export class World {
         const healthBar = this.box(0.5, 0.04, 0.05, '#d7e7a8', group, 0, 0.8, 0.005);
         group.userData.hp = healthBar;
         if (enemy.kind === 'boss') group.scale.setScalar(1.5);
+        if (enemy.kind === 'brood') group.scale.setScalar(1.2);
+        if (enemy.kind === 'grubling') group.scale.setScalar(0.62);
         this.enemyMeshes.set(enemy.id, group);
       }
       const bob = enemy.flying
@@ -478,6 +522,20 @@ export class World {
         );
         this.scene.add(beam);
         this.effects.push({ mesh: beam, life: 0.16, max: 0.16 });
+      }
+      // An ability throws a ring of sparks out from the square it was aimed at.
+      if (event.type === 'ability') {
+        const tint = event.id === 'rootgrip' ? '#9ac07a' : '#f2c76a';
+        for (let i = 0; i < 12; i++) {
+          const angle = (i * Math.PI * 2) / 12;
+          const spark = this.sphere(0.12, tint, this.scene, event.x, 0.4, event.z);
+          this.effects.push({
+            mesh: spark,
+            life: 0.55,
+            max: 0.55,
+            v: new THREE.Vector3(Math.cos(angle) * 4, 0.6, Math.sin(angle) * 4),
+          });
+        }
       }
       if (event.type === 'kill') {
         for (let i = 0; i < 5; i++) {

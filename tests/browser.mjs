@@ -1,14 +1,22 @@
-// Desktop browser walkthrough against a running dev server on port 5173.
-// Checks the layout, the garden economy, combat, save and reload, and the controls.
-// Run it with: npm run dev, then node tests/browser.mjs
+// Desktop and phone browser walkthrough against a running dev server.
+// Checks the layout, the garden economy, combat, save and reload, the controls, and the
+// r2 additions: the Ember and Lantern cards, both abilities, and the missing material note.
+// Run it with: npm run dev -- --port 5174, then node tests/browser.mjs
+// Point it somewhere else with GARDEN_URL=http://localhost:5175 node tests/browser.mjs
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
+import { mkdirSync } from 'node:fs';
+
+const URL = process.env.GARDEN_URL || 'http://localhost:5174';
+const SHOTS = 'fleet-r2-design/design/shots';
+mkdirSync(SHOTS, { recursive: true });
+mkdirSync('test-results', { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
-await page.goto('http://localhost:5173');
+await page.goto(URL);
 await page.waitForFunction(() => window.__garden);
 
 // The board must be square on screen, and the map must take three quarters of the width.
@@ -80,10 +88,108 @@ assert.equal(await page.evaluate(() => window.__garden.game.towers.length), 3);
 await page.setViewportSize({ width: 390, height: 844 });
 await page.screenshot({ path: 'test-results/mobile.png', fullPage: true });
 assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+
+// r2: the two new towers have their own cards, and the keyboard reaches them on 6 and 7.
+// Reload first so the sidebar is not resizing under the pointer while a wave runs.
+await page.setViewportSize({ width: 1440, height: 1000 });
+await page.reload();
+await page.waitForFunction(() => window.__garden);
+await page.evaluate(() => {
+  window.__garden.game.active = false;
+  window.__garden.game.queue = [];
+  window.__garden.game.enemies = [];
+  window.__garden.step(0.1);
+});
+assert.equal(await page.locator('[data-build="ember"]').count(), 1);
+assert.equal(await page.locator('[data-build="lantern"]').count(), 1);
+await page.keyboard.press('6');
+assert.ok((await page.locator('#detail').textContent()).includes('Ember'));
+await page.keyboard.press('7');
+assert.ok((await page.locator('#detail').textContent()).includes('Lantern'));
+await page.keyboard.press('Escape');
+
+// Build an Ember and a Lantern beside the route and photograph them.
+await page.evaluate(() => {
+  window.__garden.game.coins = 2000;
+  window.__garden.step(0.1);
+  document.querySelector('.sidebar-scroll').scrollTop = 0;
+});
+await page.locator('[data-build="ember"]').click();
+await clickCell(5, 5);
+await page.locator('[data-build="lantern"]').click();
+await clickCell(6, 5);
+assert.ok(
+  await page.evaluate(
+    () =>
+      window.__garden.game.towers.some((t) => t.type === 'ember') &&
+      window.__garden.game.towers.some((t) => t.type === 'lantern'),
+  ),
+);
+await page.screenshot({ path: `${SHOTS}/desktop-new-towers.png`, fullPage: true });
+
+// The detail panel of a tower that cannot afford its level 3 upgrade names the material.
+await page.evaluate(() => {
+  const game = window.__garden.game;
+  game.wood = 0;
+  game.rock = 0;
+  game.coins = 2000;
+  window.__garden.step(0.1);
+});
+await clickCell(3, 3);
+const detail = await page.locator('#detail').textContent();
+assert.ok(detail.includes('You need'), detail);
+assert.ok(detail.toLowerCase().includes('wood'), detail);
+assert.ok(detail.includes('garden plots'), detail);
+assert.equal(await page.locator('#detail [data-upgrade="power"]').isDisabled(), true);
+await page.screenshot({ path: `${SHOTS}/desktop-missing-material.png`, fullPage: true });
+
+// Fire Rootgrip and check the button switches to a countdown.
+await page.locator('#start').click();
+await page.evaluate(() => window.__garden.step(4));
+await page.locator('[data-ability="rootgrip"]').click();
+assert.ok(await page.evaluate(() => window.__garden.game.root > 0));
+assert.ok(await page.evaluate(() => window.__garden.game.cooldowns.rootgrip > 40));
+assert.match(await page.locator('[data-ability="rootgrip"] b').textContent(), /^\d+s$/);
+await page.screenshot({ path: `${SHOTS}/desktop-ability-in-use.png`, fullPage: true });
+
+// Sunburst arms first, then lands on the square that is clicked.
+await page.locator('[data-ability="sunburst"]').click();
+assert.ok(
+  await page.locator('[data-ability="sunburst"]').evaluate((el) => el.classList.contains('armed')),
+);
+await clickCell(4, 4);
+assert.ok(await page.evaluate(() => window.__garden.game.cooldowns.sunburst > 30));
+
+// A cooldown has to survive a reload, because it lives in the save file.
+await page.evaluate(() => window.__garden.save());
+await page.reload();
+await page.waitForFunction(() => window.__garden);
+assert.ok(await page.evaluate(() => window.__garden.game.cooldowns.rootgrip > 0));
+
+// The same three things on a phone sized screen.
+await page.setViewportSize({ width: 390, height: 844 });
+await page.evaluate(() => window.__garden.step(0.1));
+const abilityBox = await page.locator('[data-ability="rootgrip"]').boundingBox();
+assert.ok(abilityBox.height >= 44, `ability button is only ${abilityBox.height}px tall`);
+assert.ok(abilityBox.width >= 44, `ability button is only ${abilityBox.width}px wide`);
+await page.screenshot({ path: `${SHOTS}/phone-abilities.png`, fullPage: true });
+await page.locator('[data-build="ember"]').click();
+await page.screenshot({ path: `${SHOTS}/phone-new-towers.png`, fullPage: true });
+await page.evaluate(() => {
+  window.__garden.game.coins = 2000;
+  window.__garden.game.wood = 0;
+  window.__garden.step(0.1);
+});
+await clickCell(3, 3);
+await page.screenshot({ path: `${SHOTS}/phone-missing-material.png`, fullPage: true });
+assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+
 assert.deepEqual(errors, []);
 console.log(
   'Browser checks passed: 75% map, straight board, top garden,' +
     ' buy/upgrade/unlock all resources, automatic production, combat, tower upgrade,' +
-    ' save/reload, controls, mobile overflow, no JS errors.',
+    ' save/reload, controls, mobile overflow, Ember and Lantern cards on keys 6 and 7,' +
+    ' Rootgrip and Sunburst with a cooldown that survives reload, 44px phone buttons,' +
+    ' the missing material note, no JS errors.',
 );
 await browser.close();

@@ -1101,9 +1101,10 @@ button {
     grid-row: 4;
     grid-column: 1;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 5px;
-    padding: 8px 10px;
+    /* Seven pieces since r2, so the portrait tray is seven columns and never wraps. */
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px 8px;
     background: #f8f9f3;
     border-top: 1px solid #d7dfcd;
     min-width: 0;
@@ -1114,25 +1115,30 @@ button {
     justify-content: center;
     align-items: center;
     gap: 3px;
-    height: 78px;
+    height: 74px;
     padding: 5px 0;
     border: 1px solid #dce4d3;
     border-radius: 10px;
     background: #f1f4e9;
     min-width: 0;
+    overflow: hidden;
   }
   .tower-icon {
-    width: 27px;
-    height: 27px;
-    font-size: 21px;
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
   }
   .tower-card b {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     flex: none;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .tower-card small {
-    font-size: 10px;
+    font-size: 9px;
   }
   .wave-controls {
     grid-row: 5;
@@ -1483,5 +1489,108 @@ button {
   }
   .detail p.defense-tip {
     font-size: 12px;
+  }
+}
+
+/* The two ability buttons, floating over the top right of the board in every layout. */
+.ability-bar {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+.ability {
+  position: relative;
+  overflow: hidden;
+  min-width: 74px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid #cbd3bd;
+  border-radius: 11px;
+  background: #f1f4e6d9;
+  color: #46583e;
+  cursor: pointer;
+}
+.ability-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: #d9e2c4;
+  transition: height 0.2s linear;
+}
+.ability-face {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1.1;
+}
+.ability-face i {
+  font-style: normal;
+  font-size: 17px;
+  color: #7d9569;
+}
+.ability-face b {
+  font-size: 12px;
+  font-weight: 600;
+}
+.ability-face small {
+  margin-left: auto;
+  font-size: 10px;
+  color: #8b9a7d;
+  border: 1px solid #cbd3bd;
+  border-radius: 5px;
+  padding: 1px 4px;
+}
+.ability.cooling {
+  color: #8b9a7d;
+}
+.ability.armed {
+  border-color: #7d9569;
+  box-shadow: 0 0 0 2px #cfe0b3;
+}
+.ability[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+.detail p.defense-missing {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #a2604f;
+  background: #f7ece4;
+  border-radius: 7px;
+  padding: 8px 10px;
+  margin: 8px 0;
+}
+.detail p.defense-boost {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #7a7040;
+  margin: 6px 0;
+}
+@media (max-width: 700px), (max-width: 1000px) and (pointer: coarse) {
+  .ability-bar {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+  .ability {
+    min-width: 56px;
+    min-height: 44px;
+    padding: 4px 8px;
+  }
+  .ability-face {
+    flex-direction: column;
+    gap: 1px;
+  }
+  .ability-face small {
+    margin-left: 0;
+  }
+  .ability-face b {
+    font-size: 10px;
   }
 }

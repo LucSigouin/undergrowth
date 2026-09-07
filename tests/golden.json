@@ -2,7 +2,7 @@
  {
   "label": "built",
   "state": {
-   "version": 2,
+   "version": 3,
    "coins": 4,
    "wood": 0,
    "rock": 0,
@@ -82,7 +82,12 @@
    "kills": 0,
    "won": false,
    "lost": false,
-   "time": 0
+   "time": 0,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
    "shot": 0,
@@ -95,9 +100,9 @@
  {
   "label": "wave-0",
   "state": {
-   "version": 2,
-   "coins": 33,
-   "wood": 1,
+   "version": 3,
+   "coins": 21,
+   "wood": 6,
    "rock": 0,
    "iron": 0,
    "diamond": 0,
@@ -112,7 +117,7 @@
      "z": 3,
      "level": 2,
      "branch": "reach",
-     "cool": -4.349999999999994,
+     "cool": 0.65,
      "spent": 60
     },
     {
@@ -122,7 +127,7 @@
      "z": 3,
      "level": 1,
      "branch": null,
-     "cool": -2.333333333333335,
+     "cool": 0.30000000000000016,
      "spent": 50
     },
     {
@@ -132,7 +137,7 @@
      "z": 3,
      "level": 1,
      "branch": null,
-     "cool": 0.65,
+     "cool": -10.033333333333308,
      "spent": 35
     },
     {
@@ -162,7 +167,7 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 7.033333333333293
+     "progress": 0.033333333333308346
     },
     null,
     null,
@@ -170,16 +175,21 @@
    ],
    "active": false,
    "queue": [],
-   "spawn": -8.316666666666647,
-   "nextId": 15,
-   "kills": 9,
+   "spawn": -3.6166666666666636,
+   "nextId": 12,
+   "kills": 6,
    "won": false,
    "lost": false,
-   "time": 17.03333333333334
+   "time": 10.033333333333308,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 34,
-   "kill": 9,
+   "shot": 22,
+   "kill": 6,
    "leak": 0,
    "wave": 1,
    "stage": 0
@@ -188,9 +198,9 @@
  {
   "label": "wave-1",
   "state": {
-   "version": 2,
-   "coins": 60,
-   "wood": 2,
+   "version": 3,
+   "coins": 15,
+   "wood": 12,
    "rock": 0,
    "iron": 0,
    "diamond": 0,
@@ -215,7 +225,7 @@
      "z": 3,
      "level": 2,
      "branch": "power",
-     "cool": 0.43333333333333346,
+     "cool": 0.26666666666666683,
      "spent": 85
     },
     {
@@ -223,10 +233,10 @@
      "type": "thorn",
      "x": 8,
      "z": 3,
-     "level": 1,
-     "branch": null,
-     "cool": -11.9833333333333,
-     "spent": 35
+     "level": 2,
+     "branch": "reach",
+     "cool": -20.900000000000198,
+     "spent": 60
     },
     {
      "id": 4,
@@ -255,7 +265,7 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 9.666666666666593
+     "progress": 0.89999999999995
     },
     null,
     null,
@@ -263,16 +273,21 @@
    ],
    "active": false,
    "queue": [],
-   "spawn": -1.983333333333336,
-   "nextId": 26,
-   "kills": 20,
+   "spawn": -2.150000000000002,
+   "nextId": 21,
+   "kills": 15,
    "won": false,
    "lost": false,
-   "time": 29.6666666666673
+   "time": 20.900000000000198,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 58,
-   "kill": 20,
+   "shot": 43,
+   "kill": 15,
    "leak": 0,
    "wave": 2,
    "stage": 0
@@ -281,9 +296,9 @@
  {
   "label": "wave-2",
   "state": {
-   "version": 2,
-   "coins": 25,
-   "wood": 9,
+   "version": 3,
+   "coins": 21,
+   "wood": 18,
    "rock": 0,
    "iron": 0,
    "diamond": 0,
@@ -308,7 +323,7 @@
      "z": 3,
      "level": 2,
      "branch": "power",
-     "cool": 0.10357142857142865,
+     "cool": 0.7702380952380952,
      "spent": 85
     },
     {
@@ -318,7 +333,7 @@
      "z": 3,
      "level": 2,
      "branch": "reach",
-     "cool": -26.383333333333802,
+     "cool": -33.50000000000066,
      "spent": 60
     },
     {
@@ -348,7 +363,7 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 4.0666666666665625
+     "progress": 3.4999999999999227
     },
     {
      "type": "rock",
@@ -360,16 +375,21 @@
    ],
    "active": false,
    "queue": [],
-   "spawn": -1.8166666666666689,
-   "nextId": 39,
-   "kills": 33,
+   "spawn": -2.1833333333333353,
+   "nextId": 33,
+   "kills": 27,
    "won": false,
    "lost": false,
-   "time": 44.06666666666673
+   "time": 33.50000000000066,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 90,
-   "kill": 33,
+   "shot": 73,
+   "kill": 27,
    "leak": 0,
    "wave": 3,
    "stage": 1
@@ -378,9 +398,9 @@
  {
   "label": "wave-3",
   "state": {
-   "version": 2,
-   "coins": 36,
-   "wood": 15,
+   "version": 3,
+   "coins": 32,
+   "wood": 24,
    "rock": 3,
    "iron": 0,
    "diamond": 0,
@@ -395,7 +415,7 @@
      "z": 3,
      "level": 2,
      "branch": "reach",
-     "cool": 0.04702380952380957,
+     "cool": 0.5803571428571428,
      "spent": 60
     },
     {
@@ -405,7 +425,7 @@
      "z": 3,
      "level": 2,
      "branch": "power",
-     "cool": 0.2702380952380953,
+     "cool": 0.003571428571428656,
      "spent": 85
     },
     {
@@ -415,7 +435,7 @@
      "z": 3,
      "level": 2,
      "branch": "reach",
-     "cool": 0.5803571428571428,
+     "cool": -0.21964285714285706,
      "spent": 60
     },
     {
@@ -445,28 +465,33 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 5.999999999999864
+     "progress": 4.899999999999893
     },
     {
      "type": "rock",
      "level": 2,
-     "progress": 1.933333333333311
+     "progress": 1.399999999999976
     },
     null,
     null
    ],
    "active": false,
    "queue": [],
-   "spawn": -1.6616666666666684,
-   "nextId": 50,
-   "kills": 44,
+   "spawn": -0.7499999999999998,
+   "nextId": 44,
+   "kills": 38,
    "won": false,
    "lost": false,
-   "time": 55.99999999999938
+   "time": 44.90000000000001,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 118,
-   "kill": 44,
+   "shot": 98,
+   "kill": 38,
    "leak": 0,
    "wave": 4,
    "stage": 1
@@ -475,9 +500,9 @@
  {
   "label": "wave-4",
   "state": {
-   "version": 2,
-   "coins": 12,
-   "wood": 7,
+   "version": 3,
+   "coins": 4,
+   "wood": 10,
    "rock": 1,
    "iron": 0,
    "diamond": 0,
@@ -502,7 +527,7 @@
      "z": 3,
      "level": 2,
      "branch": "power",
-     "cool": 0.5369047619047619,
+     "cool": 0.03690476190476199,
      "spent": 85
     },
     {
@@ -512,7 +537,7 @@
      "z": 3,
      "level": 3,
      "branch": "reach",
-     "cool": -1.9529761904761933,
+     "cool": -6.052976190476179,
      "spent": 109
     },
     {
@@ -542,28 +567,33 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 0.46666666666649237
+     "progress": 8.099999999999858
     },
     {
      "type": "rock",
      "level": 2,
-     "progress": 6.399999999999937
+     "progress": 4.599999999999944
     },
     null,
     null
    ],
    "active": false,
    "queue": [],
-   "spawn": -2.328333333333335,
-   "nextId": 63,
-   "kills": 57,
+   "spawn": -2.0000000000000027,
+   "nextId": 56,
+   "kills": 50,
    "won": false,
    "lost": false,
-   "time": 70.46666666666523
+   "time": 58.09999999999926,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 158,
-   "kill": 57,
+   "shot": 129,
+   "kill": 50,
    "leak": 0,
    "wave": 5,
    "stage": 1
@@ -572,9 +602,9 @@
  {
   "label": "wave-5",
   "state": {
-   "version": 2,
+   "version": 3,
    "coins": 79,
-   "wood": 3,
+   "wood": 12,
    "rock": 9,
    "iron": 0,
    "diamond": 0,
@@ -589,7 +619,7 @@
      "z": 3,
      "level": 3,
      "branch": "reach",
-     "cool": 0.15752688172043017,
+     "cool": 0.5241935483870968,
      "spent": 109
     },
     {
@@ -599,7 +629,7 @@
      "z": 3,
      "level": 3,
      "branch": "power",
-     "cool": 0.8035714285714285,
+     "cool": 0.7702380952380952,
      "spent": 155
     },
     {
@@ -609,7 +639,7 @@
      "z": 3,
      "level": 3,
      "branch": "reach",
-     "cool": -16.252976190476158,
+     "cool": -22.119642857143116,
      "spent": 109
     },
     {
@@ -639,28 +669,33 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 4.7666666666664606
+     "progress": 4.1666666666664876
     },
     {
      "type": "rock",
      "level": 2,
-     "progress": 0.6999999999999003
+     "progress": 0.6666666666665669
     },
     null,
     null
    ],
    "active": false,
    "queue": [],
-   "spawn": -0.2949999999999999,
-   "nextId": 78,
-   "kills": 72,
+   "spawn": -1.3166666666666673,
+   "nextId": 73,
+   "kills": 67,
    "won": false,
    "lost": false,
-   "time": 84.76666666666442
+   "time": 74.16666666666502,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 188,
-   "kill": 72,
+   "shot": 164,
+   "kill": 67,
    "leak": 0,
    "wave": 6,
    "stage": 2
@@ -669,9 +704,9 @@
  {
   "label": "wave-6",
   "state": {
-   "version": 2,
-   "coins": 47,
-   "wood": 9,
+   "version": 3,
+   "coins": 31,
+   "wood": 18,
    "rock": 15,
    "iron": 0,
    "diamond": 0,
@@ -696,7 +731,7 @@
      "z": 3,
      "level": 3,
      "branch": "power",
-     "cool": 0.6924731182795699,
+     "cool": 0.7258064516129032,
      "spent": 155
     },
     {
@@ -706,7 +741,7 @@
      "z": 3,
      "level": 3,
      "branch": "reach",
-     "cool": 0.09086021505376352,
+     "cool": 0.4241935483870968,
      "spent": 109
     },
     {
@@ -736,28 +771,33 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 8.799999999999756
+     "progress": 7.499999999999784
     },
     {
      "type": "rock",
      "level": 3,
-     "progress": 4.733333333333202
+     "progress": 3.999999999999871
     },
     null,
     null
    ],
    "active": false,
    "queue": [],
-   "spawn": -2.74,
-   "nextId": 91,
-   "kills": 85,
+   "spawn": -4.933333333333326,
+   "nextId": 82,
+   "kills": 76,
    "won": false,
    "lost": false,
-   "time": 98.79999999999696
+   "time": 87.4999999999976,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 237,
-   "kill": 85,
+   "shot": 201,
+   "kill": 76,
    "leak": 0,
    "wave": 7,
    "stage": 2
@@ -766,9 +806,9 @@
  {
   "label": "wave-7",
   "state": {
-   "version": 2,
-   "coins": 133,
-   "wood": 21,
+   "version": 3,
+   "coins": 113,
+   "wood": 30,
    "rock": 33,
    "iron": 0,
    "diamond": 0,
@@ -783,7 +823,7 @@
      "z": 3,
      "level": 3,
      "branch": "reach",
-     "cool": 0.02419354838709685,
+     "cool": -0.5758064516129031,
      "spent": 109
     },
     {
@@ -793,7 +833,7 @@
      "z": 3,
      "level": 3,
      "branch": "power",
-     "cool": 0.6258064516129033,
+     "cool": -0.04086021505376328,
      "spent": 155
     },
     {
@@ -833,28 +873,33 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 5.833333333333049
+     "progress": 4.066666666666413
     },
     {
      "type": "rock",
      "level": 3,
-     "progress": 1.7666666666664945
+     "progress": 0.5666666666664923
     },
     null,
     null
    ],
    "active": false,
    "queue": [],
-   "spawn": -4.006666666666662,
-   "nextId": 106,
-   "kills": 100,
+   "spawn": -4.416666666666661,
+   "nextId": 96,
+   "kills": 90,
    "won": false,
    "lost": false,
-   "time": 115.83333333332932
+   "time": 104.06666666666332,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 303,
-   "kill": 100,
+   "shot": 270,
+   "kill": 90,
    "leak": 0,
    "wave": 8,
    "stage": 2
@@ -863,9 +908,9 @@
  {
   "label": "wave-8",
   "state": {
-   "version": 2,
-   "coins": 292,
-   "wood": 33,
+   "version": 3,
+   "coins": 264,
+   "wood": 42,
    "rock": 51,
    "iron": 0,
    "diamond": 0,
@@ -880,7 +925,7 @@
      "z": 3,
      "level": 3,
      "branch": "reach",
-     "cool": 0.5241935483870968,
+     "cool": -1.8424731182795724,
      "spent": 109
     },
     {
@@ -890,7 +935,7 @@
      "z": 3,
      "level": 3,
      "branch": "power",
-     "cool": 0.09247311827957005,
+     "cool": -1.240860215053764,
      "spent": 155
     },
     {
@@ -900,7 +945,7 @@
      "z": 3,
      "level": 3,
      "branch": "reach",
-     "cool": 0.4908602150537634,
+     "cool": 0.5241935483870968,
      "spent": 109
     },
     {
@@ -930,28 +975,33 @@
     {
      "type": "wood",
      "level": 2,
-     "progress": 5.599999999999667
+     "progress": 6.733333333333021
     },
     {
      "type": "rock",
      "level": 3,
-     "progress": 1.5333333333331107
+     "progress": 3.233333333333108
     },
     null,
     null
    ],
    "active": false,
    "queue": [],
-   "spawn": -5.006666666666659,
-   "nextId": 123,
-   "kills": 117,
+   "spawn": -10.166666666666641,
+   "nextId": 111,
+   "kills": 105,
    "won": false,
    "lost": false,
-   "time": 135.59999999999488
+   "time": 126.7333333333287,
+   "cooldowns": {
+    "rootgrip": 0,
+    "sunburst": 0
+   },
+   "root": 0
   },
   "counts": {
-   "shot": 388,
-   "kill": 117,
+   "shot": 358,
+   "kill": 105,
    "leak": 0,
    "wave": 9,
    "stage": 3

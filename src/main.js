@@ -4,7 +4,7 @@
 // holds the one Game instance and the one World instance and wires them together. Game
 // rules live in game.js and the 3D scene lives in world.js.
 import './style.css';
-import { Game, TOWERS, STAGES, MATERIALS } from './game.js';
+import { Game, TOWERS, STAGES, MATERIALS, ABILITIES } from './game.js';
 import { World } from './world.js';
 
 // Short name for document.querySelector, used all over this file.
@@ -16,7 +16,10 @@ let game;
 try {
   const raw = JSON.parse(localStorage.getItem(SAVE) || localStorage.getItem('undergrowth-save-v1'));
   const usable =
-    [1, 2].includes(raw?.version) && Array.isArray(raw.towers) && raw.stage >= 0 && raw.stage <= 10;
+    [1, 2, 3].includes(raw?.version) &&
+    Array.isArray(raw.towers) &&
+    raw.stage >= 0 &&
+    raw.stage <= 10;
   game = usable ? new Game(raw) : new Game();
 } catch {
   game = new Game();
@@ -26,6 +29,7 @@ const mobileQuery = matchMedia('(max-width: 700px), (max-width: 1000px) and (poi
 
 // Interface state. None of this belongs in the save file.
 let pendingPlacement = null;
+let aiming = null;
 let build = 'thorn',
   selected = null,
   paused = false,
@@ -64,6 +68,20 @@ const mapControls =
   '<button id="path" aria-pressed="true" title="Show enemy route">Route on</button>' +
   '</div>';
 
+// The two ability buttons. They sit over the board so they work in both layouts.
+const abilityBar =
+  '<div class="ability-bar" aria-label="Abilities">' +
+  Object.entries(ABILITIES)
+    .map(
+      ([id, ability]) =>
+        `<button class="ability" data-ability="${id}" title="${ability.desc}">` +
+        `<span class="ability-fill"></span>` +
+        `<span class="ability-face"><i>${ability.symbol}</i>` +
+        `<b>${ability.name}</b><small>${ability.key}</small></span></button>`,
+    )
+    .join('') +
+  '</div>';
+
 const placementBar =
   '<div id="placement" class="placement" hidden>' +
   '<button id="cancel-place" aria-label="Cancel placement">×</button>' +
@@ -94,7 +112,7 @@ const towerCards = Object.entries(TOWERS)
   .join('');
 
 const defensesSection =
-  '<section class="defenses"><h2>Defenses <small>1–5</small></h2>' +
+  '<section class="defenses"><h2>Defenses <small>1–7</small></h2>' +
   `<div class="cards">${towerCards}</div>` +
   '<div id="detail" class="detail" hidden></div></section>';
 
@@ -131,6 +149,7 @@ query('#app').innerHTML = `<main class="game-shell">
   <div class="map-area">${gardenStrip}<section class="scene-wrap" id="scene" aria-label="Battlefield">
     ${mapStatus}
     ${mapControls}
+    ${abilityBar}
     ${placementBar}
   </section>
   </div><aside class="sidebar" aria-label="Build and garden">
@@ -196,6 +215,17 @@ function choose(type) {
 // Handle a click on a board square: select a tower, stage a placement, or build right away.
 function onCell(cell) {
   if (paused || game.lost || game.won) return;
+  // An armed Sunburst swallows the next click and lands on that square.
+  if (aiming) {
+    const id = aiming;
+    aiming = null;
+    const err = game.useAbility(id, cell);
+    toast(err || `${ABILITIES[id].name} lands on the horde.`);
+    if (!err) beep(660);
+    persist();
+    render();
+    return;
+  }
   const tower = game.towers.find((candidate) => candidate.x === cell.x && candidate.z === cell.z);
   if (tower) {
     pendingPlacement = null;
@@ -249,8 +279,17 @@ try {
 let detailKey = '';
 
 // The three number chips under a tower name. Hedges have no combat numbers.
-function defenseStats(stats, type) {
+function defenseStats(stats, type, level = 1) {
   if (type === 'hedge') return '';
+  // A Lantern never shoots, so it shows what its ring does instead of damage numbers.
+  if (type === 'lantern') {
+    return (
+      '<div class="defense-stats">' +
+      `<span><b>+${Math.round((0.2 + level * 0.1) * 100)}%</b>Fire rate nearby</span>` +
+      `<span><b>${stats.range.toFixed(1)}</b>Ring · squares</span>` +
+      '<span><b>0</b>Damage / hit</span></div>'
+    );
+  }
   return (
     '<div class="defense-stats">' +
     `<span><b>${Math.round(stats.damage)}</b>Damage / hit</span>` +
@@ -269,17 +308,33 @@ function defenseHeading(info) {
   );
 }
 
+// The line that names what the player is short of, and why that material only comes from a plot.
+function shortfallNote(missing) {
+  if (!missing.length) return '';
+  const parts = missing
+    .map((item) => `${item.short} more ${item.name.toLowerCase()}`)
+    .join(' and ');
+  const fromGarden = missing.some((item) => item.id !== 'coins');
+  const why = fromGarden
+    ? ' Materials only come from garden plots, so buy or upgrade a plot to earn them.'
+    : ' Coins come from kills and from clearing waves.';
+  return `<p class="defense-missing">You need ${parts}.${why}</p>`;
+}
+
 // The upgrade paragraph and buttons, shown while a tower can still grow.
-function upgradeBlock(tower, cost) {
+function upgradeBlock(tower, cost, missing) {
   if (tower.level >= 3 || tower.type === 'hedge') return '<p>Fully upgraded.</p>';
   const materialCosts = MATERIALS.filter((material) => cost[material.id])
     .map((material) => ` · ${cost[material.id]} ${material.name.toLowerCase()}`)
     .join('');
-  const powerLabel = tower.level === 1 ? 'Power +45%' : 'Grow to level 3';
-  const reachButton = tower.level === 1 ? '<button data-upgrade="reach">Range +1.1</button>' : '';
+  const powerLabel = tower.level === 1 ? 'Power +55%' : 'Grow to level 3';
+  const blocked = missing.length ? ' disabled' : '';
+  const reachButton =
+    tower.level === 1 ? `<button data-upgrade="reach"${blocked}>Range +1.1</button>` : '';
   return (
     `<p>Upgrade · ${cost.coins} coins${materialCosts}</p>` +
-    `<div class="upgrade-row"><button data-upgrade="power">${powerLabel}</button>` +
+    shortfallNote(missing) +
+    `<div class="upgrade-row"><button data-upgrade="power"${blocked}>${powerLabel}</button>` +
     `${reachButton}</div>`
   );
 }
@@ -288,7 +343,15 @@ function upgradeBlock(tower, cost) {
 function renderDetail() {
   const tower = game.towers.find((candidate) => candidate.id === selected),
     info = TOWERS[tower?.type || build || 'thorn'];
-  const key = JSON.stringify([tower?.id, tower?.level, tower?.branch, build, mobileQuery.matches]);
+  const shortKey = tower ? game.upgradeShortfall(tower).map((item) => item.id) : [];
+  const key = JSON.stringify([
+    tower?.id,
+    tower?.level,
+    tower?.branch,
+    build,
+    shortKey,
+    mobileQuery.matches,
+  ]);
   if (key === detailKey) return;
   detailKey = key;
   query('#detail').hidden = !tower && (!build || mobileQuery.matches);
@@ -309,16 +372,23 @@ function renderDetail() {
   }
 
   const stats = game.stats(tower),
-    cost = game.upgradeCost(tower);
+    cost = game.upgradeCost(tower),
+    missing = game.upgradeShortfall(tower);
+  const boost = game.rateBonus(tower);
+  const boostNote =
+    boost > 1
+      ? `<p class="defense-boost">A Lantern is speeding this up by ${Math.round((boost - 1) * 100)}%.</p>`
+      : '';
   const branchLabel = tower.branch ? ' · ' + tower.branch : '';
   query('#detail').innerHTML =
     '<button class="detail-close mobile-only" id="close-detail"' +
     ' aria-label="Close tower details">×</button>' +
     `<div class="eyebrow">Level ${tower.level}${branchLabel}</div>` +
     defenseHeading(info) +
-    defenseStats(stats, tower.type) +
+    defenseStats(stats, tower.type, tower.level) +
     `<p class="defense-tip">${info.tip}</p>` +
-    upgradeBlock(tower, cost) +
+    boostNote +
+    upgradeBlock(tower, cost, missing) +
     `<button class="text-button" id="sell">Reclaim · ${Math.floor(tower.spent * 0.7)} coins</button>`;
 
   query('#close-detail')?.addEventListener('click', () => {
@@ -361,7 +431,7 @@ function render() {
   query('#wave-counter').textContent = `Wave ${shownWave} / 3`;
   query('#enemy-counter').textContent = game.active
     ? `${game.enemies.length + game.queue.length} remaining`
-    : `${7 + game.stage * 2 + (game.wave + 1) * 2} creatures`;
+    : `${game.waveSize(game.stage, Math.min(3, game.wave + 1))} creatures`;
   query('#start').disabled = (game.active && !paused) || game.lost || game.won;
   query('#start').textContent = game.won
     ? 'Garden protected ✓'
@@ -391,8 +461,47 @@ function render() {
     const staged = TOWERS[pendingPlacement.type];
     query('#confirm-place').textContent = `Place ${staged.name} · ◈ ${staged.cost}`;
   }
+  renderAbilities();
   renderGarden();
   renderDetail();
+}
+
+// Redraw the two ability buttons: the seconds left, the fill, and the armed state.
+function renderAbilities() {
+  for (const [id, ability] of Object.entries(ABILITIES)) {
+    const button = query(`[data-ability="${id}"]`);
+    const state = game.abilityState(id);
+    const share = state.ready ? 0 : state.left / ability.cooldown;
+    button.querySelector('.ability-fill').style.height = `${Math.round(share * 100)}%`;
+    button.querySelector('b').textContent = state.ready ? ability.name : `${state.left}s`;
+    button.classList.toggle('cooling', !state.ready);
+    button.classList.toggle('armed', aiming === id);
+    button.disabled = game.lost || game.won;
+    button.setAttribute('aria-pressed', String(aiming === id));
+    const label = state.ready ? `${ability.name}, ready` : `${ability.name}, ${state.left} seconds`;
+    button.setAttribute('aria-label', label);
+  }
+}
+
+// Fire an ability from a key or a button. Sunburst arms itself and waits for a square.
+function fireAbility(id) {
+  if (paused || game.lost || game.won) return;
+  if (!game.abilityState(id).ready) {
+    toast(game.useAbility(id, { x: 6, z: 4 }));
+    return;
+  }
+  if (id === 'sunburst') {
+    aiming = aiming === id ? null : id;
+    toast(aiming ? 'Pick the square to burst.' : 'Sunburst put away.');
+    render();
+    return;
+  }
+  aiming = null;
+  const err = game.useAbility(id);
+  toast(err || 'Roots take hold. Nothing on the ground moves.');
+  if (!err) beep(220);
+  persist();
+  render();
 }
 
 // Redraw the garden summary chips and the four plot cards, skipping unchanged work.
@@ -530,15 +639,25 @@ function modal(title, body, button = 'Back to the garden', action) {
 
 const HELP_TEXT =
   '<b>1. Shape the maze.</b> Choose a tower, then click a meadow square.' +
-  ' The dotted line shows the horde’s route. Keep an exit open.<br><br>' +
+  ' The dotted line shows the horde’s route. A longer route means more shots, so the' +
+  ' scenic way round is worth more than any single tower. Keep an exit open.<br><br>' +
   '<b>2. Grow while you defend.</b> Buy the wood plot for 25 coins. It automatically' +
   ' adds 3 wood every 10 seconds, including during combat. Upgrade it with coins for' +
   ' more output. Unlock and buy Rock, then Iron, then Diamond plots with coins.' +
-  ' Materials pay for tower upgrades.<br><br>' +
-  '<b>3. Put down roots.</b> Survive three waves per stage, across ten stages. Your maze' +
-  ' and garden stay. Moths fly over the maze; sunstones pierce armor.<br><br>' +
-  '<b>Controls:</b> 1–5 choose pieces, Esc inspects, Space pauses.' +
-  ' Progress saves automatically on this browser.';
+  ' The first upgrade of a tower costs coins only. Level 3 needs materials, and' +
+  ' materials only come from garden plots.<br><br>' +
+  '<b>3. Know the horde.</b> Moths fly over the maze. Beetles wear armor, and Sunstone' +
+  ' cuts through it. A brood sac bursts into three grublings when it dies, so Bloom' +
+  ' bursts clear them best. A warden ignores sap and shields everything beside it,' +
+  ' and only Ember burning gets past that shield.<br><br>' +
+  '<b>4. Your two abilities.</b> Rootgrip (Q) holds every walking enemy still for 3' +
+  ' seconds. Sunburst (E) arms a burst, then you pick the square it lands on. Both' +
+  ' recharge on their own and both are saved with your game.<br><br>' +
+  '<b>5. New towers.</b> Ember (6) sets enemies alight, and burning ignores armor and' +
+  ' shields. Lantern (7) never shoots, it makes every attacking tower in its ring fire' +
+  ' faster, so it belongs in the middle of a cluster.<br><br>' +
+  '<b>Controls:</b> 1–7 choose pieces, Q and E fire abilities, Esc inspects,' +
+  ' Space pauses. Progress saves automatically on this browser.';
 
 query('#help').onclick = () => modal('Small pieces. Big possibilities.', HELP_TEXT);
 
@@ -572,6 +691,7 @@ query('#garden-modal').addEventListener('click', (event) => {
 
 // Drop a staged placement and clear the preview.
 function cancelPlacement() {
+  aiming = null;
   pendingPlacement = null;
   world.previewTowers = null;
   world.hover.visible = false;
@@ -642,7 +762,12 @@ query('#start').onclick = () => {
     return;
   }
   if (game.start()) {
-    toast('Wave started. Follow the dotted route.');
+    // Stage 1 is where the maze lesson has to land, so say it in plain words.
+    toast(
+      game.stage === 0
+        ? 'A longer route means more shots. Hedges cost 8 coins and bend the dotted line.'
+        : 'Wave started. Follow the dotted route.',
+    );
     beep(250);
     persist();
   }
@@ -672,6 +797,10 @@ document.querySelectorAll('[data-build]').forEach((button) => {
   button.onclick = () => choose(button.dataset.build);
 });
 
+document.querySelectorAll('[data-ability]').forEach((button) => {
+  button.onclick = () => fireAbility(button.dataset.ability);
+});
+
 window.addEventListener('keydown', (event) => {
   const typing = event.target.matches('input,textarea,select');
   if (query('#modal').open || query('#garden-modal').open || typing) return;
@@ -680,8 +809,14 @@ window.addEventListener('keydown', (event) => {
     paused = !paused;
     render();
   }
-  if ('12345'.includes(event.key)) choose(Object.keys(TOWERS)[Number(event.key) - 1]);
+  const keys = Object.keys(TOWERS);
+  const slot = Number(event.key);
+  if (Number.isInteger(slot) && slot >= 1 && slot <= keys.length) choose(keys[slot - 1]);
+  for (const [id, ability] of Object.entries(ABILITIES)) {
+    if (event.key.toUpperCase() === ability.key) fireAbility(id);
+  }
   if (event.key === 'Escape') {
+    aiming = null;
     pendingPlacement = null;
     build = null;
     selected = null;
@@ -713,7 +848,8 @@ const WON_TEXT =
   ' Try a new layout with a fresh expedition.';
 const LOST_TEXT =
   'The horde reached your heart. Start a new garden with the ↺ button.' +
-  ' Try a longer maze, early farm upgrades, and Sap beside your damage towers.';
+  ' Try a longer maze first, since a longer route means more shots. Then early farm' +
+  ' upgrades, an Ember for shells and wardens, and a Lantern in the middle of your towers.';
 
 // One animation frame: step the game in fixed slices, draw, react to events, then save.
 function frame(now) {

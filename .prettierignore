@@ -2,3 +2,6 @@
 # must not rewrite it either. Everything else in src/ and tests/ is formatted.
 tests/golden.mjs
 tests/golden.json
+# tests/balance-gate.mjs is the r2 difficulty gate. No lane may touch it either, and
+# formatting it would count as touching it, so prettier leaves it alone.
+tests/balance-gate.mjs

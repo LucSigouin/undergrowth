@@ -49,21 +49,32 @@ test('every strategy reports the fields the report is built from', () => {
   }
 });
 
-test('the naive strategy loses at stage 6 wave 2, well before stage 10', () => {
+test('the naive strategy still loses, but only after it has seen most of the game', () => {
   const naive = runAll().strategies.find((s) => s.name === 'naive');
   assert.equal(naive.won, false);
-  assert.equal(naive.lostAtStage, 5);
-  assert.equal(naive.lostAtWave, 2);
+  // The r2 gate asks for stage 7 or later. r1 died at stage 6.
+  assert.ok(naive.lostAtStage >= 6);
   assert.ok(naive.lostAtStage < 9);
 });
 
-test('naive dies with towers stuck at level one and coins it cannot spend', () => {
-  // This is the cause, not a coincidence. Upgrades need wood, and naive buys no farm.
+test('naive reaches level 2 on coins alone and then stops, with no garden', () => {
+  // The level 1 to 2 upgrade is coins only in r2, so naive is no longer frozen at level 1.
+  // Level 3 still needs wood and rock, and naive never buys a plot, so level 2 is its ceiling.
   const naive = runAll().strategies.find((s) => s.name === 'naive');
   const last = naive.stages[naive.stages.length - 1];
-  assert.deepEqual([...new Set(last.towerLevels)], [1]);
+  assert.deepEqual([...new Set(last.towerLevels)], [2]);
   assert.deepEqual(last.farms, [0, 0, 0, 0]);
-  assert.ok(last.coinsEnd > 1000);
+});
+
+test('the winners lose lives across three or more stages, not in one cliff', () => {
+  const winners = runAll().strategies.filter((s) => s.won);
+  assert.ok(winners.length >= 1);
+  for (const winner of winners) {
+    const total = winner.stages.reduce((sum, stage) => sum + stage.livesLost, 0);
+    const bleeding = winner.stages.filter((stage) => stage.livesLost > 0).length;
+    assert.ok(total >= 3 && total <= 16, `${winner.name} lost ${total} lives`);
+    assert.ok(bleeding >= 3, `${winner.name} bled in ${bleeding} stages`);
+  }
 });
 
 test('at least one strategy clears all ten stages on the current constants', () => {
