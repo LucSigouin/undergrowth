@@ -1,16 +1,208 @@
+// Unit tests for the rules engine in src/game.js. They cover routing, building,
+// the garden economy, save migration, real combat, campaign progression, and the
+// events the renderer listens to. Nothing here touches a browser.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,path} from '../src/game.js';
-test('maze reroutes and rejects a sealed exit without charging',()=>{const g=new Game();g.coins=1000;for(let z=0;z<8;z++)assert.equal(g.place('hedge',6,z),null);assert.ok(path(g.towers).length>13);const coins=g.coins;assert.match(g.place('hedge',6,8),/path/);assert.equal(g.coins,coins);assert.equal(g.towers.length,8);assert.match(g.place('hedge',0,4),/entrance/)});
-test('cannot build under an enemy or its next movement target',()=>{const g=new Game();g.enemies=[{x:3.1,z:4,target:{x:4,z:4},flying:false}];assert.match(g.place('thorn',3,4),/creature/);assert.match(g.place('thorn',4,4),/creature/)});
-test('garden starts empty with only the wood plot available',()=>{const g=new Game();assert.equal(g.unlockedPlots,1);assert.deepEqual(g.farms,[null,null,null,null]);g.tick(30);assert.equal(g.wood,0);assert.match(g.farm(1),/Unlock/);assert.match(g.unlockPlot(1),/previous/);assert.equal(g.coins,200);assert.equal(g.farm(0),null);assert.equal(g.coins,175);assert.equal(g.farms[0].type,'wood')});
-test('money buys and upgrades automatic production during combat',()=>{const g=new Game();g.farm(0);g.farm(0);assert.equal(g.coins,140);assert.equal(g.farms[0].level,2);g.start();for(let i=0;i<301;i++)g.tick(1/30);assert.equal(g.wood,6);assert.equal(g.rock,0);g.place('thorn',5,3);const t=g.towers[0];assert.equal(g.upgrade(t.id,'reach'),null);assert.equal(t.level,2);assert.equal(t.branch,'reach');assert.ok(g.stats(t).range>4);assert.equal(g.wood,1)});
-test('locked resources unlock sequentially and do not produce until purchased',()=>{const g=new Game();g.coins=1500;g.farm(0);assert.match(g.unlockPlot(2),/previous/);assert.equal(g.unlockPlot(1),null);const afterUnlock=g.coins;assert.match(g.unlockPlot(1),/already/);assert.equal(g.coins,afterUnlock);g.tick(20);assert.equal(g.rock,0);assert.equal(g.farm(1),null);assert.equal(g.unlockPlot(2),null);assert.equal(g.farm(2),null);assert.equal(g.unlockPlot(3),null);assert.equal(g.farm(3),null);g.tick(10);assert.equal(g.rock,3);assert.equal(g.iron,2);assert.equal(g.diamond,1);assert.equal(g.unlockedPlots,4)});
-test('insufficient coins and maximum upgrades cannot charge or change a plot',()=>{const g=new Game();g.coins=24;assert.match(g.farm(0),/coins/);assert.equal(g.farms[0],null);g.coins=1000;g.farm(0);g.farm(0);g.farm(0);const coins=g.coins;assert.match(g.farm(0),/fully/);assert.equal(g.coins,coins);assert.equal(g.farms[0].level,3);g.coins=79;assert.match(g.unlockPlot(1),/coins/);assert.equal(g.unlockedPlots,1)});
-test('old save migration preserves expedition and refunds replaced gardens',()=>{const old={version:1,stage:4,coins:100,leaves:12,ore:8,towers:[{id:7,type:'thorn',x:3,z:3,level:1}],farms:[{type:'leaves',level:2},null,null,null]};const g=new Game(old);assert.equal(g.version,2);assert.equal(g.stage,4);assert.equal(g.coins,205);assert.equal(g.wood,12);assert.equal(g.rock,8);assert.equal(g.towers[0].id,7);assert.equal(g.unlockedPlots,1);assert.deepEqual(g.farms,[null,null,null,null])});
-test('real combat earns kills and completes a wave',()=>{const g=new Game();for(const[x,z]of[[2,3],[5,3],[8,3],[10,5]])g.place('thorn',x,z);assert.ok(g.start());assert.equal(g.start(),false);for(let i=0;i<3000&&g.active;i++)g.tick(1/30);assert.equal(g.active,false);assert.equal(g.lost,false);assert.ok(g.kills>0);assert.equal(g.wave,1)});
-test('flying enemies ignore maze and armored enemies resist thorn damage',()=>{const g=new Game();const moth=g.enemy('moth');assert.equal(moth.flying,true);const armor=g.enemy('armor');assert.ok(armor.hp>g.enemy('grub').hp);g.coins=1000;for(let z=0;z<8;z++)g.place('hedge',6,z);g.active=true;g.enemies=[moth];for(let i=0;i<400;i++)g.tick(1/30);assert.equal(g.lives,19)});
-test('save resumes a live wave deterministically',()=>{const a=new Game();a.place('thorn',3,3);a.farm(0);a.start();for(let i=0;i<70;i++)a.tick(1/30);const b=new Game(JSON.parse(a.serialize()));for(let i=0;i<90;i++){a.tick(1/30);b.tick(1/30)}assert.deepEqual(JSON.parse(a.serialize()),JSON.parse(b.serialize()))});
-test('thirty cleared waves finish ten stages while preserving settlement',()=>{const g=new Game();g.place('thorn',4,3);g.farm(0);g.farm(0);const tower=g.towers[0];for(let i=0;i<30;i++){assert.equal(g.start(),true);g.queue=[];g.enemies=[];g.tick(.01)}assert.equal(g.stage,10);assert.equal(g.won,true);assert.equal(g.towers[0],tower);assert.equal(g.farms[0].level,2);assert.equal(g.start(),false)});
-test('loss stops further simulation',()=>{const g=new Game();g.lives=1;g.active=true;g.enemies=[{...g.enemy('grub'),x:12,z:4}];g.tick(.1);assert.equal(g.lost,true);assert.equal(g.lives,0);const before=g.serialize();g.tick(10);assert.equal(g.serialize(),before)});
-test('tower shots retain their event type so the renderer can draw attacks',()=>{const g=new Game();g.place('thorn',1,3);g.start();g.tick(.05);const shot=g.events.find(e=>e.type==='shot');assert.ok(shot);assert.equal(shot.towerType,'thorn')});
+import { Game, path } from '../src/game.js';
+
+test('maze reroutes and rejects a sealed exit without charging', () => {
+  const game = new Game();
+  game.coins = 1000;
+  for (let z = 0; z < 8; z++) assert.equal(game.place('hedge', 6, z), null);
+  assert.ok(path(game.towers).length > 13);
+  const coins = game.coins;
+  assert.match(game.place('hedge', 6, 8), /path/);
+  assert.equal(game.coins, coins);
+  assert.equal(game.towers.length, 8);
+  assert.match(game.place('hedge', 0, 4), /entrance/);
+});
+
+test('cannot build under an enemy or its next movement target', () => {
+  const game = new Game();
+  game.enemies = [{ x: 3.1, z: 4, target: { x: 4, z: 4 }, flying: false }];
+  assert.match(game.place('thorn', 3, 4), /creature/);
+  assert.match(game.place('thorn', 4, 4), /creature/);
+});
+
+test('garden starts empty with only the wood plot available', () => {
+  const game = new Game();
+  assert.equal(game.unlockedPlots, 1);
+  assert.deepEqual(game.farms, [null, null, null, null]);
+  game.tick(30);
+  assert.equal(game.wood, 0);
+  assert.match(game.farm(1), /Unlock/);
+  assert.match(game.unlockPlot(1), /previous/);
+  assert.equal(game.coins, 200);
+  assert.equal(game.farm(0), null);
+  assert.equal(game.coins, 175);
+  assert.equal(game.farms[0].type, 'wood');
+});
+
+test('money buys and upgrades automatic production during combat', () => {
+  const game = new Game();
+  game.farm(0);
+  game.farm(0);
+  assert.equal(game.coins, 140);
+  assert.equal(game.farms[0].level, 2);
+  game.start();
+  for (let i = 0; i < 301; i++) game.tick(1 / 30);
+  assert.equal(game.wood, 6);
+  assert.equal(game.rock, 0);
+  game.place('thorn', 5, 3);
+  const tower = game.towers[0];
+  assert.equal(game.upgrade(tower.id, 'reach'), null);
+  assert.equal(tower.level, 2);
+  assert.equal(tower.branch, 'reach');
+  assert.ok(game.stats(tower).range > 4);
+  assert.equal(game.wood, 1);
+});
+
+test('locked resources unlock sequentially and do not produce until purchased', () => {
+  const game = new Game();
+  game.coins = 1500;
+  game.farm(0);
+  assert.match(game.unlockPlot(2), /previous/);
+  assert.equal(game.unlockPlot(1), null);
+  const afterUnlock = game.coins;
+  assert.match(game.unlockPlot(1), /already/);
+  assert.equal(game.coins, afterUnlock);
+  game.tick(20);
+  assert.equal(game.rock, 0);
+  assert.equal(game.farm(1), null);
+  assert.equal(game.unlockPlot(2), null);
+  assert.equal(game.farm(2), null);
+  assert.equal(game.unlockPlot(3), null);
+  assert.equal(game.farm(3), null);
+  game.tick(10);
+  assert.equal(game.rock, 3);
+  assert.equal(game.iron, 2);
+  assert.equal(game.diamond, 1);
+  assert.equal(game.unlockedPlots, 4);
+});
+
+test('insufficient coins and maximum upgrades cannot charge or change a plot', () => {
+  const game = new Game();
+  game.coins = 24;
+  assert.match(game.farm(0), /coins/);
+  assert.equal(game.farms[0], null);
+  game.coins = 1000;
+  game.farm(0);
+  game.farm(0);
+  game.farm(0);
+  const coins = game.coins;
+  assert.match(game.farm(0), /fully/);
+  assert.equal(game.coins, coins);
+  assert.equal(game.farms[0].level, 3);
+  game.coins = 79;
+  assert.match(game.unlockPlot(1), /coins/);
+  assert.equal(game.unlockedPlots, 1);
+});
+
+test('old save migration preserves expedition and refunds replaced gardens', () => {
+  const old = {
+    version: 1,
+    stage: 4,
+    coins: 100,
+    leaves: 12,
+    ore: 8,
+    towers: [{ id: 7, type: 'thorn', x: 3, z: 3, level: 1 }],
+    farms: [{ type: 'leaves', level: 2 }, null, null, null],
+  };
+  const game = new Game(old);
+  assert.equal(game.version, 2);
+  assert.equal(game.stage, 4);
+  assert.equal(game.coins, 205);
+  assert.equal(game.wood, 12);
+  assert.equal(game.rock, 8);
+  assert.equal(game.towers[0].id, 7);
+  assert.equal(game.unlockedPlots, 1);
+  assert.deepEqual(game.farms, [null, null, null, null]);
+});
+
+test('real combat earns kills and completes a wave', () => {
+  const game = new Game();
+  const spots = [
+    [2, 3],
+    [5, 3],
+    [8, 3],
+    [10, 5],
+  ];
+  for (const [x, z] of spots) game.place('thorn', x, z);
+  assert.ok(game.start());
+  assert.equal(game.start(), false);
+  for (let i = 0; i < 3000 && game.active; i++) game.tick(1 / 30);
+  assert.equal(game.active, false);
+  assert.equal(game.lost, false);
+  assert.ok(game.kills > 0);
+  assert.equal(game.wave, 1);
+});
+
+test('flying enemies ignore maze and armored enemies resist thorn damage', () => {
+  const game = new Game();
+  const moth = game.enemy('moth');
+  assert.equal(moth.flying, true);
+  const armor = game.enemy('armor');
+  assert.ok(armor.hp > game.enemy('grub').hp);
+  game.coins = 1000;
+  for (let z = 0; z < 8; z++) game.place('hedge', 6, z);
+  game.active = true;
+  game.enemies = [moth];
+  for (let i = 0; i < 400; i++) game.tick(1 / 30);
+  assert.equal(game.lives, 19);
+});
+
+test('save resumes a live wave deterministically', () => {
+  const original = new Game();
+  original.place('thorn', 3, 3);
+  original.farm(0);
+  original.start();
+  for (let i = 0; i < 70; i++) original.tick(1 / 30);
+  const restored = new Game(JSON.parse(original.serialize()));
+  for (let i = 0; i < 90; i++) {
+    original.tick(1 / 30);
+    restored.tick(1 / 30);
+  }
+  assert.deepEqual(JSON.parse(original.serialize()), JSON.parse(restored.serialize()));
+});
+
+test('thirty cleared waves finish ten stages while preserving settlement', () => {
+  const game = new Game();
+  game.place('thorn', 4, 3);
+  game.farm(0);
+  game.farm(0);
+  const tower = game.towers[0];
+  for (let i = 0; i < 30; i++) {
+    assert.equal(game.start(), true);
+    game.queue = [];
+    game.enemies = [];
+    game.tick(0.01);
+  }
+  assert.equal(game.stage, 10);
+  assert.equal(game.won, true);
+  assert.equal(game.towers[0], tower);
+  assert.equal(game.farms[0].level, 2);
+  assert.equal(game.start(), false);
+});
+
+test('loss stops further simulation', () => {
+  const game = new Game();
+  game.lives = 1;
+  game.active = true;
+  game.enemies = [{ ...game.enemy('grub'), x: 12, z: 4 }];
+  game.tick(0.1);
+  assert.equal(game.lost, true);
+  assert.equal(game.lives, 0);
+  const before = game.serialize();
+  game.tick(10);
+  assert.equal(game.serialize(), before);
+});
+
+test('tower shots retain their event type so the renderer can draw attacks', () => {
+  const game = new Game();
+  game.place('thorn', 1, 3);
+  game.start();
+  game.tick(0.05);
+  const shot = game.events.find((event) => event.type === 'shot');
+  assert.ok(shot);
+  assert.equal(shot.towerType, 'thorn');
+});

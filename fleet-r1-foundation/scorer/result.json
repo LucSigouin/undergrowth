@@ -1,0 +1,24 @@
+{
+  "state": "done",
+  "taskId": "2D4BB113-1E08-4242-8461-40514C0010A8",
+  "model": {
+    "requested": "claude-fable-5",
+    "effective": "claude-fable-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "fleet-r1-foundation/scorer/SCORE.md",
+    "fleet-r1-foundation/scorer/score.json",
+    "fleet-r1-foundation/scorer/result.json"
+  ],
+  "verify": {
+    "cmd": "cd /Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r1-foundation/scorer && test -s SCORE.md && node -e \"const s=require('./score.json');const items=Object.values(s.items);if(s.round!=='r1'||items.length!==6||items.some(v=>typeof v!=='number')||!['PASS','FAIL'].includes(s.verdict)||typeof s.overall!=='number'||s.gate.format_exit!==0&&s.gate.format_exit!==1||typeof s.traced.checked!=='number')process.exit(1)\"",
+    "exit": 0
+  },
+  "unverified": [
+    "The rendered page was never viewed; no browser was opened.",
+    "The three Playwright scripts were not run by any lane this round.",
+    "CSS rule semantics after the prettier reflow were trusted, not diffed as parsed rules.",
+    "All balance findings are simulator outcomes; no human playtest exists."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "state": "done",
+  "taskId": "8BB47A8E-F383-48DF-90A5-8158B5EB54E3",
+  "model": {
+    "requested": "claude-opus-5",
+    "effective": "claude-opus-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "tools/balance-sim.mjs",
+    "tests/sim.test.js",
+    "fleet-r1-foundation/sim/BALANCE-REPORT.md",
+    "fleet-r1-foundation/sim/REPORT.md",
+    "fleet-r1-foundation/sim/result.json"
+  ],
+  "verify": {
+    "cmd": "cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && npm test && node tests/golden.mjs && node --test tests/sim.test.js && node tools/balance-sim.mjs --json | node -e \"let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);if(!Array.isArray(j.strategies)||j.strategies.length<3)process.exit(1)})\" && test -s fleet-r1-foundation/sim/BALANCE-REPORT.md && test -s fleet-r1-foundation/sim/REPORT.md && node -e \"const r=require('./fleet-r1-foundation/sim/result.json');if(r.state!=='done'||!r.model||!r.taskId)process.exit(1)\"",
+    "exit": 0
+  },
+  "unverified": [
+    "No human has playtested any of the six builds. All outcomes are simulated.",
+    "The six strategies are fixed plans, not adaptive play, so they bracket human results rather than predict them.",
+    "One hand picked maze layout is used. A different layout changes route length and every late stage number.",
+    "Bloom is never bought by any strategy, so splash damage is untested.",
+    "The simulator does not idle between waves by default. The idle-20s experiment shows this changes no outcome.",
+    "The recommended constant package is simulated against these six policies only."
+  ]
+}

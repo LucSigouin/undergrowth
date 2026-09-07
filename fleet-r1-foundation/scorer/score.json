@@ -1,0 +1,10 @@
+{
+  "round": "r1",
+  "items": { "1": 10, "2": 9.5, "3": 9, "4": 10, "5": 10, "6": 10 },
+  "format_avg": 9.5,
+  "sim_avg": 10,
+  "overall": 9.75,
+  "verdict": "PASS",
+  "gate": { "format_exit": 0, "sim_exit": 0 },
+  "traced": { "checked": 6, "reproduced": 6 }
+}

@@ -1,0 +1,1 @@
+red-proof: 2026-09-07 node tests/golden.mjs on a copy with Thorn damage 10->11 -> exit 1 (GOLDEN DRIFT at line 115); untouched tree -> exit 0 "golden replay identical"

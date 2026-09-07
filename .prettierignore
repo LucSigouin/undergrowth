@@ -1,0 +1,4 @@
+# tests/golden.mjs is the behaviour freeze. No lane may touch it, so prettier
+# must not rewrite it either. Everything else in src/ and tests/ is formatted.
+tests/golden.mjs
+tests/golden.json
