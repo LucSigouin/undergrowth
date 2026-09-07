@@ -72,3 +72,12 @@ cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && npm test && node tests/
 - result.json per COMMON.md rule 7. Your taskId is the file name (without .md) in
   /Users/ls/Claude-Workspace/personal/.cnvs/pipe/ whose contents include "LANE-TOKEN: r2-design-a61f".
   Set model.requested to "claude-opus-5" and model.effective to the model id you actually run as.
+
+## Playwright is approved for this project (Luc, 2026-09-07)
+Headless Playwright (already installed here, Chromium + WebKit) may be used to smoke test and to
+take screenshots. Never launch the system browser (`open`). The orchestrator runs the v2 dev server
+on http://localhost:5174 (v1 is on 5173, do not touch it). If 5174 is down, start your own with
+`npx vite --port 5175` in the background of your own terminal and kill it by pid when done. Before
+you finish: run `tests/browser.mjs` (edit its URL to your port) and save desktop + phone screenshots
+of the new towers, an ability in use, and the detail panel with a missing material into
+fleet-r2-design/design/shots/. Link them from REPORT.md.

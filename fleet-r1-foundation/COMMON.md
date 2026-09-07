@@ -27,3 +27,7 @@ Do not touch /Users/ls/Claude-Workspace/personal/undergrowth/ (that is v1, froze
       "files":[...],"verify":{"cmd":"<your verify command>","exit":0},"unverified":[...]}
 8. Writing style in reports and code comments: plain words, short sentences, no em dashes.
 9. Never launch a browser (no `open`, no Playwright). The unit tests and the simulator run headless.
+
+## Amendment 2026-09-07 (applies to r2 and later)
+Rule 9 is relaxed: Luc approved headless Playwright for this project. Screenshots and smoke tests via
+Playwright are allowed. The system browser (`open`) stays forbidden.
