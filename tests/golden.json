@@ -1,0 +1,1033 @@
+[
+ {
+  "label": "built",
+  "state": {
+   "version": 2,
+   "coins": 4,
+   "wood": 0,
+   "rock": 0,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 0,
+   "wave": 0,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 35
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 50
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 35
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 1,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 0
+    },
+    null,
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": 0,
+   "nextId": 6,
+   "kills": 0,
+   "won": false,
+   "lost": false,
+   "time": 0
+  },
+  "counts": {
+   "shot": 0,
+   "kill": 0,
+   "leak": 0,
+   "wave": 0,
+   "stage": 0
+  }
+ },
+ {
+  "label": "wave-0",
+  "state": {
+   "version": 2,
+   "coins": 33,
+   "wood": 1,
+   "rock": 0,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 0,
+   "wave": 1,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 2,
+     "branch": "reach",
+     "cool": -4.349999999999994,
+     "spent": 60
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 1,
+     "branch": null,
+     "cool": -2.333333333333335,
+     "spent": 50
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 1,
+     "branch": null,
+     "cool": 0.65,
+     "spent": 35
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 1,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 7.033333333333293
+    },
+    null,
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -8.316666666666647,
+   "nextId": 15,
+   "kills": 9,
+   "won": false,
+   "lost": false,
+   "time": 17.03333333333334
+  },
+  "counts": {
+   "shot": 34,
+   "kill": 9,
+   "leak": 0,
+   "wave": 1,
+   "stage": 0
+  }
+ },
+ {
+  "label": "wave-1",
+  "state": {
+   "version": 2,
+   "coins": 60,
+   "wood": 2,
+   "rock": 0,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 0,
+   "wave": 2,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 2,
+     "branch": "reach",
+     "cool": 0.5803571428571428,
+     "spent": 60
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 2,
+     "branch": "power",
+     "cool": 0.43333333333333346,
+     "spent": 85
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 1,
+     "branch": null,
+     "cool": -11.9833333333333,
+     "spent": 35
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 1,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 9.666666666666593
+    },
+    null,
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -1.983333333333336,
+   "nextId": 26,
+   "kills": 20,
+   "won": false,
+   "lost": false,
+   "time": 29.6666666666673
+  },
+  "counts": {
+   "shot": 58,
+   "kill": 20,
+   "leak": 0,
+   "wave": 2,
+   "stage": 0
+  }
+ },
+ {
+  "label": "wave-2",
+  "state": {
+   "version": 2,
+   "coins": 25,
+   "wood": 9,
+   "rock": 0,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 1,
+   "wave": 0,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 2,
+     "branch": "reach",
+     "cool": 0.5803571428571428,
+     "spent": 60
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 2,
+     "branch": "power",
+     "cool": 0.10357142857142865,
+     "spent": 85
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 2,
+     "branch": "reach",
+     "cool": -26.383333333333802,
+     "spent": 60
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 2,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 4.0666666666665625
+    },
+    {
+     "type": "rock",
+     "level": 1,
+     "progress": 0
+    },
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -1.8166666666666689,
+   "nextId": 39,
+   "kills": 33,
+   "won": false,
+   "lost": false,
+   "time": 44.06666666666673
+  },
+  "counts": {
+   "shot": 90,
+   "kill": 33,
+   "leak": 0,
+   "wave": 3,
+   "stage": 1
+  }
+ },
+ {
+  "label": "wave-3",
+  "state": {
+   "version": 2,
+   "coins": 36,
+   "wood": 15,
+   "rock": 3,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 1,
+   "wave": 1,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 2,
+     "branch": "reach",
+     "cool": 0.04702380952380957,
+     "spent": 60
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 2,
+     "branch": "power",
+     "cool": 0.2702380952380953,
+     "spent": 85
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 2,
+     "branch": "reach",
+     "cool": 0.5803571428571428,
+     "spent": 60
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 2,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 5.999999999999864
+    },
+    {
+     "type": "rock",
+     "level": 2,
+     "progress": 1.933333333333311
+    },
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -1.6616666666666684,
+   "nextId": 50,
+   "kills": 44,
+   "won": false,
+   "lost": false,
+   "time": 55.99999999999938
+  },
+  "counts": {
+   "shot": 118,
+   "kill": 44,
+   "leak": 0,
+   "wave": 4,
+   "stage": 1
+  }
+ },
+ {
+  "label": "wave-4",
+  "state": {
+   "version": 2,
+   "coins": 12,
+   "wood": 7,
+   "rock": 1,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 1,
+   "wave": 2,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.5803571428571428,
+     "spent": 109
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 2,
+     "branch": "power",
+     "cool": 0.5369047619047619,
+     "spent": 85
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": -1.9529761904761933,
+     "spent": 109
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 2,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 0.46666666666649237
+    },
+    {
+     "type": "rock",
+     "level": 2,
+     "progress": 6.399999999999937
+    },
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -2.328333333333335,
+   "nextId": 63,
+   "kills": 57,
+   "won": false,
+   "lost": false,
+   "time": 70.46666666666523
+  },
+  "counts": {
+   "shot": 158,
+   "kill": 57,
+   "leak": 0,
+   "wave": 5,
+   "stage": 1
+  }
+ },
+ {
+  "label": "wave-5",
+  "state": {
+   "version": 2,
+   "coins": 79,
+   "wood": 3,
+   "rock": 9,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 2,
+   "wave": 0,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.15752688172043017,
+     "spent": 109
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 3,
+     "branch": "power",
+     "cool": 0.8035714285714285,
+     "spent": 155
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": -16.252976190476158,
+     "spent": 109
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 2,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 4.7666666666664606
+    },
+    {
+     "type": "rock",
+     "level": 2,
+     "progress": 0.6999999999999003
+    },
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -0.2949999999999999,
+   "nextId": 78,
+   "kills": 72,
+   "won": false,
+   "lost": false,
+   "time": 84.76666666666442
+  },
+  "counts": {
+   "shot": 188,
+   "kill": 72,
+   "leak": 0,
+   "wave": 6,
+   "stage": 2
+  }
+ },
+ {
+  "label": "wave-6",
+  "state": {
+   "version": 2,
+   "coins": 47,
+   "wood": 9,
+   "rock": 15,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 2,
+   "wave": 1,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.5241935483870968,
+     "spent": 109
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 3,
+     "branch": "power",
+     "cool": 0.6924731182795699,
+     "spent": 155
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.09086021505376352,
+     "spent": 109
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 2,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 8.799999999999756
+    },
+    {
+     "type": "rock",
+     "level": 3,
+     "progress": 4.733333333333202
+    },
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -2.74,
+   "nextId": 91,
+   "kills": 85,
+   "won": false,
+   "lost": false,
+   "time": 98.79999999999696
+  },
+  "counts": {
+   "shot": 237,
+   "kill": 85,
+   "leak": 0,
+   "wave": 7,
+   "stage": 2
+  }
+ },
+ {
+  "label": "wave-7",
+  "state": {
+   "version": 2,
+   "coins": 133,
+   "wood": 21,
+   "rock": 33,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 2,
+   "wave": 2,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.02419354838709685,
+     "spent": 109
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 3,
+     "branch": "power",
+     "cool": 0.6258064516129033,
+     "spent": 155
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.5241935483870968,
+     "spent": 109
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 2,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 5.833333333333049
+    },
+    {
+     "type": "rock",
+     "level": 3,
+     "progress": 1.7666666666664945
+    },
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -4.006666666666662,
+   "nextId": 106,
+   "kills": 100,
+   "won": false,
+   "lost": false,
+   "time": 115.83333333332932
+  },
+  "counts": {
+   "shot": 303,
+   "kill": 100,
+   "leak": 0,
+   "wave": 8,
+   "stage": 2
+  }
+ },
+ {
+  "label": "wave-8",
+  "state": {
+   "version": 2,
+   "coins": 292,
+   "wood": 33,
+   "rock": 51,
+   "iron": 0,
+   "diamond": 0,
+   "lives": 20,
+   "stage": 3,
+   "wave": 0,
+   "towers": [
+    {
+     "id": 1,
+     "type": "thorn",
+     "x": 2,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.5241935483870968,
+     "spent": 109
+    },
+    {
+     "id": 2,
+     "type": "sap",
+     "x": 5,
+     "z": 3,
+     "level": 3,
+     "branch": "power",
+     "cool": 0.09247311827957005,
+     "spent": 155
+    },
+    {
+     "id": 3,
+     "type": "thorn",
+     "x": 8,
+     "z": 3,
+     "level": 3,
+     "branch": "reach",
+     "cool": 0.4908602150537634,
+     "spent": 109
+    },
+    {
+     "id": 4,
+     "type": "hedge",
+     "x": 6,
+     "z": 4,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    },
+    {
+     "id": 5,
+     "type": "hedge",
+     "x": 6,
+     "z": 5,
+     "level": 1,
+     "branch": null,
+     "cool": 0,
+     "spent": 8
+    }
+   ],
+   "enemies": [],
+   "unlockedPlots": 2,
+   "farms": [
+    {
+     "type": "wood",
+     "level": 2,
+     "progress": 5.599999999999667
+    },
+    {
+     "type": "rock",
+     "level": 3,
+     "progress": 1.5333333333331107
+    },
+    null,
+    null
+   ],
+   "active": false,
+   "queue": [],
+   "spawn": -5.006666666666659,
+   "nextId": 123,
+   "kills": 117,
+   "won": false,
+   "lost": false,
+   "time": 135.59999999999488
+  },
+  "counts": {
+   "shot": 388,
+   "kill": 117,
+   "leak": 0,
+   "wave": 9,
+   "stage": 3
+  }
+ },
+ {
+  "label": "route",
+  "route": [
+   {
+    "x": 0,
+    "z": 4
+   },
+   {
+    "x": 1,
+    "z": 4
+   },
+   {
+    "x": 2,
+    "z": 4
+   },
+   {
+    "x": 3,
+    "z": 4
+   },
+   {
+    "x": 4,
+    "z": 4
+   },
+   {
+    "x": 5,
+    "z": 4
+   },
+   {
+    "x": 5,
+    "z": 5
+   },
+   {
+    "x": 5,
+    "z": 6
+   },
+   {
+    "x": 6,
+    "z": 6
+   },
+   {
+    "x": 7,
+    "z": 6
+   },
+   {
+    "x": 8,
+    "z": 6
+   },
+   {
+    "x": 9,
+    "z": 6
+   },
+   {
+    "x": 10,
+    "z": 6
+   },
+   {
+    "x": 11,
+    "z": 6
+   },
+   {
+    "x": 12,
+    "z": 6
+   },
+   {
+    "x": 12,
+    "z": 5
+   },
+   {
+    "x": 12,
+    "z": 4
+   }
+  ]
+ }
+]
