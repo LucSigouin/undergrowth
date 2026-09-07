@@ -1,0 +1,1 @@
+red-proof: 2026-09-07 node tests/balance-gate.mjs on the r1 tree (commit 4f4d19c + gate file) -> exit 1 "BALANCE GATE RED" with 7 failures (naive lost at stage 6, maze-deep 0 lives lost, winners lose lives in only 1 stage). Green requires changing the game constants and content, which is the round's job.
