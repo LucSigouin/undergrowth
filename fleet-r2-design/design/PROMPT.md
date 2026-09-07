@@ -63,7 +63,7 @@ You own: src/*, tests/* (except tests/balance-gate.mjs, never touch it), tools/*
 README.md, and fleet-r2-design/design/. Nothing else.
 
 ## Verify (the orchestrator runs exactly this; it must exit 0)
-cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && npm test && node tests/golden.mjs && node tests/balance-gate.mjs && git diff --quiet 4f4d19c -- tests/balance-gate.mjs && npx prettier --check "src/**/*.{js,css}" "tests/*.{js,mjs}" && awk 'length>110{f=1} END{exit f}' src/*.js && test -s CHANGELOG.md && test -s fleet-r2-design/design/REPORT.md && node -e "const r=require('./fleet-r2-design/design/result.json');if(r.state!=='done'||!r.model||!r.taskId)process.exit(1)"
+cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && npm test && node tests/golden.mjs && node tests/balance-gate.mjs && git diff --quiet a81309a -- tests/balance-gate.mjs && npx prettier --check "src/**/*.{js,css}" "tests/*.{js,mjs}" && awk 'length>110{f=1} END{exit f}' src/*.js && test -s CHANGELOG.md && test -s fleet-r2-design/design/REPORT.md && node -e "const r=require('./fleet-r2-design/design/result.json');if(r.state!=='done'||!r.model||!r.taskId)process.exit(1)"
 
 ## Deliverables in fleet-r2-design/design/
 - REPORT.md (draft within 10 minutes, keep updating; final: what changed and why, the before/after

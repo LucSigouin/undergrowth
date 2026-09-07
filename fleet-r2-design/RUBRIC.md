@@ -1,8 +1,8 @@
 # r2 rubric: design (score each 0-10 in 0.5 steps, average is the grade, pass >= 8.5, any cell <= 5.5 fails)
 
 Written BEFORE the builder was spawned. Scorer: run every command yourself, open the files, do not
-trust REPORT.md. The builder may NOT edit tests/balance-gate.mjs; check `git diff 4f4d19c -- tests/balance-gate.mjs`
-is empty (that commit is r1; the gate was committed right after it, so compare against its first commit if needed).
+trust REPORT.md. The builder may NOT edit tests/balance-gate.mjs; check `git diff a81309a -- tests/balance-gate.mjs`
+is empty (a81309a is the commit that added the gate).
 
 1. CURVE IS REAL AND HONEST. `node tests/balance-gate.mjs` is green. The strategies in
    tools/balance-sim.mjs were not weakened to pass it: compare `git diff 4f4d19c -- tools/` and
