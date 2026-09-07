@@ -3,3 +3,9 @@ dist/
 test-results/
 playwright-report/
 .DS_Store
+
+# r3 polish contest lane copies (full project clones; winner is merged into src/)
+fleet-r3-polish/a/
+fleet-r3-polish/b/
+!fleet-r3-polish/a/REPORT.md
+!fleet-r3-polish/b/REPORT.md

@@ -1,0 +1,1 @@
+red-proof: 2026-09-07 node tests/golden.mjs with Thorn damage 10->11 -> exit 1 (proven in r1, same gate file, lane copies byte-identical to main: sha a9b1eb2a); GARDEN_URL=http://localhost:5174 node tests/browser.mjs on the r2 tree -> exit 0 (green baseline); it asserts tower counts, card keys, cooldown reload and no console errors, so a broken card or a JS error turns it red.

@@ -1,0 +1,1 @@
+red-proof: 2026-09-07 node tools/check-ship.mjs on the r2 tree (commit bf29deb) -> exit 1 "SHIP GATE RED" (wrangler.toml missing, dist/index.html missing, deploy/deploy.sh missing, workbench/log.html missing). Green requires the lane to build every piece.
