@@ -86,14 +86,14 @@ footer{padding:clamp(1.5rem,4vw,3rem) clamp(1rem,4vw,3rem); color:var(--soft)}
 <p>How a small tower defence garden was rebuilt, round by round: what changed, what it
  scored, how it looked before and after, and what the headless simulator says about the
  difficulty curve.</p>
-<nav><a href="#current-game">current rules</a><a href="#r1">r1</a><a href="#r2">r2</a><a href="#r3">r3</a><a href="#r4">r4</a><a href="#r5">r5</a><a href="#balance">balance</a></nav>
+<nav><a href="#current-game">current rules</a><a href="#r1">r1</a><a href="#r2">r2</a><a href="#r3">r3</a><a href="#r4">r4</a><a href="#r5">r5</a><a href="#r6">r6</a><a href="#balance">balance</a></nav>
 </header>
 <div class="band tint">
 <div class="facts">
 <div class="fact"><b>30</b><span>stages</span></div>
 <div class="fact"><b>7</b><span>pieces to build</span></div>
 <div class="fact"><b>9</b><span>creature types</span></div>
-<div class="fact"><b>5</b><span>rounds of work</span></div>
+<div class="fact"><b>6</b><span>rounds of work</span></div>
 <div class="fact"><b>7</b><span>scripted strategies tested</span></div>
 </div>
 </div>
@@ -104,7 +104,7 @@ footer{padding:clamp(1.5rem,4vw,3rem) clamp(1rem,4vw,3rem); color:var(--soft)}
 <p>Material cards now use a large clickable resource icon, the coin price underneath, and a small amount-per-stage badge. No visible material names or levels; names remain in accessible labels and hover hints. The same card buys, unlocks, or upgrades the relevant farm.</p>
 <p>Latest header: Undergrowth at top left; stage and lives precede gold and materials; Settings is last on the right. On narrow phones this wraps into two rows. The bottom bar has three buttons: Start, Pause/Resume, and Speed (1× → 2× → 3× → 1×). No Space pause shortcut. Settings and tab visibility still suspend gameplay automatically. This supersedes the earlier no-name header and removal of pause/speed decisions.</p>
 <p>Progression is presented as 30 stages, one encounter per stage. Remove the separate wave counter and creature counts. Buttons, harvest output, help, and victory copy use “stage.” The engine/save/simulator retain their legacy 10 groups of 3 encounters to preserve balance and existing saves. Convert legacy group/wave to player stage as groupIndex × 3 + waveNumber. Workbench outcome tables use player stages; raw simulator group records remain legacy data. Harvest timing, enemy order, and every-third-encounter bonuses are unchanged.</p>
-<p>Current layout: the board runs vertically, entrance at the top and exit at the bottom, on every screen. Desktop farm cards form a two-column grid at the bottom of the side pane, below defenses and above the wave button. Short windows can scroll defenses independently. No Garden heading; the game name appears only in the top bar. Gold and materials share a top-right header. Defenses use large-icon grid cards without visible keyboard shortcuts. Material harvests appear on the same row as each farm name, aligned right, with no level label. On phones the header material buttons open farm controls; the duplicate resource strip is gone.</p>
+<p>Current layout: the board runs vertically, entrance at the top and exit at the bottom, on every screen. Desktop farm cards form a two-column grid at the bottom of the side pane, below defenses and above the wave button. The side pane never scrolls; short windows shrink the cards. No Garden heading; the game name appears only in the top bar. Gold and materials share a top-right header. Defenses use large-icon grid cards without visible keyboard shortcuts. Material harvests appear on the same row as each farm name, aligned right, with no level label. On phones the header material buttons open farm controls; the duplicate resource strip is gone.</p>
 <p>Updated 2026-09-08 at the owner's request: keep the game simple.</p>
 <p><b>Economy:</b> farms harvest once after a completed wave, never on a timer. Base yields per farm level are Wood 3, Rock 3, Iron 2, Diamond 1. Levels are snapshotted at wave start; midwave purchases/upgrades apply next wave. Losing pays nothing. Waiting between waves or prolonging combat cannot increase the harvest. Keep these rules in every scaling run. The idle-20s experiment must match baseline exactly. Current kit-maze wins with seven lives lost across stages 8, 9, and 10; no enemy or upgrade-cost changes were needed.</p>
 <p><b>Interface:</b> minimize visible text. Costs use resource icons and numbers; shortages show owned/required counts. No wave previews or music controls. Settings contains route visibility, restart, help, and autosave status. Detailed tower information is available on demand.</p>
@@ -194,6 +194,16 @@ gap   = max(0.35, 0.95 - stage * 0.045) for every wave in the game</code></pre>
 </header>
 <p class="note">Historical round record. The current game rules above supersede retired features and old balance results.</p>
 <div class="round-body"><p>(Luc, verbatim intent) 1. &quot;Everything should be in sight, no scrolling EVER.&quot; The right sidebar scrolls; that must go, at every desktop size. 2. Replace the &quot;Before you build&quot; panel (shown when a tower type is selected but nothing is placed) with hover notes on the tower cards. 3. Materials (wood, rock, iron, diamond) move onto the map as a HUD, like Stage and lives, on the right side of the top band.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
+<h3>Before and after</h3>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/01-fresh-desktop.png" alt="Version 1: The board on opening the game." loading="lazy"></figure><figure><figcaption>After, current game</figcaption><img src="shots/current/01-fresh-desktop.png" alt="Version 2: The board on opening the game." loading="lazy"></figure></div><p class="note">The board on opening the game.</p>
+</section>
+<section id="r6">
+<header class="round-head">
+<h2><span class="tag">r6</span> art</h2>
+<div class="scoreline"><span class="verdict">PASS</span> <b></b> out of 10</div><div class="scroller"><table><thead><tr></tr></thead><tbody><tr></tr></tbody></table></div>
+</header>
+<p class="note">Historical round record. The current game rules above supersede retired features and old balance results.</p>
+<div class="round-body"><p>This round has no written summary yet.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
 <h3>Before and after</h3>
 <div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/01-fresh-desktop.png" alt="Version 1: The board on opening the game." loading="lazy"></figure><figure><figcaption>After, current game</figcaption><img src="shots/current/01-fresh-desktop.png" alt="Version 2: The board on opening the game." loading="lazy"></figure></div><p class="note">The board on opening the game.</p>
 </section>
