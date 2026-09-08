@@ -82,10 +82,24 @@ test('at least one strategy clears all ten stages on the current constants', () 
   assert.ok(strategies.some((s) => s.won));
 });
 
+test('current balance uses the tower-only reference and excludes retired ability strategies', () => {
+  const { strategies } = runAll();
+  assert.equal(
+    strategies.some((s) => /abilities/.test(s.name)),
+    false,
+  );
+  const reference = strategies.find((s) => s.name === 'kit-maze');
+  assert.ok(reference?.won, 'the tower-and-garden reference must clear the campaign');
+});
+
 test('experiments restore the shared constant tables when they finish', () => {
   const thornDamage = TOWERS.thorn.damage;
   const rockUnlock = MATERIALS[1].unlock;
   runExperiments();
   assert.equal(TOWERS.thorn.damage, thornDamage);
   assert.equal(MATERIALS[1].unlock, rockUnlock);
+});
+
+test('waiting between waves cannot improve the economy or strategy outcomes', () => {
+  assert.deepEqual(runAll({ idleSeconds: 20 }), runAll());
 });

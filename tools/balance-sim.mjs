@@ -123,30 +123,7 @@ function makeApi(game) {
     unlockPlot: (index) => game.unlockPlot(index) === null,
     guns: () => game.towers.filter((t) => t.type !== 'hedge'),
     routeLength: () => (path(game.towers) || []).length,
-    ability: (id, tile) => game.useAbility(id, tile) === null,
   };
-}
-
-// The board square with the most enemies within 3 of it, which is where Sunburst should land.
-function densestTile(game) {
-  let best = null;
-  for (let x = 0; x < 13; x++) {
-    for (let z = 0; z < 9; z++) {
-      const count = game.enemies.filter((e) => Math.hypot(e.x - x, e.z - z) <= 3).length;
-      if (!best || count > best.count) best = { x, z, count };
-    }
-  }
-  return best;
-}
-
-// A shared in wave policy: root the crowd when it builds up, then burst the thickest cluster.
-function useAbilities(game, api, floor = 6) {
-  const alive = game.enemies.length;
-  if (alive >= floor) api.ability('rootgrip');
-  if (alive >= floor) {
-    const tile = densestTile(game);
-    if (tile && tile.count >= floor) api.ability('sunburst', { x: tile.x, z: tile.z });
-  }
 }
 
 // Buys and upgrades the wood plot, then rock, iron and diamond, up to the given levels.
@@ -163,7 +140,10 @@ function growFarms(game, api, levels) {
 
 // Upgrades attacking towers, lowest level first, while the money and materials last.
 function upgradeGuns(game, api, branch) {
-  const guns = api.guns().slice().sort((a, b) => a.level - b.level || a.id - b.id);
+  const guns = api
+    .guns()
+    .slice()
+    .sort((a, b) => a.level - b.level || a.id - b.id);
   for (const tower of guns) {
     while (tower.level < 3 && api.upgrade(tower.id, branch)) {
       // keep upgrading this tower while it is affordable
@@ -338,27 +318,6 @@ const STRATEGIES = [
       mazePolicy(game, api, 'power', true, KIT_GUNS);
     },
   },
-  {
-    name: 'kit-abilities',
-    note: 'The r2 maze plus Rootgrip and Sunburst, fired whenever six or more creatures are alive.',
-    policy(game, api) {
-      mazePolicy(game, api, 'power', true, KIT_GUNS);
-    },
-    duringWave(game, api) {
-      useAbilities(game, api);
-    },
-  },
-  {
-    name: 'naive-abilities',
-    note: 'The naive open field build, but the player does remember the two abilities.',
-    policy(game, api) {
-      buildPlan(game, api, OPEN_GUNS);
-      upgradeGuns(game, api, 'power');
-    },
-    duringWave(game, api) {
-      useAbilities(game, api);
-    },
-  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -366,13 +325,12 @@ const STRATEGIES = [
 // ---------------------------------------------------------------------------
 
 // Steps one wave to its end and reports lives lost, seconds taken and whether it stalled.
-function playWave(game, tuning, strategy, api) {
+function playWave(game, tuning) {
   const budget = MAX_WAVE_SECONDS * TICKS_PER_SECOND;
   let livesLost = 0;
   let ticks = 0;
   while (game.active && ticks < budget) {
     const before = game.lives;
-    if (strategy.duringWave) strategy.duringWave(game, api);
     game.tick(DT);
     if (game.lives < before) livesLost += before - game.lives;
     applyCoinOverlay(game, tuning);
@@ -416,7 +374,7 @@ function runStrategy(strategy, tuning = {}) {
       const stageIndex = game.stage;
       const waveNumber = game.wave + 1;
       if (!game.start()) break;
-      const wave = playWave(game, tuning, strategy, api);
+      const wave = playWave(game, tuning);
       record.livesLost += wave.livesLost;
       record.waves.push({
         wave: waveNumber,
@@ -473,7 +431,7 @@ function runAll(tuning = {}, only = null) {
 const R1_UNLOCKS = { 1: { unlock: 80 }, 2: { unlock: 160 }, 3: { unlock: 300 } };
 
 const EXPERIMENTS = [
-  { name: 'baseline', note: 'The shipped r2 constants, for comparison.', tuning: {} },
+  { name: 'baseline', note: 'The current wave-harvest rules, for comparison.', tuning: {} },
   {
     name: 'r1-hp-1.43',
     note: 'Enemy growth back to the r1 value of 1.43 per stage.',
@@ -526,7 +484,7 @@ const EXPERIMENTS = [
   },
   {
     name: 'idle-20s',
-    note: 'Twenty seconds of build time between waves, so the garden produces off the clock.',
+    note: 'Twenty seconds between waves must not change harvests or balance.',
     tuning: { idleSeconds: 20 },
   },
 ];
@@ -604,7 +562,7 @@ function printNumbers() {
       const raw = measured.points.reduce((sum, hp) => sum + hp, 0);
       const effective = measured.points.reduce(
         (sum, hp, i) => sum + hp / (measured.kinds[i] === 'armor' ? resist : 1),
-        0
+        0,
       );
       const window = measured.window;
       const row = [
@@ -630,7 +588,8 @@ function printNumbers() {
 // One line summary of a strategy result.
 function verdict(result) {
   if (result.won) return `won, ${result.livesEnd} lives left`;
-  if (result.stalledAt) return `stalled at stage ${result.stalledAt.stage + 1} wave ${result.stalledAt.wave}`;
+  if (result.stalledAt)
+    return `stalled at stage ${result.stalledAt.stage + 1} wave ${result.stalledAt.wave}`;
   if (result.lostAtStage === null) return 'stopped early';
   return `lost at stage ${result.lostAtStage + 1} wave ${result.lostAtWave}`;
 }
@@ -641,7 +600,9 @@ function printTable(results) {
     console.log(`\n== ${result.name} ==`);
     console.log(result.note);
     console.log(`Result: ${verdict(result)}. Kills ${result.kills}.`);
-    console.log('stage  livesLost  livesEnd  coinsEnd  towers  hedges  levels        farms      route');
+    console.log(
+      'stage  livesLost  livesEnd  coinsEnd  towers  hedges  levels        farms      route',
+    );
     for (const stage of result.stages) {
       const columns = [
         String(stage.stage + 1).padStart(5),
@@ -666,7 +627,9 @@ function printExperiments(experiments) {
   console.log(['experiment'.padEnd(20), ...names.map((n) => n.padEnd(14))].join(''));
   for (const experiment of experiments) {
     const cells = experiment.strategies.map((r) => {
-      const outcome = r.won ? 'won' : `S${(r.lostAtStage ?? r.stagesCleared) + 1}W${r.lostAtWave ?? '-'}`;
+      const outcome = r.won
+        ? 'won'
+        : `S${(r.lostAtStage ?? r.stagesCleared) + 1}W${r.lostAtWave ?? '-'}`;
       return `${outcome} -${r.livesLost}`.padEnd(14);
     });
     console.log([experiment.name.padEnd(20), ...cells].join(''));

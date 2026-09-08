@@ -3,7 +3,110 @@
 // events the renderer listens to. Nothing here touches a browser.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, WAVES, ABILITIES, path } from '../src/game.js';
+import { Game, WAVES, path } from '../src/game.js';
+
+test('burn kills at the gate pay once without costing a life', () => {
+  const game = new Game();
+  game.start();
+  game.queue = [];
+  game.enemies = [
+    {
+      ...game.enemy('grub'),
+      x: 11.999,
+      z: 4,
+      target: { x: 12, z: 4 },
+      hp: 1,
+      burn: 100,
+      burnTime: 5,
+    },
+  ];
+  game.tick(1 / 30);
+  assert.equal(game.lives, 20);
+  assert.equal(game.kills, 1);
+  assert.equal(game.coins, 200 + 4 + 18);
+  assert.equal(game.enemies.length, 0);
+  assert.equal(
+    game.events.some((event) => event.type === 'leak'),
+    false,
+  );
+  game.tick(1 / 30);
+  assert.equal(game.kills, 1);
+});
+
+test('towers prioritize remaining maze distance and account for flying enemies', () => {
+  const game = new Game();
+  game.coins = 5000;
+  for (let z = 1; z < 9; z++) game.place('hedge', 9, z);
+  game.place('prism', 10, 2);
+  game.start();
+  game.queue = [];
+  const far = { ...game.enemy('grub'), x: 8, z: 4, hp: 1000, speed: 0 };
+  const near = { ...game.enemy('grub'), x: 10, z: 0, hp: 1000, speed: 0 };
+  game.enemies = [far, near];
+  assert.equal(path(game.towers, far).length - 1, 12);
+  assert.equal(path(game.towers, near).length - 1, 6);
+  game.tick(1 / 30);
+  assert.equal(far.hp, 1000);
+  assert.equal(near.hp, 973);
+
+  // A flyer at the far walker's position has only four squares left.
+  const flyer = { ...game.enemy('moth'), x: 8, z: 4, hp: 1000, speed: 0 };
+  game.enemies.push(flyer);
+  game.towers.at(-1).cool = 0;
+  game.tick(1 / 30);
+  assert.equal(flyer.hp, 973);
+  assert.equal(near.hp, 973);
+
+  // Reclaiming the wall changes priority immediately; no old route may be reused.
+  game.sell(game.towers.find((tower) => tower.x === 9 && tower.z === 4).id);
+  game.enemies = [far, near];
+  game.towers.at(-1).cool = 0;
+  game.tick(1 / 30);
+  assert.equal(far.hp, 973);
+});
+
+test('target priority includes the unfinished movement segment', () => {
+  const game = new Game();
+  game.place('prism', 9, 3);
+  game.start();
+  game.queue = [];
+  const farther = {
+    ...game.enemy('grub'),
+    x: 10.4,
+    z: 4,
+    target: { x: 11, z: 4 },
+    hp: 1000,
+    speed: 0,
+  };
+  const nearer = {
+    ...game.enemy('grub'),
+    x: 10.6,
+    z: 4,
+    target: { x: 11, z: 4 },
+    hp: 1000,
+    speed: 0,
+  };
+  game.enemies = [farther, nearer];
+  game.tick(1 / 30);
+  assert.equal(farther.hp, 1000);
+  assert.equal(nearer.hp, 973);
+});
+
+test('Lantern growth and old power purchases use the same useful coverage path', () => {
+  const game = new Game();
+  game.place('lantern', 5, 4);
+  const lamp = game.towers[0];
+  game.upgrade(lamp.id, 'power');
+  assert.equal(lamp.branch, 'reach');
+  assert.equal(game.stats(lamp).range, 3.85);
+  const oldSave = JSON.parse(game.serialize());
+  oldSave.towers[0].branch = 'power';
+  const restored = new Game(oldSave);
+  assert.equal(restored.towers[0].branch, 'reach');
+  assert.equal(restored.coins, game.coins);
+  assert.equal(restored.towers[0].spent, lamp.spent);
+  assert.equal(oldSave.towers[0].branch, 'power');
+});
 
 test('maze reroutes and rejects a sealed exit without charging', () => {
   const game = new Game();
@@ -38,7 +141,7 @@ test('garden starts empty with only the wood plot available', () => {
   assert.equal(game.farms[0].type, 'wood');
 });
 
-test('money buys and upgrades automatic production during combat', () => {
+test('money buys and upgrades harvests paid after combat', () => {
   const game = new Game();
   game.farm(0);
   game.farm(0);
@@ -46,6 +149,10 @@ test('money buys and upgrades automatic production during combat', () => {
   assert.equal(game.farms[0].level, 2);
   game.start();
   for (let i = 0; i < 301; i++) game.tick(1 / 30);
+  assert.equal(game.wood, 0);
+  game.queue = [];
+  game.enemies = [];
+  game.tick(0.01);
   assert.equal(game.wood, 6);
   assert.equal(game.rock, 0);
   game.place('thorn', 5, 3);
@@ -74,7 +181,9 @@ test('locked resources unlock sequentially and do not produce until purchased', 
   assert.equal(game.farm(2), null);
   assert.equal(game.unlockPlot(3), null);
   assert.equal(game.farm(3), null);
-  game.tick(10);
+  game.start();
+  game.queue = [];
+  game.tick(0.01);
   assert.equal(game.rock, 3);
   assert.equal(game.iron, 2);
   assert.equal(game.diamond, 1);
@@ -110,7 +219,7 @@ test('old save migration preserves expedition and refunds replaced gardens', () 
     farms: [{ type: 'leaves', level: 2 }, null, null, null],
   };
   const game = new Game(old);
-  assert.equal(game.version, 3);
+  assert.equal(game.version, 5);
   assert.equal(game.stage, 4);
   assert.equal(game.coins, 205);
   assert.equal(game.wood, 12);
@@ -340,40 +449,6 @@ test('a lantern never shoots and speeds up every tower inside its ring', () => {
   assert.ok(thorn.cool < game.stats(thorn).rate);
 });
 
-test('rootgrip holds walking enemies, refuses while cooling, and survives a save', () => {
-  const game = new Game();
-  game.active = true;
-  const grub = { ...game.enemy('grub'), x: 3, z: 4 };
-  const moth = { ...game.enemy('moth'), x: 3, z: 4 };
-  game.enemies = [grub, moth];
-  assert.equal(game.useAbility('rootgrip'), null);
-  assert.match(game.useAbility('rootgrip'), /gathering/);
-  const startX = grub.x;
-  game.tick(1);
-  assert.equal(grub.x, startX);
-  assert.ok(moth.x > startX);
-  const restored = new Game(JSON.parse(game.serialize()));
-  assert.ok(restored.cooldowns.rootgrip > 40);
-  assert.match(restored.useAbility('rootgrip'), /gathering/);
-  restored.tick(60);
-  assert.equal(restored.abilityState('rootgrip').ready, true);
-});
-
-test('sunburst needs a square and only damages what is close to it', () => {
-  const game = new Game();
-  game.active = true;
-  const near = { ...game.enemy('grub'), x: 6, z: 4 };
-  const far = { ...game.enemy('grub'), x: 11, z: 8 };
-  game.enemies = [near, far];
-  assert.match(game.useAbility('sunburst'), /square/);
-  assert.match(game.useAbility('sunburst', { x: 40, z: 2 }), /square/);
-  assert.equal(game.cooldowns.sunburst, 0);
-  assert.equal(game.useAbility('sunburst', { x: 6, z: 4 }), null);
-  assert.ok(near.hp < near.maxHp);
-  assert.equal(far.hp, far.maxHp);
-  assert.equal(game.cooldowns.sunburst, ABILITIES.sunburst.cooldown);
-});
-
 test('the first upgrade costs coins only and the panel names what is missing', () => {
   const game = new Game();
   game.coins = 500;
@@ -390,7 +465,7 @@ test('the first upgrade costs coins only and the panel names what is missing', (
   assert.match(game.upgrade(tower.id, 'power'), /materials/);
 });
 
-test('a version 2 save loads as version 3 with towers, farms, stage and coins intact', () => {
+test('a version 2 save loads as version 5 with towers, farms, stage and coins intact', () => {
   const saved = {
     version: 2,
     stage: 5,
@@ -416,7 +491,7 @@ test('a version 2 save loads as version 3 with towers, farms, stage and coins in
     kills: 88,
   };
   const game = new Game(saved);
-  assert.equal(game.version, 3);
+  assert.equal(game.version, 5);
   assert.equal(game.stage, 5);
   assert.equal(game.wave, 1);
   assert.equal(game.coins, 342);
@@ -426,11 +501,11 @@ test('a version 2 save loads as version 3 with towers, farms, stage and coins in
   assert.equal(game.farms[0].level, 3);
   assert.equal(game.farms[1].type, 'rock');
   assert.equal(game.unlockedPlots, 3);
-  assert.deepEqual(game.cooldowns, { rootgrip: 0, sunburst: 0 });
-  assert.equal(game.root, 0);
+  assert.equal(game.cooldowns, undefined);
+  assert.equal(game.root, undefined);
 });
 
-test('a version 1 save still migrates all the way to version 3', () => {
+test('a version 1 save still migrates all the way to version 5', () => {
   const game = new Game({
     version: 1,
     stage: 4,
@@ -440,9 +515,140 @@ test('a version 1 save still migrates all the way to version 3', () => {
     towers: [{ id: 7, type: 'thorn', x: 3, z: 3, level: 1 }],
     farms: [{ type: 'leaves', level: 2 }, null, null, null],
   });
-  assert.equal(game.version, 3);
+  assert.equal(game.version, 5);
   assert.equal(game.stage, 4);
   assert.equal(game.wood, 12);
   assert.equal(game.coins, 205);
-  assert.equal(game.abilityState('sunburst').ready, true);
+  assert.equal(game.cooldowns, undefined);
+});
+
+test('version 3 saves retain the live wave but discard retired ability state', () => {
+  const original = new Game();
+  original.farm(0);
+  original.place('thorn', 3, 3);
+  original.start();
+  original.tick(1 / 30);
+  const saved = JSON.parse(original.serialize());
+  saved.version = 3;
+  saved.root = 3;
+  saved.cooldowns = { rootgrip: 40, sunburst: 30 };
+  const restored = new Game(saved);
+  assert.equal(restored.version, 5);
+  assert.equal(restored.coins, original.coins);
+  assert.equal(restored.lives, original.lives);
+  assert.deepEqual(restored.towers, original.towers);
+  assert.deepEqual(restored.farms, original.farms);
+  assert.deepEqual(restored.enemies, original.enemies);
+  assert.deepEqual(restored.queue, original.queue);
+  assert.equal(restored.active, true);
+  const x = restored.enemies[0].x;
+  restored.tick(1 / 30);
+  assert.ok(restored.enemies[0].x > x, 'the removed root effect must not freeze an old save');
+  const current = JSON.parse(restored.serialize());
+  assert.equal('root' in current, false);
+  assert.equal('cooldowns' in current, false);
+  assert.equal(typeof restored.useAbility, 'undefined');
+  assert.equal(saved.root, 3, 'migration must not mutate the source save');
+});
+
+// Isolate wave completion from combat to exercise the economy boundaries.
+function finishHarvestWave(game) {
+  game.queue = [];
+  game.enemies = [];
+  game.tick(0.01);
+}
+
+test('waiting and dragging out combat never produce materials', () => {
+  const game = new Game();
+  game.farm(0);
+  game.tick(86400);
+  assert.equal(game.wood, 0);
+  game.start();
+  game.queue = [];
+  const enemy = game.enemy('grub');
+  enemy.speed = 0;
+  game.enemies = [enemy];
+  game.tick(86400);
+  assert.equal(game.wood, 0);
+  finishHarvestWave(game);
+  assert.equal(game.wood, 3);
+  game.tick(86400);
+  assert.equal(game.wood, 3);
+});
+
+test('midwave purchases and upgrades only affect the following harvest, including after reload', () => {
+  const game = new Game();
+  game.coins = 1000;
+  game.farm(0);
+  game.start();
+  game.farm(0);
+  game.unlockPlot(1);
+  game.farm(1);
+  assert.equal(game.start(), false);
+  const restored = new Game(JSON.parse(game.serialize()));
+  finishHarvestWave(restored);
+  assert.equal(restored.wood, 3);
+  assert.equal(restored.rock, 0);
+  const paid = new Game(JSON.parse(restored.serialize()));
+  paid.tick(1000);
+  assert.equal(paid.wood, 3);
+  paid.start();
+  finishHarvestWave(paid);
+  assert.equal(paid.wood, 9);
+  assert.equal(paid.rock, 3);
+});
+
+test('a failed wave pays no harvest and the final successful wave does', () => {
+  const game = new Game();
+  game.farm(0);
+  game.start();
+  game.lives = 0;
+  finishHarvestWave(game);
+  assert.equal(game.lost, true);
+  assert.equal(game.wood, 0);
+  assert.deepEqual(game.waveHarvest, [0, 0, 0, 0]);
+  const final = new Game();
+  final.farm(0);
+  final.stage = 9;
+  final.wave = 2;
+  final.start();
+  finishHarvestWave(final);
+  assert.equal(final.won, true);
+  assert.equal(final.wood, 3);
+  final.tick(1000);
+  assert.equal(final.wood, 3);
+});
+
+test('version 4 live saves discard timers and use saved farm levels for one harvest', () => {
+  const game = new Game({
+    version: 4,
+    active: true,
+    wave: 1,
+    wood: 17,
+    farms: [{ type: 'wood', level: 2, progress: 9.9 }, null, null, null],
+  });
+  assert.equal(game.wood, 17);
+  assert.equal('progress' in game.farms[0], false);
+  const restored = new Game(JSON.parse(game.serialize()));
+  finishHarvestWave(restored);
+  assert.equal(restored.wood, 23);
+});
+
+test('selling refunds every coin spent on a tower and its upgrades exactly once', () => {
+  const game = new Game();
+  game.coins = 1000;
+  game.wood = game.rock = game.iron = game.diamond = 1000;
+  game.place('thorn', 3, 3);
+  const tower = game.towers[0];
+  game.upgrade(tower.id, 'reach');
+  game.upgrade(tower.id);
+  const restored = new Game(JSON.parse(game.serialize()));
+  restored.sell(tower.id);
+  assert.equal(restored.coins, 1000);
+  assert.equal(restored.towers.length, 0);
+  restored.sell(tower.id);
+  assert.equal(restored.coins, 1000);
+  restored.place('hedge', 3, 3);
+  restored.sell(restored.towers[0].id);
+  assert.equal(restored.coins, 1000);
 });

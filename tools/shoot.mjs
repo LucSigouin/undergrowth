@@ -146,13 +146,14 @@ async function runWaveAndFreeze(page) {
     await page.evaluate((seconds) => {
       document.querySelector('#start').click();
       window.__garden.step(seconds);
-      document.querySelector('#pause').click();
+      window.__garden.setPaused(document.querySelector('#paused').hidden);
     }, WAVE_SECONDS);
   } else {
     say('note: window.__garden.step is missing here, so the wave ran on the wall clock.');
     await page.locator('#start').click();
     await page.waitForTimeout(WAVE_SECONDS * 1000);
-    await page.locator('#pause').click();
+    await page.locator('#settings').click();
+    await page.addStyleTag({ content: '#modal, #modal::backdrop { visibility: hidden; }' });
   }
   await page.waitForTimeout(SETTLE_MS);
 }
@@ -191,14 +192,14 @@ const allProblems = [];
     deviceScaleFactor: 1,
   });
   const { page, problems } = await openPage(context);
-  await page.evaluate(() => document.querySelector('#pause').click());
+  await page.evaluate(() => window.__garden.setPaused(document.querySelector('#paused').hidden));
   await page.waitForTimeout(SETTLE_MS);
   await shoot(page, '01-fresh-desktop.png');
-  await page.evaluate(() => document.querySelector('#pause').click());
+  await page.evaluate(() => window.__garden.setPaused(document.querySelector('#paused').hidden));
   await buildAndSelect(page);
   await runWaveAndFreeze(page);
   const detail = (await page.locator('#detail').textContent()) || '';
-  if (!/Level|level/.test(detail)) {
+  if (!/Level|level|Lv/.test(detail)) {
     say('note: the detail panel did not report a level, so the selection may not have taken.');
   }
   await shoot(page, '02-midwave-desktop.png');
@@ -242,13 +243,13 @@ const allProblems = [];
   }
   const point = await cellPoint(page, SELECTED[0], SELECTED[1]);
   await page.mouse.click(point.x, point.y);
-  await page.evaluate(() => document.querySelector('#pause').click());
+  await page.evaluate(() => window.__garden.setPaused(document.querySelector('#paused').hidden));
   await page.waitForTimeout(SETTLE_MS);
   const detail = (await page.locator('#detail').textContent()) || '';
-  if (detail.includes('You need')) {
-    say('The detail panel names the missing material on this server.');
+  if (await page.locator('#detail .resource-amount.short').count()) {
+    say('The detail panel shows resource icons with owned/required counts.');
   } else {
-    say('This server has no missing material note, so 03 is the level 2 detail panel instead.');
+    say('This server has no material shortfall icons, so 03 is the level 2 detail panel instead.');
   }
   await shoot(page, '03-missing-material.png');
   allProblems.push(...problems);

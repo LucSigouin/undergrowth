@@ -65,6 +65,7 @@ export class World {
 
     this.materials = new Map();
     this.towerMeshes = new Map();
+    this.towerPreview = null;
     this.enemyMeshes = new Map();
     this.effects = [];
     this.board = new THREE.Group();
@@ -85,10 +86,6 @@ export class World {
     this.range = this.flatRing(0.986, 1, SCENE.ring, 0.85, 64, true);
     this.range.visible = false;
     this.scene.add(this.range);
-    // The Sunburst target ring. It only appears while the ability is armed.
-    this.burst = this.flatRing(0.9, 1, '#f0a93c', 0.9, 64, true);
-    this.burst.visible = false;
-    this.scene.add(this.burst);
     this.zoom = 1;
     this.top = true;
     this.boostFrom = null;
@@ -167,6 +164,9 @@ export class World {
     });
 
     canvas.addEventListener('pointerup', (event) => {
+      // Only a matching primary press may place/select a tower. Secondary clicks
+      // belong to the interface's cancel action, including their release event.
+      if (event.button !== 0 || !pointers.has(event.pointerId)) return;
       const wasGesture = gesture;
       pointers.delete(event.pointerId);
       if (!wasGesture) this.onCell(pick(event));
@@ -183,9 +183,11 @@ export class World {
       lastPan = null;
     });
 
-    canvas.addEventListener('pointerleave', () => {
+    canvas.addEventListener('pointerleave', (event) => {
+      if (event.pointerType === 'touch') return;
       this.hover.visible = false;
       this.previewTowers = null;
+      this.clearTowerPreview();
     });
 
     this.resizeObserver = new ResizeObserver(() => {
@@ -516,30 +518,69 @@ export class World {
     }
   }
 
+  // The ghost owns cloned materials so transparency never affects built towers.
+  clearTowerPreview() {
+    if (!this.towerPreview) return;
+    this.towerPreview.traverse((mesh) => {
+      if (mesh.isMesh) mesh.material.dispose();
+    });
+    this.disposeGroup(this.towerPreview);
+    this.towerPreview = null;
+  }
+
+  showTowerPreview(cell, type, blocked) {
+    if (this.towerPreview?.userData.type !== type) {
+      this.clearTowerPreview();
+      this.towerPreview = this.makeTower({ ...cell, type, level: 1 });
+      this.towerPreview.traverse((mesh) => {
+        if (!mesh.isMesh) return;
+        mesh.material = mesh.material.clone();
+        mesh.userData.previewColor = mesh.material.color.clone();
+        mesh.material.transparent = true;
+        mesh.material.opacity = 0.55;
+        mesh.material.depthWrite = false;
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+      });
+    }
+    this.towerPreview.position.set(cell.x, 0.05, cell.z);
+    this.towerPreview.traverse((mesh) => {
+      if (mesh.isMesh)
+        mesh.material.color.copy(
+          blocked ? new THREE.Color(SCENE.hoverBlocked) : mesh.userData.previewColor,
+        );
+    });
+  }
+
   // Move the hover square and range ring, and preview how a new wall would bend the route.
   showHover(cell, type, game, selected) {
     this.previewTowers = null;
     const valid = cell.x >= 0 && cell.x < 13 && cell.z >= 0 && cell.z < 9;
-    // While Sunburst is armed the pointer is a target, not a building site.
-    if (this.aiming) {
-      this.hover.visible = false;
-      this.range.visible = false;
-      this.burst.visible = valid;
-      this.burst.scale.setScalar(3);
-      if (valid) this.burst.position.set(cell.x, 0.1, cell.z);
-      return;
-    }
-    this.burst.visible = false;
+    const occupied = game.towers.some((tower) => tower.x === cell.x && tower.z === cell.z);
+    const trial = [...game.towers, { x: cell.x, z: cell.z }];
+    const blocked =
+      valid &&
+      type &&
+      (occupied ||
+        game.coins < TOWERS[type].cost ||
+        ((cell.x === 0 || cell.x === 12) && cell.z === 4) ||
+        !path(trial) ||
+        game.enemies.some(
+          (enemy) =>
+            !enemy.flying &&
+            ((Math.round(enemy.x) === cell.x && Math.round(enemy.z) === cell.z) ||
+              (enemy.target?.x === cell.x && enemy.target?.z === cell.z) ||
+              !path(trial, enemy.target || { x: Math.round(enemy.x), z: Math.round(enemy.z) })),
+        ));
     this.hover.visible = valid && !!type;
     if (valid) {
       this.hover.position.set(cell.x, 0.08, cell.z);
-      const blocked =
-        game.towers.some((tower) => tower.x === cell.x && tower.z === cell.z) ||
-        !path([...game.towers, { x: cell.x, z: cell.z }]) ||
-        ((cell.x === 0 || cell.x === 12) && cell.z === 4);
       this.hover.material = this.mat(blocked ? SCENE.hoverBlocked : SCENE.hoverOk, 'soft');
-      if (type && !blocked) this.previewTowers = [...game.towers, { x: cell.x, z: cell.z }];
+      if (type && !blocked) this.previewTowers = trial;
     }
+    if (valid && type && !occupied && !game.lost && !game.won)
+      this.showTowerPreview(cell, type, blocked);
+    else this.clearTowerPreview();
     const ringFor = selected || (valid && type ? { type, x: cell.x, z: cell.z, level: 1 } : null);
     this.range.visible = !!ringFor && ringFor.type !== 'hedge';
     if (ringFor) {
@@ -593,20 +634,6 @@ export class World {
       const hit = this.effectMesh(new THREE.IcosahedronGeometry(0.18, 1), color, 0.9);
       hit.position.copy(to);
       this.spark(hit, 0.18);
-    }
-    // An ability throws a ring of sparks out from the square it was aimed at.
-    if (event.type === 'ability') {
-      const tint = event.id === 'rootgrip' ? '#5d8a4c' : '#f0a93c';
-      const shock = this.flatRing(0.3, 2.9, tint, 0.5, 48, true);
-      shock.position.set(event.x, 0.11, event.z);
-      this.scene.add(shock);
-      this.spark(shock, 0.5);
-      for (let i = 0; i < 12; i++) {
-        const angle = (i * Math.PI * 2) / 12;
-        const bit = this.effectMesh(new THREE.IcosahedronGeometry(0.13, 1), tint);
-        bit.position.set(event.x, 0.4, event.z);
-        this.spark(bit, 0.55, new THREE.Vector3(Math.cos(angle) * 4, 0.6, Math.sin(angle) * 4));
-      }
     }
     if (event.type === 'kill') {
       const puff = this.flatRing(0.05, 0.55, '#fff3bd', 0.8, 24, true);
@@ -767,25 +794,28 @@ export class World {
     this.renderer.render(this.scene, this.camera);
   }
 
-  // Refit the camera to the container. Portrait phones turn the board to make squares larger.
+  // Fit the vertical board: entry at the top and exit at the bottom on every screen.
   resize() {
     const width = this.container.clientWidth,
       height = this.container.clientHeight;
     this.renderer.setSize(width, height, false);
     const aspect = width / height;
     const coarse = matchMedia('(pointer: coarse)').matches;
-    const portrait = coarse && width < height;
     // Fit the board to the shorter side, leaving a margin for the controls that float
-    // over it. Portrait turns the board, so the spans swap with it.
+    // over it. World X runs down the screen; world Z runs across it.
     const pad = coarse ? 1.3 : 1.2;
-    const spanX = (portrait ? 9 : 13) + pad * 2;
-    const spanY = (portrait ? 13 : 9) + pad * 2;
-    const across = Math.max(spanX, spanY * aspect) / this.zoom;
+    const spanX = 9 + pad * 2;
+    const spanY = 13 + pad * 2;
+    // Keep the fitted meadow clear of the 44px phone controls at both edges.
+    // A fixed margin in world squares becomes too small in a short viewport.
+    const usableHeight = Math.max(1, height - 120);
+    const phoneSpan = coarse ? (13 * width) / usableHeight : 0;
+    const across = Math.max(spanX, spanY * aspect, phoneSpan) / this.zoom;
     this.camera.left = -across / 2;
     this.camera.right = across / 2;
     this.camera.top = across / aspect / 2;
     this.camera.bottom = -across / aspect / 2;
-    this.camera.up.set(portrait ? -1 : 0, 0, portrait ? 0 : -1);
+    this.camera.up.set(-1, 0, 0);
     this.camera.position.copy(this.target).add(new THREE.Vector3(0, 30, 0));
     this.camera.lookAt(this.target);
     this.camera.updateProjectionMatrix();

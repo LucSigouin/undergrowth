@@ -25,8 +25,37 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       const sceneWidth = await page.locator('#scene').evaluate((el) => el.clientWidth);
       assert.equal(sceneWidth, viewport.width);
     }
+    assert.ok(
+      await page.evaluate(() => {
+        const world = window.__garden.world;
+        const corners = [
+          [0, 0],
+          [12, 0],
+          [0, 8],
+          [12, 8],
+        ].map(([x, z]) => world.cellScreen(x, z));
+        const status = document.querySelector('.map-status').getBoundingClientRect();
+        const controls = document.querySelector('.map-controls').getBoundingClientRect();
+        const entry = world.cellScreen(0, 4),
+          exit = world.cellScreen(12, 4);
+        return (
+          Math.abs(entry.x - exit.x) < 0.01 &&
+          entry.y < exit.y &&
+          corners.every((cell) => cell.y > status.bottom && cell.y < controls.top)
+        );
+      }),
+      'fitted board squares must stay clear of phone controls',
+    );
     // Every control a thumb has to hit must be at least 44 pixels tall.
-    const touchTargets = ['#start', '[data-build="thorn"]', '#pause', '[data-garden-open="0"]'];
+    const touchTargets = [
+      '#start',
+      '#pause',
+      '#speed',
+      '[data-build="thorn"]',
+      '[data-hud-garden="0"]',
+      '#tower-info',
+      '#settings',
+    ];
     for (const selector of touchTargets) {
       const tallEnough = await page
         .locator(selector)
@@ -34,7 +63,16 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       assert.ok(tallEnough, selector);
     }
     await page.screenshot({ path: `test-results/${name}-mobile-${viewport.width}.png` });
-    await page.locator('[data-garden-open="0"]').tap();
+    // Choosing a piece offers an explanation before spending any coins.
+    await page.locator('[data-build="sap"]').tap();
+    await page.locator('#tower-info').tap();
+    assert.match(await page.locator('#modal').textContent(), /52% for 2.2 seconds/);
+    assert.equal(await page.locator('#modal [aria-label="Damage per hit"]').count(), 1);
+    assert.equal(await page.evaluate(() => window.__garden.game.coins), 200);
+    await page.locator('#modal-ok').tap();
+    assert.equal(await page.locator('[data-build="sap"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('[data-build="thorn"]').tap();
+    await page.locator('[data-hud-garden="0"]').tap();
     await page.locator('[data-farm="0"]').tap();
     assert.equal(await page.evaluate(() => window.__garden.game.farms[0].level), 1);
     await page.locator('#close-garden').tap();
@@ -66,10 +104,13 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     await page.locator('#start').tap();
     await page.waitForFunction(() => window.__garden.game.enemies.length > 0);
     await page.locator('#pause').tap();
-    await page.locator('#start').tap();
+    assert.equal(await page.locator('#paused').isVisible(), true);
+    await page.locator('#pause').tap();
+    await page.locator('#speed').tap();
+    assert.equal(await page.locator('#speed').textContent(), '2×');
     assert.equal(await page.evaluate(() => document.querySelector('#paused').hidden), true);
-    await page.locator('#mobile-options').tap();
-    await page.locator('#menu-restart').tap();
+    await page.locator('#settings').tap();
+    await page.locator('#restart').tap();
     await page.locator('#modal-cancel').tap();
     assert.equal(await page.evaluate(() => window.__garden.game.towers.length), 1);
     await page.screenshot({ path: `test-results/${name}-mobile-playing-${viewport.width}.png` });
@@ -77,7 +118,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     console.log(
       `${name} ${viewport.width}×${viewport.height}: layout, 44px controls,` +
         ' garden purchase, placement preview/confirm, zoom, tower details,' +
-        ' real-time wave, pause/resume, menu checked.',
+        ' real-time stage, menu checked.',
     );
     await context.close();
   }

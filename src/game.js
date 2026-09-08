@@ -129,29 +129,7 @@ export const ENEMIES = {
 // How much of a hit an armored beetle absorbs from anything that is not a Sunstone.
 export const ARMOR_RESIST = 0.55;
 
-// The two player abilities, with the key that fires them and the seconds they take to recharge.
-export const ABILITIES = {
-  rootgrip: {
-    name: 'Rootgrip',
-    key: 'Q',
-    cooldown: 45,
-    hold: 3,
-    symbol: '⊻',
-    desc: 'Roots every walking enemy in place for 3 seconds. Moths keep flying.',
-  },
-  sunburst: {
-    name: 'Sunburst',
-    key: 'E',
-    cooldown: 38,
-    radius: 3,
-    damage: 70,
-    growth: 0.24,
-    symbol: '✷',
-    desc: 'Pick a square. Everything within 3 squares of it takes a burst that ignores armor.',
-  },
-};
-
-// The four garden plots in unlock order, with their prices and output per collection.
+// The four garden plots in unlock order, with their prices and base harvest per completed wave.
 export const MATERIALS = [
   { id: 'wood', name: 'Wood', buy: 25, unlock: 0, upgrade: 35, yield: 3, symbol: '♧' },
   { id: 'rock', name: 'Rock', buy: 45, unlock: 60, upgrade: 55, yield: 3, symbol: '⬟' },
@@ -376,7 +354,7 @@ export const WAVES = [
     enemies: [
       ['armor', 9],
       ['warden', 3],
-      ['moth', 10],
+      ['moth', 12],
       ['grub', 9],
     ],
     gap: 0.55,
@@ -467,7 +445,7 @@ export function path(towers, start = ENTRY) {
 
 // One expedition: coins, materials, towers, garden plots, enemies, and campaign progress.
 export class Game {
-  // Start a fresh settlement, or restore a saved one, migrating version 1 and version 2 saves.
+  // Start a fresh settlement, or restore an older expedition without its retired abilities.
   constructor(data) {
     // Migrate the old garden without discarding an existing expedition.
     if (data?.version === 1) {
@@ -489,12 +467,8 @@ export class Game {
       delete data.leaves;
       delete data.ore;
     }
-    // Version 2 saves keep every tower, farm, stage and coin. They only gain the ability clocks.
-    if (data?.version === 2) {
-      data = { ...data, version: 3, cooldowns: { rootgrip: 0, sunburst: 0 }, root: 0 };
-    }
     const defaults = {
-      version: 3,
+      version: 5,
       coins: 200,
       wood: 0,
       rock: 0,
@@ -508,6 +482,7 @@ export class Game {
       unlockedPlots: 1,
       farms: [null, null, null, null],
       active: false,
+      waveHarvest: [0, 0, 0, 0],
       queue: [],
       spawn: 0,
       nextId: 1,
@@ -515,10 +490,24 @@ export class Game {
       won: false,
       lost: false,
       time: 0,
-      cooldowns: { rootgrip: 0, sunburst: 0 },
-      root: 0,
     };
     Object.assign(this, defaults, data);
+    this.version = 5;
+    // Keep old settlements and live waves, but discard retired ability state.
+    delete this.cooldowns;
+    delete this.root;
+    // Lanterns have one growth path. Preserve old purchases while giving former
+    // power-branch Lanterns the coverage their zero-damage branch was missing.
+    this.towers = this.towers.map((tower) =>
+      tower.type === 'lantern' && tower.level > 1 ? { ...tower, branch: 'reach' } : tower,
+    );
+    // Older live saves have no start-of-wave snapshot; use their saved farm levels once.
+    this.farms = this.farms.map((plot) => (plot ? { type: plot.type, level: plot.level } : null));
+    if (data && data.version < 5 && this.active) {
+      this.waveHarvest = MATERIALS.map(
+        (material, i) => material.yield * (this.farms[i]?.level || 0),
+      );
+    }
     this.events = [];
   }
 
@@ -632,16 +621,18 @@ export class Game {
     for (const [resource, amount] of Object.entries(cost)) this[resource] -= amount;
     tower.spent += cost.coins;
     tower.level++;
-    if (tower.level === 2) tower.branch = branch === 'reach' ? 'reach' : 'power';
+    if (tower.level === 2) {
+      tower.branch = tower.type === 'lantern' || branch === 'reach' ? 'reach' : 'power';
+    }
     this.emit('build', { id });
     return null;
   }
 
-  // Remove a tower and return 70 percent of everything spent on it.
+  // Remove a tower and refund all coins spent on its purchase and upgrades.
   sell(id) {
     const tower = this.towers.find((candidate) => candidate.id === id);
     if (!tower) return;
-    this.coins += Math.floor(tower.spent * 0.7);
+    this.coins += tower.spent;
     this.towers = this.towers.filter((candidate) => candidate.id !== id);
   }
 
@@ -678,7 +669,7 @@ export class Game {
     if (this.coins < cost) return 'You need more coins.';
     this.coins -= cost;
     if (plot) plot.level++;
-    else this.farms[index] = { type: MATERIALS[index].id, level: 1, progress: 0 };
+    else this.farms[index] = { type: MATERIALS[index].id, level: 1 };
     return null;
   }
 
@@ -704,6 +695,7 @@ export class Game {
   // Begin the next wave and fill the spawn queue. Returns false when a wave is already running.
   start() {
     if (this.active || this.won || this.lost) return false;
+    this.waveHarvest = MATERIALS.map((material, i) => material.yield * (this.farms[i]?.level || 0));
     this.active = true;
     this.wave++;
     this.spawn = 0;
@@ -733,7 +725,7 @@ export class Game {
     };
   }
 
-  // How much damage a burst or a burn is reduced by the Wardens standing beside this enemy.
+  // How much a tower hit is reduced by nearby Wardens. Burning bypasses this shield.
   shieldFactor(enemy) {
     for (const other of this.enemies) {
       const aura = ENEMIES[other.kind]?.aura;
@@ -745,59 +737,10 @@ export class Game {
     return 1;
   }
 
-  // Seconds left before an ability can be used again, and whether it is ready now.
-  abilityState(id) {
-    const left = Math.max(0, this.cooldowns[id] || 0);
-    return { id, name: ABILITIES[id].name, left: Math.ceil(left), ready: left <= 0 };
-  }
-
-  // Fire a player ability. Sunburst needs a tile. Returns null on success or a refusal message.
-  useAbility(id, tile = null) {
-    const ability = ABILITIES[id];
-    if (!ability) return 'Unknown ability.';
-    if (this.lost || this.won) return 'This expedition has ended.';
-    if ((this.cooldowns[id] || 0) > 0) {
-      return `${ability.name} is still gathering. ${Math.ceil(this.cooldowns[id])} seconds left.`;
-    }
-    if (id === 'rootgrip') {
-      this.root = Math.max(this.root, ability.hold);
-      this.emit('ability', { id, x: 6, z: 4 });
-    } else {
-      const onBoard =
-        tile && Number.isInteger(tile.x) && Number.isInteger(tile.z) && tile.x >= 0 && tile.x < W;
-      if (!onBoard || tile.z < 0 || tile.z >= H) return 'Pick a square on the meadow first.';
-      const damage = ability.damage * (1 + this.stage * ability.growth);
-      for (const enemy of this.enemies) {
-        if (Math.hypot(enemy.x - tile.x, enemy.z - tile.z) > ability.radius) continue;
-        enemy.hp -= damage * this.shieldFactor(enemy);
-      }
-      this.emit('ability', { id, x: tile.x, z: tile.z });
-    }
-    this.cooldowns[id] = ability.cooldown;
-    return null;
-  }
-
   // Advance the whole game by dt seconds: gardens, spawns, movement, shooting, and wave endings.
   tick(dt) {
     if (this.lost || this.won) return;
     this.time += dt;
-    // Gardens collect even when no wave is running.
-    for (let i = 0; i < this.farms.length; i++) {
-      const plot = this.farms[i];
-      if (!plot) continue;
-      plot.progress += dt;
-      while (plot.progress >= 10) {
-        plot.progress -= 10;
-        this[plot.type] += MATERIALS[i].yield * plot.level;
-      }
-    }
-
-    // Abilities recharge whether or not a wave is running.
-    for (const id of Object.keys(ABILITIES)) {
-      this.cooldowns[id] = Math.max(0, (this.cooldowns[id] || 0) - dt);
-    }
-    this.root = Math.max(0, this.root - dt);
-
     if (!this.active) return;
 
     // Release the next group of queued enemies once this wave's spawn timer runs out.
@@ -820,9 +763,11 @@ export class Game {
 
     // Walk every enemy along the route, spending its movement budget square by square.
     for (const enemy of this.enemies) {
+      // Burning can kill before movement. Leave these enemies in place
+      // for the payout/splitting pass; a dead enemy must never reach the escape check.
+      if (enemy.hp <= 0) continue;
       enemy.slow = Math.max(0, enemy.slow - dt);
-      const held = this.root > 0 && !enemy.flying;
-      let move = held ? 0 : dt * enemy.speed * (enemy.slow > 0 ? 0.48 : 1);
+      let move = dt * enemy.speed * (enemy.slow > 0 ? 0.48 : 1);
       while (move > 0) {
         if (!enemy.target) {
           if (enemy.x >= 12 && Math.abs(enemy.z - 4) < 0.01) {
@@ -852,7 +797,49 @@ export class Game {
     }
     this.enemies = this.enemies.filter((enemy) => !enemy.escaped);
 
-    // Every ready tower shoots the enemy closest to the exit inside its range.
+    // Build one reverse distance field only if a tower needs to choose a target.
+    // Distances follow the maze; flyers still use their direct route. An enemy
+    // between squares must finish its current movement segment before rerouting.
+    let distances;
+    const remaining = new Map();
+    const distanceToExit = (enemy) => {
+      if (remaining.has(enemy)) return remaining.get(enemy);
+      let distance;
+      if (enemy.flying) {
+        distance = Math.hypot(EXIT.x - enemy.x, EXIT.z - enemy.z);
+      } else {
+        if (!distances) {
+          distances = new Map([[`${EXIT.x},${EXIT.z}`, 0]]);
+          const blocked = new Set(this.towers.map((tower) => `${tower.x},${tower.z}`));
+          const queue = [EXIT];
+          for (let i = 0; i < queue.length; i++) {
+            const cell = queue[i];
+            for (const [dx, dz] of [
+              [1, 0],
+              [-1, 0],
+              [0, 1],
+              [0, -1],
+            ]) {
+              const x = cell.x + dx,
+                z = cell.z + dz,
+                key = `${x},${z}`;
+              if (x < 0 || x >= W || z < 0 || z >= H || blocked.has(key) || distances.has(key))
+                continue;
+              distances.set(key, distances.get(`${cell.x},${cell.z}`) + 1);
+              queue.push({ x, z });
+            }
+          }
+        }
+        const next = enemy.target || { x: Math.round(enemy.x), z: Math.round(enemy.z) };
+        distance =
+          Math.hypot(next.x - enemy.x, next.z - enemy.z) +
+          (distances.get(`${next.x},${next.z}`) ?? Infinity);
+      }
+      remaining.set(enemy, distance);
+      return distance;
+    };
+
+    // Every ready tower shoots the enemy with the shortest remaining route in range.
     for (const tower of this.towers) {
       if (tower.type === 'hedge' || tower.type === 'lantern') continue;
       tower.cool -= dt;
@@ -861,7 +848,6 @@ export class Game {
       const inRange = this.enemies.filter(
         (enemy) => enemy.hp > 0 && Math.hypot(enemy.x - tower.x, enemy.z - tower.z) <= stats.range,
       );
-      const distanceToExit = (enemy) => Math.hypot(12 - enemy.x, 4 - enemy.z);
       const target = inRange.sort((a, b) => distanceToExit(a) - distanceToExit(b))[0];
       if (!target) continue;
       tower.cool = stats.rate / this.rateBonus(tower);
@@ -902,6 +888,7 @@ export class Game {
 
     if (this.lives <= 0) {
       this.lives = 0;
+      this.waveHarvest = [0, 0, 0, 0];
       this.lost = true;
       this.active = false;
       this.emit('lost');
@@ -911,6 +898,10 @@ export class Game {
     // The wave ends once nothing is queued and nothing is left alive on the board.
     if (!this.queue.length && !this.enemies.length) {
       this.active = false;
+      MATERIALS.forEach((material, i) => {
+        this[material.id] += this.waveHarvest[i];
+      });
+      this.waveHarvest = [0, 0, 0, 0];
       this.coins += 18 + this.stage * 4;
       this.emit('wave');
       if (this.wave === 3) {

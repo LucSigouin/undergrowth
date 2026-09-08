@@ -25,12 +25,6 @@ export const MATERIAL_LOOK = {
   diamond: { symbol: '◇', color: '#1f93ab' },
 };
 
-// The two abilities. Sunburst keeps a sun, Rootgrip gets a root fork.
-export const ABILITY_LOOK = {
-  rootgrip: { symbol: '⋔', color: '#4c7a37' },
-  sunburst: { symbol: '✷', color: '#d99c12' },
-};
-
 // Enemy bodies. Darker and more saturated than the ground so a crowd reads as a crowd.
 export const ENEMY_LOOK = {
   grub: { color: '#9b4f38', size: 0.23, scale: 1 },

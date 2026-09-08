@@ -1,5 +1,117 @@
 # Changelog
 
+## Tower placement previews, 2026-09-08
+
+- Show translucent versions of all seven towers while aiming placement.
+- Invalid squares turn the preview red; built towers retain their original materials.
+- Phone placement previews remain until confirm/cancel. Right-click, Escape, and leaving the board clear mouse previews.
+
+## Readable defense hover boxes, 2026-09-08
+
+- Removed repeated names, icons, level labels, and costs from defense hover boxes.
+- Added visible stat labels, larger values, and 14px effect/tip text.
+- Positioned hover boxes beside the side pane so they do not cover neighboring defense cards.
+
+## Icon farm cards, 2026-09-08
+
+- Removed visible material names from farm cards. Large material icons now buy, unlock, or upgrade farms.
+- Coin prices appear below the icons; small badges show production per stage.
+- Retained resource names in accessible labels and hover hints.
+
+## Consolidated top bar, 2026-09-08
+
+- Restored Undergrowth at the top left and moved stage/lives before the resource totals.
+- Moved Settings after the materials at the far right. Narrow phones use two header rows.
+- Grouped Start, Pause/Resume, and Speed (1×, 2×, 3×) in the bottom bar. Removed the Space pause shortcut. Settings still suspends gameplay.
+
+## Thirty-stage progression, 2026-09-08
+
+- Each encounter is now presented as a stage, numbered 1–30.
+- Removed separate wave and creature counters; controls, harvest labels, help, and victory text use stages.
+- Preserved encounter order, rewards, difficulty, and existing saves. Workbench outcomes use the new numbering.
+
+## Vertical map and sidebar farms, 2026-09-08
+
+- Rotated the map on every screen: entry at the top, exit at the bottom.
+- Moved desktop farms into a two-column grid at the bottom of the side pane.
+- Kept resource totals in the header and phone farm controls in their sheet.
+- Short desktop windows scroll defenses independently; farms and wave controls stay available.
+
+## Resource header and defense grid, 2026-09-08
+
+- Removed Garden and Undergrowth headings; combined gold and material totals at the top right.
+- Defense cards form a grid with larger icons, names, and coin costs; shortcut labels removed.
+- Farm harvests sit beside names, aligned right. Removed visible material levels.
+- Phones use header material buttons to open farm controls and a larger defense grid.
+
+## Wave harvests, 2026-09-08
+
+- Replaced timed farm production with one harvest per completed wave: 3 Wood, 3 Rock,
+  2 Iron, or 1 Diamond per farm level. Farm levels at wave start determine the payout.
+- Midwave purchases and upgrades take effect next wave. Waiting and longer fights provide
+  no extra materials; failed waves pay nothing. Removed production timer bars.
+- Save version 5 preserves resources and pending harvests. Older live waves use saved
+  farm levels for their first harvest, and obsolete production progress is discarded.
+- Existing difficulty targets pass without changing enemies, farm prices, or upgrade costs.
+
+## Compact interface, 2026-09-08
+
+- Resource costs use the HUD icons. Shortages display owned/required counts and retain
+  resource names in accessible labels and hover hints.
+- Removed wave previews, the visible autosave footer, and sound controls and playback.
+- One Settings menu holds route visibility, restart, help, and autosave status on all layouts.
+  Route visibility persists across reloads. Restart still requires confirmation.
+- Reduced garden instructions, upgrade prose, and success notifications. Detailed tower
+  explanations are behind the info button; upgrade stats and costs stay visible.
+- The phone tray and wave footer are smaller, giving more room to the board.
+- Gameplay, economy, save data, and difficulty rules are unchanged.
+
+## Simpler game, 2026-09-08
+
+Rootgrip and Sunburst are removed at the owner's request. Their buttons, Q/E handlers,
+aiming ring/banner, effects, cooldowns, and combat logic are gone. Automatic tower effects
+such as Sap slow and Ember burn remain. Save version 4 keeps older settlements and live
+waves while discarding the retired ability fields.
+
+The simulator no longer includes kit-abilities or naive-abilities. Its seven remaining
+strategies use towers and the garden only; kit-maze remains the winning reference,
+with 7 lives lost across three stages. Enemy scaling and wave composition did not need
+another adjustment. The original balance gate remains in force.
+
+workbench/CURRENT-RULES.md records the owner's instruction for future scaling work.
+The log builder now publishes those rules and fresh simulation results at the top of both
+workbench pages, plus workbench/balance.json. Historical round records are explicitly
+labelled as history. Current screenshots show the game without ability controls.
+
+## Review fixes, 2026-09-08
+
+- Enemies killed by burning or Sunburst stop before movement, so a kill at the gate earns
+  its reward instead of costing a life. Existing brood splitting and end-of-wave handling remain.
+- Towers target by remaining walking distance, including an unfinished movement segment.
+  Flyers use their direct distance. A reverse distance field is shared by targeting decisions
+  within each tick and rebuilt when needed, so a changed maze takes effect immediately.
+- Lantern now has one upgrade path, increasing its speed boost and coverage together.
+  Old upgraded Power Lanterns receive Reach coverage on load without another charge.
+- Upgrade buttons show before/after damage or support boost and range. Missing-material
+  quantities refresh as resources arrive; the detail cache also tracks Lantern support changes.
+- Wave previews show the actual creature roster and the stage's tactical advice. Phones
+  offer a selected-tower description and a Tower info button before purchase. Both reading
+  dialogs pause combat and preserve the previous pause state when dismissed.
+- Phone notifications sit over the header, away from combat. The fitted camera reserves
+  space for the controls above and below the meadow, including at small phone heights.
+- Stage 9 wave 2 sends 12 moths instead of 10. With corrected targeting and Lantern coverage,
+  this retains the existing difficulty gate without increasing enemy HP or weakening tests.
+  The two kit strategies win with 7 and 6 total lives lost across stages 8, 9, and 10.
+- Added regression coverage for exit kills, maze/flying/partial-segment targeting, Lantern
+  save normalization, live resource shortfalls, upgrade previews, and phone information controls.
+  The golden replay was refreshed for the intentional targeting change; its coin, life, kill,
+  stage, and wave checkpoints are unchanged, while the last two wave timings differ.
+
+Waiting between waves was evaluated with 0, 20, and 60 seconds of idle time on the corrected
+combat rules before the two-moth adjustment. No strategy's win/loss outcome changed; one
+losing abilities strategy reached stage 8 instead of stage 7. Resource production stays as
+it was. These scripted runs do not replace testing with new players.
+
 ## r2, 2026-09-07: a real curve, hand written waves, and the r2 kit
 
 Round r2 acts on `fleet-r1-foundation/sim/BALANCE-REPORT.md`. The r1 game had a hidden gate

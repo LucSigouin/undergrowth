@@ -109,12 +109,6 @@ await hoverCell(desktop, 5, 3);
 await desktop.waitForTimeout(400);
 await desktop.screenshot({ path: `${OUT}/desktop-lantern-boost.png` });
 
-// 4. Desktop with Sunburst armed: the banner, the ring, and the cancel.
-await desktop.keyboard.press('Escape');
-await desktop.locator('[data-ability="sunburst"]').click();
-await hoverCell(desktop, 8, 4);
-await desktop.waitForTimeout(400);
-await desktop.screenshot({ path: `${OUT}/desktop-sunburst-armed.png` });
 await desktop.close();
 
 // 5. Phone portrait, mid wave, with the tower sheet open.

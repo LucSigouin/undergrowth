@@ -4,9 +4,9 @@
 // holds the one Game instance and the one World instance and wires them together. Game
 // rules live in game.js and the 3D scene lives in world.js.
 import './style.css';
-import { Game, TOWERS, STAGES, MATERIALS, ABILITIES } from './game.js';
+import { Game, TOWERS, MATERIALS } from './game.js';
 import { World } from './world.js';
-import { TOWER_LOOK, MATERIAL_LOOK, ABILITY_LOOK } from './look.js';
+import { TOWER_LOOK, MATERIAL_LOOK } from './look.js';
 
 // Short name for document.querySelector, used all over this file.
 const query = (selector) => document.querySelector(selector),
@@ -17,7 +17,7 @@ let game;
 try {
   const raw = JSON.parse(localStorage.getItem(SAVE) || localStorage.getItem('undergrowth-save-v1'));
   const usable =
-    [1, 2, 3].includes(raw?.version) &&
+    [1, 2, 3, 4, 5].includes(raw?.version) &&
     Array.isArray(raw.towers) &&
     raw.stage >= 0 &&
     raw.stage <= 10;
@@ -30,19 +30,16 @@ const mobileQuery = matchMedia('(max-width: 700px), (max-width: 1000px) and (poi
 
 // Interface state. None of this belongs in the save file.
 let pendingPlacement = null;
-let aiming = null;
 let hoverCell = null;
 let build = 'thorn',
   selected = null,
   paused = false,
-  backgroundPause = null,
   speed = 1,
-  sound = false,
+  backgroundPause = null,
   toastTimer,
   saveTime = 0,
   uiTime = 0,
-  last = performance.now(),
-  audio;
+  last = performance.now();
 
 // The chip colour and symbol for a piece or a material, kept out of the rules file.
 const chip = (look, extra = '') =>
@@ -51,23 +48,23 @@ const chip = (look, extra = '') =>
 // The page markup, built once. Every later update edits pieces of it in place.
 const gardenStrip =
   '<section class="garden-strip" aria-label="Resource garden">' +
-  '<div class="garden-strip-heading"><h2>Garden</h2>' +
-  '<p>Buy a resource. It collects itself. Upgrade with coins.</p></div>' +
   '<div id="garden-summary" class="garden-summary"></div>' +
   '<div id="farms" class="garden-plots"></div>' +
   '</section>';
 
 const mapStatus =
   '<div class="map-status">' +
-  '<span>Stage <b id="stage-number">01</b><span class="status-muted"> / 10</span></span>' +
+  '<span>Stage <b id="stage-number">01</b><span class="status-muted"> / 30</span></span>' +
   '<span class="status-divider"></span>' +
   '<span class="heart">♥ <b id="lives">20 / 20</b></span>' +
   '</div>';
 
-// The four materials, as a HUD in the top band of the map beside the stage and lives chip.
-// The ids stay where they were, so every counter update in render() still finds them.
+// Gold and materials share a top-right header; material buttons open their farm controls.
 const materialHud =
-  '<div class="map-status map-materials" aria-label="Materials">' +
+  '<header class="resource-header" aria-label="Game status and resources">' +
+  '<span class="game-title">Undergrowth</span>' +
+  mapStatus +
+  '<span class="gold-total" aria-label="Gold"><i class="coin">◈</i><b id="coins">200</b></span>' +
   MATERIALS.map(
     (material, i) =>
       `<button class="material-chip" data-hud-garden="${i}"` +
@@ -75,30 +72,13 @@ const materialHud =
       chip(MATERIAL_LOOK[material.id]) +
       `<b id="${material.id}">0</b></button>`,
   ).join('') +
-  '</div>';
+  '<button id="settings" aria-label="Settings" title="Settings">⚙</button></header>';
 
 const mapControls =
   '<div class="map-controls">' +
-  '<button id="pause" aria-label="Pause game" title="Pause · Space">Ⅱ</button>' +
-  '<button id="speed" title="Game speed">1×</button>' +
   '<button id="zoom" class="mobile-only" aria-label="Zoom into battlefield">＋</button>' +
   '<button id="fit" class="mobile-only" aria-label="Fit battlefield">⤢</button>' +
-  '<button id="mobile-options" class="mobile-only" aria-label="Game menu">⋯</button>' +
-  '<button id="path" aria-pressed="true" title="Show enemy route">Route on</button>' +
-  '</div>';
-
-// The two ability buttons. They sit over the board so they work in both layouts.
-const abilityBar =
-  '<div class="ability-bar" aria-label="Abilities">' +
-  Object.entries(ABILITIES)
-    .map(
-      ([id, ability]) =>
-        `<button class="ability" data-ability="${id}" title="${ability.desc}">` +
-        `<span class="ability-fill"></span>` +
-        `<span class="ability-face"><i>${ABILITY_LOOK[id].symbol}</i>` +
-        `<b>${ability.name}</b><small>${ability.key}</small></span></button>`,
-    )
-    .join('') +
+  '<button id="tower-info" class="mobile-only" aria-label="Tower information">ⓘ</button>' +
   '</div>';
 
 const placementBar =
@@ -107,76 +87,49 @@ const placementBar =
   '<button id="confirm-place">Place tower</button></div>' +
   '<div class="paused-overlay" id="paused" hidden>Paused</div>';
 
-// Shown across the board while Sunburst is armed, so an armed burst is never a surprise.
-const aimBar =
-  '<div id="aiming" class="aiming" role="status" hidden>' +
-  `<i aria-hidden="true">${ABILITY_LOOK.sunburst.symbol}</i>` +
-  '<span><b>Sunburst armed</b>Pick a square. No tower will be built.</span>' +
-  '<button id="cancel-aim">Cancel</button></div>';
-
-const sidebarHeading =
-  '<div class="sidebar-heading"><span class="wordmark">undergrowth.</span>' +
-  '<button id="help" class="icon-button" aria-label="How to play">?</button></div>';
-
-const resourceRow =
-  '<div class="resources"><span title="Coins"><i class="coin">◈</i>' +
-  '<b id="coins">200</b><small>Coins</small></span></div>';
-
-// One card per buildable defense, in the order they appear in TOWERS. Each card is a single
-// line now. The description, the numbers and the tip live in the hover note instead.
+// Defense cards show their icon, name, and coin cost.
 const towerCards = Object.entries(TOWERS)
-  .map(([id, tower], i) => {
+  .map(([id, tower]) => {
     const chosen = id === 'thorn';
     return (
       `<button class="tower-card ${chosen ? 'selected' : ''}" data-build="${id}"` +
       ` aria-pressed="${chosen}" aria-describedby="hover-note">` +
       chip(TOWER_LOOK[id], 'tower-icon') +
       `<span class="tower-summary"><b>${tower.name}</b></span>` +
-      `<small><i>◈</i>${tower.cost}</small>` +
-      `<kbd>${i + 1}</kbd></button>`
+      `<small><i>◈</i>${tower.cost}</small></button>`
     );
   })
   .join('');
 
 const defensesSection =
-  '<section class="defenses"><h2>Defenses <small>Keys 1 to 7</small></h2>' +
+  '<section class="defenses"><h2>Defenses</h2>' +
   `<div class="cards">${towerCards}</div>` +
   '<div id="detail" class="detail" hidden></div></section>';
 
 const waveControls =
-  '<div class="wave-controls"><div class="wave-meta">' +
-  '<span id="wave-counter">Wave 1 / 3</span>' +
-  '<span id="enemy-counter">9 creatures</span></div>' +
-  '<button class="primary" id="start">Begin wave ↗</button>' +
-  '<div class="utilities"><span id="saved">Autosaved</span><div>' +
-  '<button id="sound" aria-label="Enable sound" title="Sound">♪</button>' +
-  '<button id="restart" aria-label="Start a new garden" title="New garden">↺</button>' +
-  '</div></div></div>';
+  '<div class="wave-controls"><button class="primary" id="start">Start ↗</button>' +
+  '<button id="pause" aria-label="Pause" title="Pause">Ⅱ</button>' +
+  '<button id="speed" aria-label="Speed: 1×" title="Game speed">1×</button></div>';
 
 const overlays =
   '<div id="hover-note" class="hover-note" role="tooltip" hidden></div>' +
   '<div id="toast" role="status" aria-live="polite"></div>' +
   '<dialog id="modal"></dialog>' +
   '<dialog id="garden-modal" class="garden-sheet"><div class="sheet-heading">' +
-  '<div><h2>Your garden</h2><p>Collects automatically while you defend.</p></div>' +
   '<button id="close-garden" aria-label="Close garden">×</button></div>' +
   '<div class="sheet-body"></div></dialog>';
 
 query('#app').innerHTML = `<main class="game-shell">
-  <div class="map-area">${gardenStrip}<section class="scene-wrap" id="scene" aria-label="Battlefield">
-    ${mapStatus}
-    ${materialHud}
+  ${materialHud}
+  <div class="map-area"><section class="scene-wrap" id="scene" aria-label="Battlefield">
     ${mapControls}
-    ${abilityBar}
     ${placementBar}
-    ${aimBar}
   </section>
   </div><aside class="sidebar" aria-label="Build and garden">
-    ${sidebarHeading}
-    ${resourceRow}
     <div class="sidebar-body">
       ${defensesSection}
     </div>
+    ${gardenStrip}
     ${waveControls}
   </aside>
 </main>${overlays}`;
@@ -189,62 +142,30 @@ function toast(msg) {
   toastTimer = setTimeout(() => query('#toast').classList.remove('show'), 3500);
 }
 
-// Play one soft blip, but only when the player has turned sound on.
-function beep(freq = 440) {
-  if (!sound) return;
-  try {
-    audio ??= new AudioContext();
-    const oscillator = audio.createOscillator(),
-      gain = audio.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(freq, audio.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(freq * 0.5, audio.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.025, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.14);
-    oscillator.connect(gain);
-    gain.connect(audio.destination);
-    oscillator.start();
-    oscillator.stop(audio.currentTime + 0.15);
-  } catch {}
-}
-
-// Write the game to localStorage and report whether it worked.
+// Save quietly when browser storage is available.
 function persist() {
   try {
     localStorage.setItem(SAVE, game.serialize());
-    query('#saved').textContent = 'Autosaved';
   } catch {
-    query('#saved').textContent = 'Saving unavailable';
+    // Storage may be unavailable; keep the current session playable.
   }
 }
 
 // Pick the piece the next click will build.
 function choose(type) {
   pendingPlacement = null;
-  aiming = null;
   world.previewTowers = null;
+  world.clearTowerPreview();
   world.range.visible = false;
   build = type;
   selected = null;
   detailKey = '';
   render();
-  beep(300);
 }
 
 // Handle a click on a board square: select a tower, stage a placement, or build right away.
 function onCell(cell) {
   if (paused || game.lost || game.won) return;
-  // An armed Sunburst swallows the next click and lands on that square.
-  if (aiming) {
-    const id = aiming;
-    aiming = null;
-    const err = game.useAbility(id, cell);
-    toast(err || `${ABILITIES[id].name} lands on the horde.`);
-    if (!err) beep(660);
-    persist();
-    render();
-    return;
-  }
   const tower = game.towers.find((candidate) => candidate.x === cell.x && candidate.z === cell.z);
   if (tower) {
     pendingPlacement = null;
@@ -268,7 +189,6 @@ function onCell(cell) {
     if (err) {
       toast(err);
     } else {
-      beep(500);
       persist();
       render();
     }
@@ -300,6 +220,9 @@ function showBoost() {
 let world;
 try {
   world = new World(query('#scene'), onCell, onHover);
+  try {
+    world.route.visible = localStorage.getItem('undergrowth-route') !== 'false';
+  } catch {}
 } catch (error) {
   query('#scene').innerHTML =
     '<div style="padding:35px">This garden needs WebGL. Enable hardware' +
@@ -316,16 +239,16 @@ function defenseStats(stats, type, level = 1) {
   if (type === 'lantern') {
     return (
       '<div class="defense-stats">' +
-      `<span><b>+${Math.round((0.2 + level * 0.1) * 100)}%</b>Fire rate nearby</span>` +
-      `<span><b>${stats.range.toFixed(1)}</b>Ring · squares</span>` +
-      '<span><b>0</b>Damage / hit</span></div>'
+      `<span><b>+${Math.round((0.2 + level * 0.1) * 100)}%</b><span title="Nearby fire rate" aria-label="Nearby fire rate">Fire rate</span></span>` +
+      `<span><b>${stats.range.toFixed(1)}</b><span title="Coverage" aria-label="Coverage">Coverage</span></span>` +
+      '<span><b>0</b><span title="Damage per hit" aria-label="Damage per hit">Damage</span></span></div>'
     );
   }
   return (
     '<div class="defense-stats">' +
-    `<span><b>${Math.round(stats.damage)}</b>Damage / hit</span>` +
-    `<span><b>${stats.range.toFixed(1)}</b>Range · squares</span>` +
-    `<span><b>${stats.rate.toFixed(2)}s</b>Between shots</span></div>`
+    `<span><b>${Math.round(stats.damage)}</b><span title="Damage per hit" aria-label="Damage per hit">Damage</span></span>` +
+    `<span><b>${stats.range.toFixed(1)}</b><span title="Range" aria-label="Range">Range</span></span>` +
+    `<span><b>${stats.rate.toFixed(2)}s</b><span title="Time between shots" aria-label="Time between shots">Shot interval</span></span></div>`
   );
 }
 
@@ -338,55 +261,77 @@ function defenseHeading(type) {
   );
 }
 
-// The line that names what the player is short of, and why that material only comes from a plot.
-function shortfallNote(missing) {
-  if (!missing.length) return '';
-  const parts = missing
-    .map((item) => `${item.short} more ${item.name.toLowerCase()}`)
-    .join(' and ');
-  const fromGarden = missing.some((item) => item.id !== 'coins');
-  const why = fromGarden
-    ? ' Materials only come from garden plots, so buy or upgrade a plot to earn them.'
-    : ' Coins come from kills and from clearing waves.';
-  return `<p class="defense-missing">You need ${parts}.${why}</p>`;
+// Resource names remain available to assistive technology and hover hints.
+function resourceAmounts(cost, check = true) {
+  return (
+    '<span class="resource-amounts">' +
+    Object.entries(cost)
+      .filter(([, n]) => n > 0)
+      .map(([id, need]) => {
+        const name = id === 'coins' ? 'Coins' : MATERIALS.find((m) => m.id === id).name;
+        const have = Math.floor(game[id]);
+        const short = check && have < need;
+        const label = short
+          ? `${name}: ${have} / ${need}; ${need - have} more needed`
+          : `${need} ${name.toLowerCase()}`;
+        const icon =
+          id === 'coins'
+            ? '<span class="coin" aria-hidden="true">◈</span>'
+            : chip(MATERIAL_LOOK[id]);
+        return (
+          `<span class="resource-amount ${short ? 'short' : ''}" data-resource="${id}" role="img" title="${label}" aria-label="${label}">` +
+          icon +
+          `<b aria-hidden="true">${short ? have + '/' : ''}${need}</b></span>`
+        );
+      })
+      .join('') +
+    '</span>'
+  );
 }
 
 // The upgrade paragraph and buttons, shown while a tower can still grow.
 function upgradeBlock(tower, cost, missing) {
-  if (tower.level >= 3 || tower.type === 'hedge') return '<p>Fully upgraded.</p>';
-  const materialCosts = MATERIALS.filter((material) => cost[material.id])
-    .map((material) => ` · ${cost[material.id]} ${material.name.toLowerCase()}`)
-    .join('');
-  const powerLabel = tower.level === 1 ? 'Power +55%' : 'Grow to level 3';
+  if (tower.level >= 3 || tower.type === 'hedge') return '';
   const blocked = missing.length ? ' disabled' : '';
-  const reachButton =
-    tower.level === 1 ? `<button data-upgrade="reach"${blocked}>Range +1.1</button>` : '';
+  const current = game.stats(tower);
+  const branches =
+    tower.type === 'lantern' ? ['reach'] : tower.level === 1 ? ['power', 'reach'] : [tower.branch];
+  const buttons = branches
+    .map((branch) => {
+      const next = game.stats({ ...tower, level: tower.level + 1, branch });
+      const label =
+        tower.type === 'lantern' || tower.level > 1
+          ? `↑ ${tower.level + 1}`
+          : branch === 'power'
+            ? 'Power'
+            : 'Range';
+      const numbers =
+        tower.type === 'lantern'
+          ? `✦ ${Math.round((0.2 + tower.level * 0.1) * 100)} → ${Math.round((0.2 + (tower.level + 1) * 0.1) * 100)}%`
+          : `⚔ ${Math.round(current.damage)} → ${Math.round(next.damage)}`;
+      return (
+        `<button data-upgrade="${branch}"${blocked}><b>${label}</b>` +
+        `<small>${numbers}</small><small>◎ ${current.range.toFixed(2)} → ${next.range.toFixed(2)}</small></button>`
+      );
+    })
+    .join('');
   return (
-    `<p>Upgrade · ${cost.coins} coins${materialCosts}</p>` +
-    shortfallNote(missing) +
-    `<div class="upgrade-row"><button data-upgrade="power"${blocked}>${powerLabel}</button>` +
-    `${reachButton}</div>`
+    `<div class="upgrade-cost" aria-label="Upgrade cost">${resourceAmounts(cost)}</div>` +
+    `<div class="upgrade-row">${buttons}</div>`
   );
 }
 
 // The small note that hovering or focusing a tower card puts up beside the card. It carries
 // what the old "Before you build" panel said: the level 1 numbers, the effect and the tip.
-function noteMarkup(type) {
+function noteMarkup(type, includeTip = true) {
   const info = TOWERS[type],
     stats = game.stats({ type, level: 1 });
-  const short = game.coins < info.cost;
-  const shortNote = short
-    ? `<p class="defense-missing">You have ${Math.floor(game.coins)} coins, so this` +
-      ' costs more than you can pay. Clear a wave or sell a piece.</p>'
-    : '';
   return (
-    `<div class="eyebrow">${type === 'hedge' ? 'Maze building' : 'Level 1'} · ` +
-    `${info.cost} coins</div>` +
-    defenseHeading(type) +
+    '<div class="defense-note">' +
     defenseStats(stats, type) +
-    shortNote +
     `<p class="defense-effect">${info.effect}</p>` +
-    `<p class="defense-tip">${info.tip}</p>`
+    (includeTip ? `<p class="defense-tip">${info.tip}</p>` : '') +
+    '</div>'
   );
 }
 
@@ -394,14 +339,15 @@ function noteMarkup(type) {
 function showNote(card) {
   if (mobileQuery.matches) return;
   const note = query('#hover-note');
-  note.innerHTML = noteMarkup(card.dataset.build);
+  note.innerHTML = noteMarkup(card.dataset.build, false);
   note.hidden = false;
   const gap = 10;
   const box = card.getBoundingClientRect(),
+    pane = query('.sidebar').getBoundingClientRect(),
     own = note.getBoundingClientRect();
   const top = Math.min(box.top - gap, innerHeight - own.height - gap);
   note.style.top = `${Math.max(gap, top)}px`;
-  note.style.left = `${Math.max(gap, box.left - own.width - gap)}px`;
+  note.style.left = `${Math.max(gap, pane.left - own.width - gap)}px`;
 }
 
 function hideNote() {
@@ -411,8 +357,14 @@ function hideNote() {
 // Redraw the tower detail card. It only ever describes a tower already on the board.
 function renderDetail() {
   const tower = game.towers.find((candidate) => candidate.id === selected);
-  const shortKey = tower ? game.upgradeShortfall(tower).map((item) => item.id) : [];
-  const key = JSON.stringify([tower?.id, tower?.level, tower?.branch, shortKey]);
+  const shortKey = tower ? game.upgradeShortfall(tower) : [];
+  const key = JSON.stringify([
+    tower?.id,
+    tower?.level,
+    tower?.branch,
+    shortKey,
+    tower && game.rateBonus(tower),
+  ]);
   if (key === detailKey) return;
   detailKey = key;
   query('#detail').hidden = !tower;
@@ -427,21 +379,23 @@ function renderDetail() {
     missing = game.upgradeShortfall(tower);
   const boost = game.rateBonus(tower);
   const boostNote =
-    boost > 1
-      ? `<p class="defense-boost">A Lantern is speeding this up by ${Math.round((boost - 1) * 100)}%.</p>`
-      : '';
-  const branchLabel = tower.branch ? ' · ' + tower.branch : '';
+    boost > 1 ? `<p class="defense-boost">✦ +${Math.round((boost - 1) * 100)}%</p>` : '';
+  const branchLabel = tower.branch === 'reach' ? 'Range' : tower.branch === 'power' ? 'Power' : '';
+  const growthBadge =
+    tower.type === 'hedge'
+      ? ''
+      : `<div class="tower-growth"><span>Level ${tower.level}</span>${branchLabel ? `<span>${branchLabel}</span>` : ''}</div>`;
   query('#detail').innerHTML =
     '<button class="detail-close" id="close-detail"' +
     ' aria-label="Close tower details">×</button>' +
-    `<div class="eyebrow">Level ${tower.level}${branchLabel}</div>` +
     defenseHeading(tower.type) +
+    growthBadge +
     defenseStats(stats, tower.type, tower.level) +
     boostNote +
-    `<p class="defense-effect">${info.effect}</p>` +
-    `<p class="defense-tip">${info.tip}</p>` +
     upgradeBlock(tower, cost, missing) +
-    `<button class="text-button" id="sell">Reclaim · ${Math.floor(tower.spent * 0.7)} coins</button>`;
+    `<div class="detail-actions"><button id="sell" aria-label="Sell ${info.name} for ${tower.spent} coins">Sell ${resourceAmounts({ coins: tower.spent }, false)}</button>` +
+    '<button id="detail-info" aria-label="Tower information">ⓘ</button></div>';
+  query('#detail-info').onclick = () => modal(info.name, noteMarkup(tower.type), 'Done');
 
   query('#close-detail')?.addEventListener('click', () => {
     selected = null;
@@ -454,7 +408,7 @@ function renderDetail() {
     .forEach((button) => {
       button.onclick = () => {
         const err = game.upgrade(tower.id, button.dataset.upgrade);
-        toast(err || 'A little stronger. A little wilder.');
+        if (err) toast(err);
         detailKey = '';
         persist();
         render();
@@ -495,12 +449,18 @@ function render() {
     query('#' + key).textContent = Math.floor(game[key]);
   }
   query('#lives').textContent = `${game.lives} / 20`;
-  query('#stage-number').textContent = String(Math.min(10, game.stage + 1)).padStart(2, '0');
-  const shownWave = Math.min(3, game.wave + (game.active ? 0 : 1));
-  query('#wave-counter').textContent = `Wave ${shownWave} / 3`;
-  query('#enemy-counter').textContent = game.active
-    ? `${game.enemies.length + game.queue.length} remaining`
-    : `${game.waveSize(game.stage, Math.min(3, game.wave + 1))} creatures`;
+  // Keep the existing encounter/save sequence; each encounter is one displayed stage.
+  const stageNumber = Math.max(
+    1,
+    Math.min(30, game.stage * 3 + game.wave + (game.active || game.lost ? 0 : 1)),
+  );
+  query('#stage-number').textContent = String(stageNumber).padStart(2, '0');
+  const infoType = build || game.towers.find((tower) => tower.id === selected)?.type;
+  query('#tower-info').disabled = !infoType;
+  query('#tower-info').setAttribute(
+    'aria-label',
+    infoType ? `About ${TOWERS[infoType].name}` : 'Tower information',
+  );
   query('#start').disabled = (game.active && !paused) || game.lost || game.won;
   query('#start').textContent = game.won
     ? 'Garden protected ✓'
@@ -508,16 +468,9 @@ function render() {
       ? 'Expedition ended'
       : game.active
         ? paused
-          ? 'Resume wave ▶'
-          : 'Wave in progress…'
-        : 'Begin wave ↗';
-  document.querySelectorAll('.wave-progress span').forEach((element, i) => {
-    element.classList.toggle('done', i < game.wave);
-  });
-  document.querySelectorAll('.stage-dot').forEach((element, i) => {
-    element.classList.toggle('current', i === game.stage);
-    element.classList.toggle('complete', i < game.stage);
-  });
+          ? 'Resume ▶'
+          : 'Playing'
+        : 'Start ↗';
   document.querySelectorAll('[data-build]').forEach((button) => {
     button.classList.toggle('selected', button.dataset.build === build);
     button.setAttribute('aria-pressed', String(button.dataset.build === build));
@@ -528,60 +481,24 @@ function render() {
     button.classList.toggle('unaffordable', short);
     button.setAttribute('aria-description', short ? 'Not enough coins' : 'Affordable');
   });
-  world.aiming = !!aiming;
-  query('#aiming').hidden = !aiming;
-  query('#scene').classList.toggle('armed', !!aiming);
-  if (!aiming) world.burst.visible = false;
   showBoost();
   query('#paused').hidden = !paused;
   query('#pause').textContent = paused ? '▶' : 'Ⅱ';
+  query('#pause').setAttribute('aria-label', paused ? 'Resume' : 'Pause');
+  query('#pause').title = paused ? 'Resume' : 'Pause';
+  query('#pause').disabled = game.lost || game.won;
   query('#speed').textContent = speed + '×';
+  query('#speed').setAttribute('aria-label', `Speed: ${speed}×`);
   query('#placement').hidden = !pendingPlacement;
   if (pendingPlacement) {
     const staged = TOWERS[pendingPlacement.type];
-    query('#confirm-place').textContent = `Place ${staged.name} · ◈ ${staged.cost}`;
+    query('#confirm-place').textContent = `✓ ${staged.name} · ◈ ${staged.cost}`;
   }
-  renderAbilities();
+  const previewCell = pendingPlacement || (world.hover.visible ? hoverCell : null);
+  if (previewCell && build) world.showHover(previewCell, build, game, null);
+  if (!build || game.lost || game.won) world.clearTowerPreview();
   renderGarden();
   renderDetail();
-}
-
-// Redraw the two ability buttons: the seconds left, the fill, and the armed state.
-function renderAbilities() {
-  for (const [id, ability] of Object.entries(ABILITIES)) {
-    const button = query(`[data-ability="${id}"]`);
-    const state = game.abilityState(id);
-    const share = state.ready ? 0 : state.left / ability.cooldown;
-    button.querySelector('.ability-fill').style.height = `${Math.round(share * 100)}%`;
-    button.querySelector('b').textContent = state.ready ? ability.name : `${state.left}s`;
-    button.classList.toggle('cooling', !state.ready);
-    button.classList.toggle('armed', aiming === id);
-    button.disabled = game.lost || game.won;
-    button.setAttribute('aria-pressed', String(aiming === id));
-    const label = state.ready ? `${ability.name}, ready` : `${ability.name}, ${state.left} seconds`;
-    button.setAttribute('aria-label', label);
-  }
-}
-
-// Fire an ability from a key or a button. Sunburst arms itself and waits for a square.
-function fireAbility(id) {
-  if (paused || game.lost || game.won) return;
-  if (!game.abilityState(id).ready) {
-    toast(game.useAbility(id, { x: 6, z: 4 }));
-    return;
-  }
-  if (id === 'sunburst') {
-    aiming = aiming === id ? null : id;
-    toast(aiming ? 'Pick the square to burst.' : 'Sunburst put away.');
-    render();
-    return;
-  }
-  aiming = null;
-  const err = game.useAbility(id);
-  toast(err || 'Roots take hold. Nothing on the ground moves.');
-  if (!err) beep(220);
-  persist();
-  render();
 }
 
 // Redraw the garden summary chips and the four plot cards, skipping unchanged work.
@@ -595,7 +512,7 @@ function renderGarden() {
     query('#garden-summary').dataset.key = summaryKey;
     query('#garden-summary').innerHTML = MATERIALS.map((material, i) => {
       const locked = i >= game.unlockedPlots;
-      const value = locked ? 'Locked' : game.farms[i] ? game[material.id] : 'Buy · ' + material.buy;
+      const value = locked ? '🔒' : game.farms[i] ? game[material.id] : '◈ ' + material.buy;
       return (
         `<button data-garden-open="${i}"` +
         ` aria-label="Manage ${material.name.toLowerCase()} garden">` +
@@ -612,7 +529,9 @@ function renderGarden() {
 
   const ended = game.lost || game.won;
   const plotsKey = JSON.stringify([
-    game.farms.map((plot) => (plot ? { ...plot, progress: Math.floor(plot.progress) } : null)),
+    game.farms,
+    game.active,
+    game.waveHarvest,
     game.unlockedPlots,
     game.coins,
     ended,
@@ -626,33 +545,26 @@ function renderGarden() {
       next = i === game.unlockedPlots && !!game.farms[i - 1],
       cost = locked ? material.unlock : game.farmCost(i);
     const disabled = ended || game.coins < cost || (locked && !next) || plot?.level >= 3;
-    const status = locked
-      ? 'Locked'
-      : plot
-        ? `Level ${plot.level} · +${material.yield * plot.level} / 10 sec`
-        : 'Not producing';
-    const label = locked
-      ? `Unlock · ◈ ${cost}`
-      : plot
-        ? plot.level >= 3
-          ? 'Fully upgraded'
-          : `Upgrade · ◈ ${cost}`
-        : `Buy ${material.name.toLowerCase()} · ◈ ${cost}`;
+    const harvest = plot ? material.yield * plot.level : 0;
+    const actionName = locked ? 'Unlock' : plot ? (plot.level >= 3 ? 'Max' : 'Upgrade') : 'Buy';
+    const label = plot?.level >= 3 ? '✓' : resourceAmounts({ coins: cost });
     const hint =
       locked && !next
         ? 'Buy ' + MATERIALS[i - 1].name.toLowerCase() + ' first'
         : plot && plot.level < 3
-          ? 'Increase production to ' + material.yield * (plot.level + 1) + ' every 10 seconds'
-          : label;
+          ? 'Harvest ' + material.yield * (plot.level + 1) + ' per stage; changes apply next stage'
+          : `${actionName} ${material.name}`;
     const action = locked ? `data-unlock="${i}"` : `data-farm="${i}"`;
+    const harvestHint = game.active
+      ? `This stage: ${game.waveHarvest[i]} ${material.name.toLowerCase()}. Changes apply next stage.`
+      : 'Harvest per completed stage, set when the stage starts.';
     return (
       `<article class="resource-plot ${locked ? 'locked' : ''}" data-plot="${i}">` +
-      '<div class="plot-summary">' +
-      `<div class="material-art ${material.id} ${plot ? 'producing' : ''}" aria-hidden="true">` +
-      '<i></i><i></i><i></i></div>' +
-      `<div><b>${material.name}</b><small>${status}</small></div></div>` +
-      `<div class="progress"><i style="width:${plot ? plot.progress * 10 : 0}%"></i></div>` +
-      `<button ${action} ${disabled ? 'disabled' : ''} title="${hint}">${label}</button></article>`
+      `<button class="farm-card" ${action} ${disabled ? 'disabled' : ''} title="${hint}. ${harvestHint}" aria-label="${actionName} ${material.name}${plot?.level >= 3 ? '' : ', ' + cost + ' coins'}, ${harvest} per stage">` +
+      `<small class="farm-harvest">${harvest}<span>/stage</span></small>` +
+      (locked ? '<span class="farm-lock" aria-hidden="true">🔒</span>' : '') +
+      chip(MATERIAL_LOOK[material.id], 'farm-icon') +
+      `<span class="farm-price">${label}</span></button></article>`
     );
   }).join('');
 
@@ -661,10 +573,8 @@ function renderGarden() {
     .forEach((button) => {
       button.onclick = () => {
         const i = Number(button.dataset.farm),
-          existing = !!game.farms[i],
           err = game.farm(i);
-        const started = MATERIALS[i].name + ' production started. Materials collect automatically.';
-        toast(err || (existing ? MATERIALS[i].name + ' production upgraded.' : started));
+        if (err) toast(err);
         persist();
         render();
       };
@@ -674,8 +584,8 @@ function renderGarden() {
     .forEach((button) => {
       button.onclick = () => {
         const i = Number(button.dataset.unlock);
-        const unlocked = MATERIALS[i].name + ' plot unlocked. Buy it to start production.';
-        toast(game.unlockPlot(i) || unlocked);
+        const err = game.unlockPlot(i);
+        if (err) toast(err);
         persist();
         render();
       };
@@ -683,14 +593,11 @@ function renderGarden() {
 }
 
 // Open the shared dialog, pausing the game while it is up. An action adds a second button.
-function modal(title, body, button = 'Back to the garden', action) {
+function modal(title, body, button = 'Done', action) {
   const dialog = query('#modal');
-  const cancelButton = action
-    ? '<button class="outline" id="modal-cancel">Keep this garden</button>'
-    : '';
+  const cancelButton = action ? '<button class="outline" id="modal-cancel">Cancel</button>' : '';
   dialog.innerHTML =
-    '<div class="eyebrow">Undergrowth</div>' +
-    `<h2>${title}</h2><p>${body}</p>` +
+    `<h2>${title}</h2><div class="modal-body">${body}</div>` +
     `<button class="primary" id="modal-ok">${button}</button>` +
     cancelButton;
   const wasPaused = paused;
@@ -714,49 +621,42 @@ function modal(title, body, button = 'Back to the garden', action) {
 }
 
 const HELP_TEXT =
-  '<b class="help-warning">Played this before?</b> The wild grew back stronger this season.' +
-  ' Every creature has more hit points, and the maze that held last time will not hold on' +
-  ' its own. You need the new kit with it: an Ember for shells and wardens, and a Lantern' +
-  ' in the middle of your towers.<br><br>' +
-  '<b>1. Shape the maze.</b> Choose a tower, then click a meadow square.' +
-  ' The dotted line shows the horde’s route. A longer route means more shots, so the' +
-  ' scenic way round is worth more than any single tower. Keep an exit open.<br><br>' +
-  '<b>2. Grow while you defend.</b> Buy the wood plot for 25 coins. It automatically' +
-  ' adds 3 wood every 10 seconds, including during combat. Upgrade it with coins for' +
-  ' more output. Unlock and buy Rock, then Iron, then Diamond plots with coins.' +
-  ' The first upgrade of a tower costs coins only. Level 3 needs materials, and' +
-  ' materials only come from garden plots.<br><br>' +
-  '<b>3. Know the horde.</b> Moths fly over the maze. Beetles wear armor, and Sunstone' +
-  ' cuts through it. A brood sac bursts into three grublings when it dies, so Bloom' +
-  ' bursts clear them best. A warden ignores sap and shields everything beside it,' +
-  ' and only Ember burning gets past that shield.<br><br>' +
-  '<b>4. Your two abilities.</b> Rootgrip (Q) holds every walking enemy still for 3' +
-  ' seconds. Sunburst (E) arms a burst, then you pick the square it lands on. While it is' +
-  ' armed the board says so and a board tap fires the burst instead of building a tower,' +
-  ' so use Cancel or press Escape if you change your mind. Both recharge on their own and' +
-  ' both are saved with your game.<br><br>' +
-  '<b>5. New towers.</b> Ember (6) sets enemies alight, and burning ignores armor and' +
-  ' shields. Lantern (7) never shoots, it makes every attacking tower in its ring fire' +
-  ' faster, so it belongs in the middle of a cluster. Point at a Lantern and the board rings' +
-  ' every tower it is speeding up.<br><br>' +
-  '<b>Controls:</b> 1–7 choose pieces, Q and E fire abilities, Esc inspects,' +
-  ' Space pauses. Progress saves automatically on this browser.';
+  '<p><b>Build a maze.</b> Longer routes give towers more time. Keep an exit open.</p>' +
+  '<p><b>Grow.</b> Garden plots harvest after each completed stage. Farm levels at stage start set the harvest; upgrades apply next stage. Upgrade towers with coins and materials.</p>' +
+  '<p><b>Costs.</b> Icons show each resource. Red counts show what you have / what you need.</p>' +
+  '<p><b>Enemies.</b> Moths fly over walls. Sunstone counters armor; Ember counters shields.</p>' +
+  '<p>1–7: choose a tower · Right-click / Esc: cancel</p>';
 
-query('#help').onclick = () => modal('Small pieces. Big possibilities.', HELP_TEXT);
+query('#tower-info').onclick = () => {
+  const type = build || game.towers.find((tower) => tower.id === selected)?.type;
+  if (type) modal(`About ${TOWERS[type].name}`, noteMarkup(type), 'Done');
+};
 
-query('#mobile-options').onclick = () => {
-  const menu =
-    '<button class="outline" id="menu-help">How to play</button>' +
-    '<button class="outline" id="menu-sound">Toggle sound</button>' +
-    '<button class="outline" id="menu-restart">New garden</button>';
-  modal('Game menu', menu, 'Return to game');
-  // Each menu row closes the dialog and then clicks the matching desktop button.
-  for (const name of ['help', 'sound', 'restart']) {
-    query('#menu-' + name).onclick = () => {
-      query('#modal-ok').click();
-      query('#' + name).click();
-    };
-  }
+query('#settings').onclick = () => {
+  modal(
+    'Settings',
+    '<div class="settings-list">' +
+      `<button id="path" role="switch" aria-checked="${world.route.visible}"><span>Enemy route</span><b>${world.route.visible ? 'On' : 'Off'}</b></button>` +
+      '<button id="help">How to play</button>' +
+      '<button id="restart">Restart garden</button>' +
+      '</div>',
+  );
+  query('#path').onclick = () => {
+    world.route.visible = !world.route.visible;
+    query('#path').setAttribute('aria-checked', String(world.route.visible));
+    query('#path b').textContent = world.route.visible ? 'On' : 'Off';
+    try {
+      localStorage.setItem('undergrowth-route', String(world.route.visible));
+    } catch {}
+  };
+  query('#help').onclick = () => {
+    query('#modal-ok').click();
+    modal('How to play', HELP_TEXT);
+  };
+  query('#restart').onclick = () => {
+    query('#modal-ok').click();
+    restartGame();
+  };
 };
 
 query('#close-garden').onclick = () => query('#garden-modal').close();
@@ -774,20 +674,29 @@ query('#garden-modal').addEventListener('click', (event) => {
 
 // Drop a staged placement and clear the preview.
 function cancelPlacement() {
-  aiming = null;
   pendingPlacement = null;
   world.previewTowers = null;
+  world.clearTowerPreview();
   world.hover.visible = false;
   world.range.visible = false;
   render();
 }
 
-query('#cancel-aim').onclick = () => {
-  aiming = null;
-  world.burst.visible = false;
-  toast('Sunburst put away.');
-  render();
-};
+// Escape and right-click both leave building and inspection mode.
+function cancelSelection() {
+  build = null;
+  selected = null;
+  hoverCell = null;
+  detailKey = '';
+  hideNote();
+  cancelPlacement();
+}
+
+query('.game-shell').addEventListener('contextmenu', (event) => {
+  if (query('#modal').open || query('#garden-modal').open) return;
+  event.preventDefault();
+  cancelSelection();
+});
 
 query('#cancel-place').onclick = cancelPlacement;
 query('#confirm-place').onclick = () => {
@@ -799,7 +708,6 @@ query('#confirm-place').onclick = () => {
     return;
   }
   cancelPlacement();
-  beep(500);
   persist();
 };
 
@@ -829,8 +737,8 @@ const RESTART_TEXT =
   'This replaces your saved settlement with a fresh garden.' +
   ' Your current towers and materials will be cleared.';
 
-query('#restart').onclick = () =>
-  modal('Plant a new beginning?', RESTART_TEXT, 'Start a new garden', () => {
+function restartGame() {
+  modal('Restart?', RESTART_TEXT, 'Restart', () => {
     pendingPlacement = null;
     game = new Game();
     selected = null;
@@ -840,8 +748,8 @@ query('#restart').onclick = () =>
     detailKey = '';
     persist();
     render();
-    toast('A new beginning. Make it yours.');
   });
+}
 
 query('#start').onclick = () => {
   paused = false;
@@ -852,13 +760,6 @@ query('#start').onclick = () => {
     return;
   }
   if (game.start()) {
-    // Stage 1 is where the maze lesson has to land, so say it in plain words.
-    toast(
-      game.stage === 0
-        ? 'A longer route means more shots. Hedges cost 8 coins and bend the dotted line.'
-        : 'Wave started. Follow the dotted route.',
-    );
-    beep(250);
     persist();
   }
   render();
@@ -868,21 +769,9 @@ query('#pause').onclick = () => {
   render();
 };
 query('#speed').onclick = () => {
-  speed = speed === 1 ? 2 : speed === 2 ? 3 : 1;
+  speed = speed === 3 ? 1 : speed + 1;
   render();
 };
-query('#sound').onclick = () => {
-  sound = !sound;
-  query('#sound').style.background = sound ? '#dce8cb' : 'transparent';
-  query('#sound').setAttribute('aria-label', sound ? 'Mute sound' : 'Enable sound');
-  beep(600);
-};
-query('#path').onclick = () => {
-  world.route.visible = !world.route.visible;
-  query('#path').textContent = world.route.visible ? 'Route on' : 'Route off';
-  query('#path').setAttribute('aria-pressed', String(world.route.visible));
-};
-
 document.querySelectorAll('[data-build]').forEach((button) => {
   button.onclick = () => choose(button.dataset.build);
   button.addEventListener('mouseenter', () => showNote(button));
@@ -894,35 +783,13 @@ document.querySelectorAll('[data-build]').forEach((button) => {
 window.addEventListener('scroll', hideNote, true);
 mobileQuery.addEventListener('change', hideNote);
 
-document.querySelectorAll('[data-ability]').forEach((button) => {
-  button.onclick = () => fireAbility(button.dataset.ability);
-});
-
 window.addEventListener('keydown', (event) => {
   const typing = event.target.matches('input,textarea,select');
   if (query('#modal').open || query('#garden-modal').open || typing) return;
-  if (event.code === 'Space') {
-    event.preventDefault();
-    paused = !paused;
-    render();
-  }
   const keys = Object.keys(TOWERS);
   const slot = Number(event.key);
   if (Number.isInteger(slot) && slot >= 1 && slot <= keys.length) choose(keys[slot - 1]);
-  for (const [id, ability] of Object.entries(ABILITIES)) {
-    if (event.key.toUpperCase() === ability.key) fireAbility(id);
-  }
-  if (event.key === 'Escape') {
-    aiming = null;
-    pendingPlacement = null;
-    build = null;
-    selected = null;
-    detailKey = '';
-    world.range.visible = false;
-    world.hover.visible = false;
-    world.previewTowers = null;
-    render();
-  }
+  if (event.key === 'Escape') cancelSelection();
 });
 
 window.addEventListener('pagehide', persist);
@@ -940,13 +807,8 @@ document.addEventListener('visibilitychange', () => {
   render();
 });
 
-const WON_TEXT =
-  'Ten stages survived. The wilds are quiet, and your little garden stands.' +
-  ' Try a new layout with a fresh expedition.';
-const LOST_TEXT =
-  'The horde reached your heart. Start a new garden with the ↺ button.' +
-  ' Try a longer maze first, since a longer route means more shots. Then early farm' +
-  ' upgrades, an Ember for shells and wardens, and a Lantern in the middle of your towers.';
+const WON_TEXT = 'All 30 stages cleared.';
+const LOST_TEXT = 'Try a longer maze. Restart from Settings.';
 
 // One animation frame: step the game in fixed slices, draw, react to events, then save.
 function frame(now) {
@@ -963,15 +825,10 @@ function frame(now) {
   world.sync(game, dt);
   for (const event of game.events) {
     if (event.type === 'wave') {
-      toast('Wave survived. Coins earned. Time to tend your garden.');
-      beep(800);
+      toast('Stage cleared');
     }
-    if (event.type === 'stage') {
-      toast(`Stage ${game.stage + 1}: ${STAGES[game.stage][0]}. Your settlement carries on.`);
-    }
-    if (event.type === 'leak') beep(140);
-    if (event.type === 'won') modal('You grew something extraordinary.', WON_TEXT);
-    if (event.type === 'lost') modal('Even gardens need another season.', LOST_TEXT);
+    if (event.type === 'won') modal('Garden protected', WON_TEXT);
+    if (event.type === 'lost') modal('Garden lost', LOST_TEXT);
   }
   game.events = [];
   uiTime += dt;
@@ -997,6 +854,10 @@ if (import.meta.env.DEV) {
       return game;
     },
     world,
+    setPaused(value) {
+      paused = value;
+      render();
+    },
     step(seconds) {
       for (let i = 0; i < seconds * 30; i++) game.tick(1 / 30);
       render();

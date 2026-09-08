@@ -13,6 +13,7 @@
 // The output is deterministic: no clock is read, directories are sorted, and the page is written
 // in one pass. Running it twice gives the same bytes. It is checked before it is written that the
 // page carries no em dash and no tool or model name.
+import { MATERIALS } from '../src/game.js';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -178,10 +179,12 @@ function askLine(dir) {
 // The screenshots. Before is always v1. After is the newest round directory that exists.
 const shotsRoot = 'workbench/shots';
 const shotDirs = isDir(shotsRoot) ? readdirSync(join(root, shotsRoot)).sort() : [];
-const afterDir = shotDirs
-  .filter((name) => /^r\d+$/.test(name) && isDir(join(shotsRoot, name)))
-  .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
-  .pop();
+const afterDir = shotDirs.includes('current')
+  ? 'current'
+  : shotDirs
+      .filter((name) => /^r\d+$/.test(name) && isDir(join(shotsRoot, name)))
+      .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+      .pop();
 const beforeDir = shotDirs.includes('v1') ? 'v1' : null;
 const shotExists = (dir, file) => Boolean(dir) && existsSync(join(root, shotsRoot, dir, file));
 
@@ -206,7 +209,7 @@ function shotPair(id) {
   }
   if (shotExists(afterDir, file)) {
     pieces.push({
-      label: 'After, version 2',
+      label: 'After, current game',
       src: `shots/${afterDir}/${file}`,
       alt: `Version 2: ${caption}`,
     });
@@ -235,14 +238,13 @@ const balance = JSON.parse(
 );
 
 const outcome = (strategy) => {
-  if (strategy.won) return 'won all 10 stages';
-  const stage = (strategy.lostAtStage ?? strategy.stagesCleared) + 1;
-  const wave = strategy.lostAtWave ?? '-';
-  return `lost in stage ${stage}, wave ${wave}`;
+  if (strategy.won) return 'won all 30 stages';
+  const stage = (strategy.lostAtStage ?? strategy.stagesCleared) * 3 + (strategy.lostAtWave ?? 1);
+  return `lost in stage ${stage}`;
 };
 
 const balanceTable =
-  '<div class="scroller"><table><thead><tr>' +
+  '<div class="scroller tw"><table><thead><tr>' +
   ['Strategy', 'Outcome', 'Stages cleared', 'Lives lost', 'Kills', 'What it does']
     .map((cell) => `<th>${cell}</th>`)
     .join('') +
@@ -252,7 +254,7 @@ const balanceTable =
       [
         `<tr><th scope="row"><code>${escape(strategy.name)}</code></th>`,
         `<td>${escape(outcome(strategy))}</td>`,
-        `<td>${strategy.stagesCleared}</td>`,
+        `<td>${strategy.stages.reduce((total, group) => total + group.waves.length, 0) - (strategy.won ? 0 : 1)}</td>`,
         `<td>${strategy.livesLost}</td>`,
         `<td>${strategy.kills}</td>`,
         `<td class="note">${escape(strategy.note || '')}</td></tr>`,
@@ -263,8 +265,25 @@ const balanceTable =
 
 const winners = balance.strategies.filter((strategy) => strategy.won).length;
 const balanceLine =
-  `${winners} of ${balance.strategies.length} scripted strategies win all ten stages, and every` +
+  `${winners} of ${balance.strategies.length} scripted strategies win all 30 stages, and every` +
   ' winner bleeds on the way. That is the whole point of the curve.';
+
+// Current rules are kept separately from immutable round history. Publish the same
+// measured balance and owner instruction on both workbench pages on every rebuild.
+const currentRules = read('workbench/CURRENT-RULES.md');
+if (!currentRules) throw new Error('workbench/CURRENT-RULES.md is missing');
+const currentSection = [
+  '<!-- CURRENT-GAME:START -->',
+  '<section id="current-game">',
+  '<h2>Current game: towers and garden only</h2>',
+  markdown(currentRules.replace(/^# .*\n/, '')),
+  '<p><a href="CURRENT-RULES.md">Current rules source</a> · <a href="balance.json">Measured balance data</a></p>',
+  '<h3>Current scaling results</h3>',
+  `<p>${escape(balanceLine)}</p>`,
+  balanceTable,
+  '</section>',
+  '<!-- CURRENT-GAME:END -->',
+].join('\n');
 
 // One section per round.
 function section(round) {
@@ -313,6 +332,7 @@ function section(round) {
     `<h2><span class="tag">${escape(round.id)}</span> ${escape(title)}</h2>`,
     scoreBlock,
     '</header>',
+    '<p class="note">Historical round record. The current game rules above supersede retired features and old balance results.</p>',
     `<div class="round-body">${body}</div>`,
     '<h3>Before and after</h3>',
     shots,
@@ -396,7 +416,7 @@ footer{padding:clamp(1.5rem,4vw,3rem) clamp(1rem,4vw,3rem); color:var(--soft)}
 `;
 
 const facts = [
-  ['10', 'stages of 3 waves'],
+  ['30', 'stages'],
   ['7', 'pieces to build'],
   ['9', 'creature types'],
   [String(rounds.length), 'rounds of work'],
@@ -422,7 +442,7 @@ const html = [
   '<p>How a small tower defence garden was rebuilt, round by round: what changed, what it',
   ' scored, how it looked before and after, and what the headless simulator says about the',
   ' difficulty curve.</p>',
-  `<nav>${nav}<a href="#balance">balance</a></nav>`,
+  `<nav><a href="#current-game">current rules</a>${nav}<a href="#balance">balance</a></nav>`,
   '</header>',
   '<div class="band tint">',
   '<div class="facts">',
@@ -432,6 +452,7 @@ const html = [
   ),
   '</div>',
   '</div>',
+  currentSection,
   ...rounds.map(section),
   '<section id="balance">',
   '<header class="round-head"><h2><span class="tag">sim</span> The difficulty curve</h2></header>',
@@ -458,6 +479,38 @@ const found = BANNED.filter((word) => strippedOfAssets.toLowerCase().includes(wo
 if (found.length) throw new Error(`the log names a tool or a model: ${found.join(', ')}`);
 
 writeFileSync(join(root, 'workbench/log.html'), html);
+writeFileSync(
+  join(root, 'workbench/balance.json'),
+  JSON.stringify(
+    {
+      playerAbilities: [],
+      referenceStrategy: 'kit-maze',
+      progression: { stages: 30, encountersPerStage: 1, legacyGroupSize: 3 },
+      economy: { payout: 'completed-wave', snapshot: 'wave-start', idleProduction: false, baseHarvestPerLevel: Object.fromEntries(MATERIALS.map((material) => [material.id, material.yield])) },
+      ...balance,
+    },
+    null,
+    2,
+  ) + '\n',
+);
+const operationsPath = join(root, 'workbench/workbench.html');
+if (existsSync(operationsPath)) {
+  let operations = readFileSync(operationsPath, 'utf8');
+  const marker = /<!-- CURRENT-GAME:START -->[\s\S]*?<!-- CURRENT-GAME:END -->/;
+  if (marker.test(operations)) operations = operations.replace(marker, () => currentSection);
+  else {
+    if (!operations.includes('<main id="main">'))
+      throw new Error('Cannot find the operations workbench main section');
+    operations = operations.replace('<main id="main">', '<main id="main">\n' + currentSection);
+  }
+  if (!operations.includes('href="#current-game"')) {
+    operations = operations.replace(
+      '<nav aria-label="Sections">',
+      '<nav aria-label="Sections">\n  <a href="#current-game">Current game rules</a>',
+    );
+  }
+  writeFileSync(operationsPath, operations);
+}
 console.log(
   `wrote workbench/log.html: ${rounds.length} round sections,` +
     ` shots before ${beforeDir || 'none'} and after ${afterDir || 'none'},` +

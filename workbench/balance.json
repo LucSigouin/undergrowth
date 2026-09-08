@@ -1,0 +1,2572 @@
+{
+  "playerAbilities": [],
+  "referenceStrategy": "kit-maze",
+  "progression": {
+    "stages": 30,
+    "encountersPerStage": 1,
+    "legacyGroupSize": 3
+  },
+  "economy": {
+    "payout": "completed-wave",
+    "snapshot": "wave-start",
+    "idleProduction": false,
+    "baseHarvestPerLevel": {
+      "wood": 3,
+      "rock": 3,
+      "iron": 2,
+      "diamond": 1
+    }
+  },
+  "strategies": [
+    {
+      "name": "naive",
+      "note": "A few Thorns beside the straight route. Upgrades when affordable. No farm.",
+      "lostAtStage": 6,
+      "lostAtWave": 3,
+      "won": false,
+      "stalledAt": null,
+      "stagesCleared": 6,
+      "livesEnd": 0,
+      "livesLost": 20,
+      "kills": 305,
+      "stages": [
+        {
+          "stage": 0,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 112,
+          "towers": 7,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 5.4,
+              "coinsEnd": 42
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 7.8,
+              "coinsEnd": 61
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 9.6,
+              "coinsEnd": 112
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 13
+        },
+        {
+          "stage": 1,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 163,
+          "towers": 10,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 9.7,
+              "coinsEnd": 73
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 10.3,
+              "coinsEnd": 93
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 13.9,
+              "coinsEnd": 163
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 13
+        },
+        {
+          "stage": 2,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 383,
+          "towers": 10,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 9.2,
+              "coinsEnd": 150
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 11.3,
+              "coinsEnd": 232
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 12.6,
+              "coinsEnd": 383
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 13
+        },
+        {
+          "stage": 3,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 784,
+          "towers": 10,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 10.4,
+              "coinsEnd": 472
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 14.2,
+              "coinsEnd": 583
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 18,
+              "coinsEnd": 784
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 13
+        },
+        {
+          "stage": 4,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 1220,
+          "towers": 10,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 10.2,
+              "coinsEnd": 878
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 10.6,
+              "coinsEnd": 991
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 15.1,
+              "coinsEnd": 1220
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 13
+        },
+        {
+          "stage": 5,
+          "livesLost": 7,
+          "livesEnd": 13,
+          "coinsEnd": 1653,
+          "towers": 10,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 16.4,
+              "coinsEnd": 1331
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 20.5,
+              "coinsEnd": 1451
+            },
+            {
+              "wave": 3,
+              "livesLost": 7,
+              "seconds": 31.1,
+              "coinsEnd": 1653
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 13
+        },
+        {
+          "stage": 6,
+          "livesLost": 13,
+          "livesEnd": 0,
+          "coinsEnd": 1837,
+          "towers": 10,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 4,
+              "seconds": 18.3,
+              "coinsEnd": 1739
+            },
+            {
+              "wave": 2,
+              "livesLost": 7,
+              "seconds": 23.3,
+              "coinsEnd": 1817
+            },
+            {
+              "wave": 3,
+              "livesLost": 2,
+              "seconds": 12.3,
+              "coinsEnd": 1837
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 13
+        }
+      ]
+    },
+    {
+      "name": "maze",
+      "note": "Serpentine hedge walls with Thorn, Sap and Sunstone in the wall. Buys wood and rock so it can upgrade.",
+      "lostAtStage": 8,
+      "lostAtWave": 2,
+      "won": false,
+      "stalledAt": null,
+      "stagesCleared": 8,
+      "livesEnd": 0,
+      "livesLost": 22,
+      "kills": 471,
+      "stages": [
+        {
+          "stage": 0,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 116,
+          "towers": 15,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 5.4,
+              "coinsEnd": 49
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 7.8,
+              "coinsEnd": 79
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 9.6,
+              "coinsEnd": 116
+            }
+          ],
+          "hedges": 12,
+          "towerLevels": [
+            2,
+            2,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 17
+        },
+        {
+          "stage": 1,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 145,
+          "towers": 27,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 9.7,
+              "coinsEnd": 88
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 11,
+              "coinsEnd": 84
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 14.5,
+              "coinsEnd": 145
+            }
+          ],
+          "hedges": 21,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 33
+        },
+        {
+          "stage": 2,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 157,
+          "towers": 36,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 11.3,
+              "coinsEnd": 83
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 17.1,
+              "coinsEnd": 106
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 20.9,
+              "coinsEnd": 157
+            }
+          ],
+          "hedges": 27,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 45
+        },
+        {
+          "stage": 3,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 204,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 11.2,
+              "coinsEnd": 92
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 14.9,
+              "coinsEnd": 133
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 25,
+              "coinsEnd": 204
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            1,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 4,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 273,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 19.5,
+              "coinsEnd": 103
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 17.8,
+              "coinsEnd": 142
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 21.4,
+              "coinsEnd": 273
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 5,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 487,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 20.3,
+              "coinsEnd": 265
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 24,
+              "coinsEnd": 315
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 38.9,
+              "coinsEnd": 487
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 6,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 963,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 27.4,
+              "coinsEnd": 589
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 34.1,
+              "coinsEnd": 705
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 39.2,
+              "coinsEnd": 963
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 7,
+          "livesLost": 6,
+          "livesEnd": 16,
+          "coinsEnd": 1536,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 18,
+              "coinsEnd": 1091
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 35.7,
+              "coinsEnd": 1253
+            },
+            {
+              "wave": 3,
+              "livesLost": 6,
+              "seconds": 65,
+              "coinsEnd": 1536
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 8,
+          "livesLost": 16,
+          "livesEnd": 0,
+          "coinsEnd": 1773,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 43.8,
+              "coinsEnd": 1700
+            },
+            {
+              "wave": 2,
+              "livesLost": 16,
+              "seconds": 61.9,
+              "coinsEnd": 1773
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        }
+      ]
+    },
+    {
+      "name": "maze-deep",
+      "note": "The maze plan plus the full garden from stage 5, the only way a Sunstone can reach level 3.",
+      "lostAtStage": 9,
+      "lostAtWave": 3,
+      "won": false,
+      "stalledAt": null,
+      "stagesCleared": 9,
+      "livesEnd": 0,
+      "livesLost": 24,
+      "kills": 571,
+      "stages": [
+        {
+          "stage": 0,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 116,
+          "towers": 15,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 5.4,
+              "coinsEnd": 49
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 7.8,
+              "coinsEnd": 79
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 9.6,
+              "coinsEnd": 116
+            }
+          ],
+          "hedges": 12,
+          "towerLevels": [
+            2,
+            2,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 17
+        },
+        {
+          "stage": 1,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 145,
+          "towers": 27,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 9.7,
+              "coinsEnd": 88
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 11,
+              "coinsEnd": 84
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 14.5,
+              "coinsEnd": 145
+            }
+          ],
+          "hedges": 21,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 33
+        },
+        {
+          "stage": 2,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 157,
+          "towers": 36,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 11.3,
+              "coinsEnd": 83
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 17.1,
+              "coinsEnd": 106
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 20.9,
+              "coinsEnd": 157
+            }
+          ],
+          "hedges": 27,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 45
+        },
+        {
+          "stage": 3,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 204,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 11.2,
+              "coinsEnd": 92
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 14.9,
+              "coinsEnd": 133
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 25,
+              "coinsEnd": 204
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            1,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 4,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 230,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 20.6,
+              "coinsEnd": 108
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 20.1,
+              "coinsEnd": 151
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 31.5,
+              "coinsEnd": 230
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 5,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 282,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 28.1,
+              "coinsEnd": 112
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 31.5,
+              "coinsEnd": 132
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 55,
+              "coinsEnd": 282
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 6,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 261,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 26,
+              "coinsEnd": 125
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 33.9,
+              "coinsEnd": 122
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 37.6,
+              "coinsEnd": 261
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 7,
+          "livesLost": 2,
+          "livesEnd": 20,
+          "coinsEnd": 616,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 16.8,
+              "coinsEnd": 151
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 34.2,
+              "coinsEnd": 313
+            },
+            {
+              "wave": 3,
+              "livesLost": 2,
+              "seconds": 57.2,
+              "coinsEnd": 616
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 8,
+          "livesLost": 19,
+          "livesEnd": 3,
+          "coinsEnd": 1281,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 39.6,
+              "coinsEnd": 780
+            },
+            {
+              "wave": 2,
+              "livesLost": 13,
+              "seconds": 63,
+              "coinsEnd": 925
+            },
+            {
+              "wave": 3,
+              "livesLost": 6,
+              "seconds": 70.8,
+              "coinsEnd": 1281
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 9,
+          "livesLost": 3,
+          "livesEnd": 0,
+          "coinsEnd": 1655,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 61.2,
+              "coinsEnd": 1424
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 52.6,
+              "coinsEnd": 1572
+            },
+            {
+              "wave": 3,
+              "livesLost": 3,
+              "seconds": 68.9,
+              "coinsEnd": 1655
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        }
+      ]
+    },
+    {
+      "name": "farm-first",
+      "note": "Wood then rock then iron then diamond, fully upgraded, before any tower is bought.",
+      "lostAtStage": 0,
+      "lostAtWave": 3,
+      "won": false,
+      "stalledAt": null,
+      "stagesCleared": 0,
+      "livesEnd": 0,
+      "livesLost": 20,
+      "kills": 0,
+      "stages": [
+        {
+          "stage": 0,
+          "livesLost": 20,
+          "livesEnd": 0,
+          "coinsEnd": 1,
+          "towers": 0,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 6,
+              "seconds": 16.8,
+              "coinsEnd": 28
+            },
+            {
+              "wave": 2,
+              "livesLost": 9,
+              "seconds": 19.2,
+              "coinsEnd": 46
+            },
+            {
+              "wave": 3,
+              "livesLost": 5,
+              "seconds": 14.9,
+              "coinsEnd": 1
+            }
+          ],
+          "hedges": 0,
+          "towerLevels": [],
+          "farms": [
+            3,
+            1,
+            0,
+            0
+          ],
+          "routeLength": 13
+        }
+      ]
+    },
+    {
+      "name": "farm-lite",
+      "note": "Two Thorns first, then the wood and rock plots, then the maze. Farming without going undefended.",
+      "lostAtStage": 8,
+      "lostAtWave": 2,
+      "won": false,
+      "stalledAt": null,
+      "stagesCleared": 8,
+      "livesEnd": 0,
+      "livesLost": 21,
+      "kills": 462,
+      "stages": [
+        {
+          "stage": 0,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 147,
+          "towers": 12,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 5.4,
+              "coinsEnd": 55
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 7.8,
+              "coinsEnd": 68
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 9.6,
+              "coinsEnd": 147
+            }
+          ],
+          "hedges": 10,
+          "towerLevels": [
+            2,
+            2
+          ],
+          "farms": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 19
+        },
+        {
+          "stage": 1,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 182,
+          "towers": 14,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 10.2,
+              "coinsEnd": 83
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 12.2,
+              "coinsEnd": 108
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 16.2,
+              "coinsEnd": 182
+            }
+          ],
+          "hedges": 12,
+          "towerLevels": [
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 21
+        },
+        {
+          "stage": 2,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 161,
+          "towers": 35,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 13,
+              "coinsEnd": 73
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 12.2,
+              "coinsEnd": 95
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 18.7,
+              "coinsEnd": 161
+            }
+          ],
+          "hedges": 29,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 23
+        },
+        {
+          "stage": 3,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 217,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 11.3,
+              "coinsEnd": 100
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 14.3,
+              "coinsEnd": 116
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 24.2,
+              "coinsEnd": 217
+            }
+          ],
+          "hedges": 29,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 31
+        },
+        {
+          "stage": 4,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 239,
+          "towers": 41,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 19.7,
+              "coinsEnd": 97
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 17.6,
+              "coinsEnd": 115
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 21.4,
+              "coinsEnd": 239
+            }
+          ],
+          "hedges": 29,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 37
+        },
+        {
+          "stage": 5,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 277,
+          "towers": 41,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 19.4,
+              "coinsEnd": 132
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 23.8,
+              "coinsEnd": 154
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 36.3,
+              "coinsEnd": 277
+            }
+          ],
+          "hedges": 29,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 37
+        },
+        {
+          "stage": 6,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 753,
+          "towers": 41,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 20.2,
+              "coinsEnd": 379
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 25.8,
+              "coinsEnd": 495
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 27.9,
+              "coinsEnd": 753
+            }
+          ],
+          "hedges": 29,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 37
+        },
+        {
+          "stage": 7,
+          "livesLost": 3,
+          "livesEnd": 18,
+          "coinsEnd": 1321,
+          "towers": 41,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 16.9,
+              "coinsEnd": 881
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 30.6,
+              "coinsEnd": 1043
+            },
+            {
+              "wave": 3,
+              "livesLost": 3,
+              "seconds": 55.3,
+              "coinsEnd": 1321
+            }
+          ],
+          "hedges": 29,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 37
+        },
+        {
+          "stage": 8,
+          "livesLost": 18,
+          "livesEnd": 0,
+          "coinsEnd": 1554,
+          "towers": 41,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 30.6,
+              "coinsEnd": 1485
+            },
+            {
+              "wave": 2,
+              "livesLost": 18,
+              "seconds": 42.3,
+              "coinsEnd": 1554
+            }
+          ],
+          "hedges": 29,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 37
+        }
+      ]
+    },
+    {
+      "name": "reach-maze",
+      "note": "The maze plan with the reach upgrade branch instead of power. Shows what the damage cap costs.",
+      "lostAtStage": 7,
+      "lostAtWave": 3,
+      "won": false,
+      "stalledAt": null,
+      "stagesCleared": 7,
+      "livesEnd": 0,
+      "livesLost": 20,
+      "kills": 404,
+      "stages": [
+        {
+          "stage": 0,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 116,
+          "towers": 15,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 5.4,
+              "coinsEnd": 49
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 7.8,
+              "coinsEnd": 79
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 9.6,
+              "coinsEnd": 116
+            }
+          ],
+          "hedges": 12,
+          "towerLevels": [
+            2,
+            2,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 17
+        },
+        {
+          "stage": 1,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 145,
+          "towers": 27,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 9.7,
+              "coinsEnd": 88
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 10.3,
+              "coinsEnd": 84
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 14.6,
+              "coinsEnd": 145
+            }
+          ],
+          "hedges": 21,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 33
+        },
+        {
+          "stage": 2,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 157,
+          "towers": 36,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 14.4,
+              "coinsEnd": 83
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 21.3,
+              "coinsEnd": 106
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 23.7,
+              "coinsEnd": 157
+            }
+          ],
+          "hedges": 27,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 45
+        },
+        {
+          "stage": 3,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 204,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 11.7,
+              "coinsEnd": 92
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 15.3,
+              "coinsEnd": 133
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 28.2,
+              "coinsEnd": 204
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            1,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 4,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 273,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 16.7,
+              "coinsEnd": 103
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 20.9,
+              "coinsEnd": 142
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 26.7,
+              "coinsEnd": 273
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 5,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 487,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 25.5,
+              "coinsEnd": 265
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 26.6,
+              "coinsEnd": 315
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 50.2,
+              "coinsEnd": 487
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 6,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 963,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 30.4,
+              "coinsEnd": 589
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 37.5,
+              "coinsEnd": 705
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 41.5,
+              "coinsEnd": 963
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 7,
+          "livesLost": 20,
+          "livesEnd": 0,
+          "coinsEnd": 1307,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 22.9,
+              "coinsEnd": 1091
+            },
+            {
+              "wave": 2,
+              "livesLost": 5,
+              "seconds": 39.5,
+              "coinsEnd": 1228
+            },
+            {
+              "wave": 3,
+              "livesLost": 15,
+              "seconds": 76.7,
+              "coinsEnd": 1307
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "routeLength": 53
+        }
+      ]
+    },
+    {
+      "name": "kit-maze",
+      "note": "The r2 maze: the same walls and slots, but with two Embers and a Lantern. No abilities.",
+      "lostAtStage": null,
+      "lostAtWave": null,
+      "won": true,
+      "stalledAt": null,
+      "stagesCleared": 10,
+      "livesEnd": 17,
+      "livesLost": 7,
+      "kills": 597,
+      "stages": [
+        {
+          "stage": 0,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 116,
+          "towers": 15,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 5.4,
+              "coinsEnd": 49
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 7.8,
+              "coinsEnd": 79
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 9.6,
+              "coinsEnd": 116
+            }
+          ],
+          "hedges": 12,
+          "towerLevels": [
+            2,
+            2,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 17
+        },
+        {
+          "stage": 1,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 160,
+          "towers": 26,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 9.7,
+              "coinsEnd": 78
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 11,
+              "coinsEnd": 74
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 14.5,
+              "coinsEnd": 160
+            }
+          ],
+          "hedges": 21,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            1,
+            1
+          ],
+          "farms": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 27
+        },
+        {
+          "stage": 2,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 157,
+          "towers": 34,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 12.4,
+              "coinsEnd": 63
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 17.1,
+              "coinsEnd": 86
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 22.7,
+              "coinsEnd": 157
+            }
+          ],
+          "hedges": 27,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 33
+        },
+        {
+          "stage": 3,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 214,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 11.7,
+              "coinsEnd": 97
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 15,
+              "coinsEnd": 113
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 25.6,
+              "coinsEnd": 214
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 4,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 230,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 20.5,
+              "coinsEnd": 148
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 22.1,
+              "coinsEnd": 151
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 40.1,
+              "coinsEnd": 230
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            0
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 5,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 282,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 29.8,
+              "coinsEnd": 112
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 34.5,
+              "coinsEnd": 132
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 59.4,
+              "coinsEnd": 282
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            2,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 6,
+          "livesLost": 0,
+          "livesEnd": 20,
+          "coinsEnd": 282,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 36.8,
+              "coinsEnd": 146
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 40.7,
+              "coinsEnd": 143
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 41.8,
+              "coinsEnd": 282
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 7,
+          "livesLost": 3,
+          "livesEnd": 19,
+          "coinsEnd": 303,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 17.3,
+              "coinsEnd": 130
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 36,
+              "coinsEnd": 180
+            },
+            {
+              "wave": 3,
+              "livesLost": 3,
+              "seconds": 53.1,
+              "coinsEnd": 303
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 8,
+          "livesLost": 1,
+          "livesEnd": 20,
+          "coinsEnd": 905,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 38.5,
+              "coinsEnd": 327
+            },
+            {
+              "wave": 2,
+              "livesLost": 1,
+              "seconds": 59.8,
+              "coinsEnd": 528
+            },
+            {
+              "wave": 3,
+              "livesLost": 0,
+              "seconds": 65.4,
+              "coinsEnd": 905
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        },
+        {
+          "stage": 9,
+          "livesLost": 3,
+          "livesEnd": 17,
+          "coinsEnd": 1528,
+          "towers": 40,
+          "waves": [
+            {
+              "wave": 1,
+              "livesLost": 0,
+              "seconds": 44.9,
+              "coinsEnd": 1048
+            },
+            {
+              "wave": 2,
+              "livesLost": 0,
+              "seconds": 46.5,
+              "coinsEnd": 1196
+            },
+            {
+              "wave": 3,
+              "livesLost": 3,
+              "seconds": 100.5,
+              "coinsEnd": 1528
+            }
+          ],
+          "hedges": 30,
+          "towerLevels": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "farms": [
+            3,
+            2,
+            2,
+            2
+          ],
+          "routeLength": 53
+        }
+      ]
+    }
+  ]
+}

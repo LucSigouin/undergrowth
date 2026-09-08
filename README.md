@@ -13,11 +13,24 @@ Open http://localhost:5173. Requires a browser with WebGL enabled.
 
 ## How to play
 
-Choose a defense with the toolbar or keys 1 to 7, then click a meadow square. Click an existing tower to upgrade or reclaim it. Space pauses, Escape leaves build mode.
+Choose a defense with the toolbar or keys 1 to 7, then click a meadow square. A translucent tower previews the placement and turns red if blocked; on phones it remains until you confirm or cancel. Click an existing tower to upgrade or reclaim it. Right-click or Escape cancels selection and placement previews.
 
-**A longer route means more shots.** This is the whole game. A hedge costs 8 coins and bends the dotted line the horde walks, and every extra square is more seconds under your towers. The straight route is 13 squares. A good maze is over 50. No amount of damage makes up for skipping this, and the first stage says so out loud.
+Costs use the resource icons from the HUD. Red counts show **owned / required**; hover an
+icon for its resource name. Upgrade panels keep the stats and costs compact. The **ⓘ**
+button opens tower details when needed.
 
-**The garden pays for level 3.** Buy the first wood plot for 25 coins; it collects 3 wood every 10 seconds, including during combat. Coin upgrades increase output. Unlock and buy Rock, Iron, and Diamond plots in order. The level 1 to 2 upgrade of a tower costs coins only, so you are never locked out of growing at all, but level 3 needs wood and rock, and those only come from a plot. When you cannot afford an upgrade the detail panel names the material you are short of and where it comes from.
+The **⚙ Settings** button contains the enemy-route toggle, restart, help, and autosave
+status. Route visibility is remembered across reloads. Autosave runs quietly. There is no
+wave-preview or music control. Settings and information panels pause combat while open.
+
+Towers prioritize the enemy with the shortest remaining route to the gate. Flying enemies
+use their direct route. Upgrade buttons show damage or support boost and range before and
+after purchase. Lantern has one growth path that improves both its boost and coverage;
+previously purchased Power Lanterns automatically gain the same coverage when loaded.
+
+**A longer route means more shots.** This is the whole game. A hedge costs 8 coins and bends the dotted line the horde walks, and every extra square is more seconds under your towers. The straight route is 13 squares. A good maze is over 50. No amount of damage makes up for skipping this.
+
+**The garden pays for level 3.** Buy the first wood plot for 25 coins; it harvests 3 wood per completed stage per farm level. Rock yields 3, Iron 2, and Diamond 1 per level. Farm levels at stage start fix that stage’s payout; purchases and upgrades during combat apply next stage. Waiting produces nothing. Coin upgrades increase output. Unlock and buy Rock, Iron, and Diamond plots in order. The level 1 to 2 upgrade of a tower costs coins only, so you are never locked out of growing at all, but level 3 needs wood and rock, and those only come from a plot. When you cannot afford an upgrade the cost icons show owned/required counts for missing resources.
 
 ### The seven pieces
 
@@ -34,15 +47,6 @@ Choose a defense with the toolbar or keys 1 to 7, then click a meadow square. Cl
 ### The horde
 
 Grubs walk. Runners are fast. Beetles wear armor and only Sunstone cuts through it cleanly. Moths fly straight over the maze, so the direct line still needs cover. A brood sac bursts into three grublings when it dies, which is why Bloom bursts clear them best. A warden ignores sap entirely and shields every enemy within about two squares of it, and only Ember burning gets past that shield.
-
-### Abilities
-
-Two abilities are always available and cost nothing but time.
-
-- **Rootgrip (Q)**, 45 second cooldown. Holds every walking enemy still for 3 seconds. Moths keep flying.
-- **Sunburst (E)**, 38 second cooldown. Arms a burst, then you pick the square. Everything within 3 squares of it takes damage that ignores armor.
-
-Both buttons sit over the top right of the board, work with a tap on a phone, show the seconds left while they recharge, and are saved with the game, so a cooldown survives a reload.
 
 ## Deploy
 
@@ -66,10 +70,24 @@ server. `npm run check:ship` checks that the project is in a shippable state.
 
 ## Development
 
-`npm test` checks routing, economy, combat, the wave table, the new enemies, towers and abilities, persistence, and campaign progression. `node tests/golden.mjs` replays a fixed scripted game and fails on any behaviour drift. `node tools/balance-sim.mjs` plays every scripted strategy headless and prints the per stage tables; `--experiments` compares constant changes. `node tests/balance-gate.mjs` checks the difficulty targets. `npm run build` creates a static deployable `dist/` folder. All 3D models are generated locally from geometry; fonts have system fallbacks. No backend or account required.
+`npm test` checks routing, economy, combat, the wave table, the enemies and towers, persistence, and campaign progression. `node tests/golden.mjs` replays a fixed scripted game and fails on any behaviour drift. `node tools/balance-sim.mjs` plays every scripted strategy headless and prints the per stage tables; `--experiments` compares constant changes. `node tests/balance-gate.mjs` checks the difficulty targets. `npm run build` creates a static deployable `dist/` folder. All 3D models are generated locally from geometry; fonts have system fallbacks. No backend or account required.
 
-The desktop map occupies 75% of the width. The sidebar holds coins, the seven defenses and the wave control, and it never scrolls at any window size. Point at a defense card, or reach it with the keyboard, and a small note gives its effect, its tip and its level 1 numbers. Your wood, rock, iron and diamond sit on the map itself, in the top band on the right beside the stage and lives chip; click one to jump to the plot that makes it. Phones use a compact resource row, a bottom tower tray in portrait, and a compact side tray in landscape. Tap a resource to open its garden controls. Tap a square, then confirm placement. Pinch or use + to zoom, drag to pan when zoomed, and use the fit button to return to the full board. Portrait mode turns the straight board vertically to make squares larger. The ⋯ menu contains help, sound, and restart. Open the dev server's Network URL from a phone on the same Wi-Fi.
+The map runs vertically from the entrance at the top to the exit at the bottom on every screen. Undergrowth sits at the top left; stage and lives precede gold and materials on the right, with Settings at the far end. The bottom bar has Start, Pause/Resume, and Speed (1×, 2×, 3×) buttons. Click a material to manage its farm; farm cards use large clickable material icons with prices underneath and a per-stage harvest badge, without visible names or levels. The sidebar presents defenses in a two-column grid with large icons, names, and coin costs. Farm cards form a second grid anchored below defenses, above the wave button. In short desktop windows, defenses scroll independently to keep farms and the wave button accessible. Keyboard shortcuts still work but are not printed on the cards. Hover or focus a card for details. Phones use a two-row defense grid in portrait and a side grid in landscape. Tap a resource to open farm controls. Tap a square, then confirm placement. Pinch or use + to zoom, drag to pan when zoomed, and use the fit button to return to the full board. The ⚙ Settings menu contains help, route visibility, restart, and autosave status.
 
-Plot unlock prices are 60 / 110 / 180 coins. Version 1 and version 2 saves both migrate forward: the expedition is preserved, old version 1 materials convert to wood and rock, replaced version 1 garden buildings are refunded, and version 2 saves keep every tower, farm, stage and coin while gaining the two ability clocks.
+
+Plot unlock prices are 60 / 110 / 180 coins. Saves from versions 1 through 4 migrate to
+version 5 without resetting the expedition. Old materials and garden buildings still migrate;
+Old live saves use their saved farm levels for their first harvest; old production timers are discarded. Retired ability timers and root effects are discarded.
+
+## Current balance rules
+
+Rootgrip and Sunburst have been removed. Play uses towers, maze building, upgrades, and the
+garden only. Difficulty tuning must not assume player abilities, emergency spells, or Q/E
+shortcuts. The `kit-maze` strategy is the current winning reference, without player abilities.
+Read [workbench/CURRENT-RULES.md](workbench/CURRENT-RULES.md) before changing scaling.
+`npm run log` refreshes the current rules and measured balance table in both workbench pages.
+Old round reports are historical and can mention features that are no longer present.
 
 See CHANGELOG.md for what changed in round r2 and why.
+
+The campaign displays 30 stages, one encounter per stage, with no creature counter. Existing saves and balance keep their internal ten-group structure; the interface and current workbench tables convert that to stages 1–30.
