@@ -1,0 +1,1 @@
+red-proof: 2026-09-07 GARDEN_URL=http://localhost:5174 node tests/layout-gate.mjs on commit 11f3de2 -> exit 1 "LAYOUT GATE RED" with 24 failures across 5 desktop sizes (sidebar-scroll scrolls, 5 controls cut off at <=1536x864, materials not in #scene, detail panel visible with nothing selected). Green requires the layout change.
