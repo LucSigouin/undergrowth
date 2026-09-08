@@ -1,5 +1,15 @@
 # Changelog
 
+## Layout gate green again, 2026-09-08
+
+- Short desktop windows (1366x768, 1280x720) no longer scroll the build column. Card rows share
+  the height evenly and farm cards and icons shrink under 800px of height.
+- `tests/layout-gate.mjs` now expects the materials in the top header, where the 2026-09-08
+  decision put them, instead of on the map.
+- README, DECISIONS and CURRENT-RULES no longer describe a scrolling side pane. The README
+  intro says 30 stages, matching the interface.
+- Added the MIT licence for the public GitHub repository.
+
 ## Tower placement previews, 2026-09-08
 
 - Show translucent versions of all seven towers while aiming placement.
@@ -35,7 +45,7 @@
 - Rotated the map on every screen: entry at the top, exit at the bottom.
 - Moved desktop farms into a two-column grid at the bottom of the side pane.
 - Kept resource totals in the header and phone farm controls in their sheet.
-- Short desktop windows scroll defenses independently; farms and wave controls stay available.
+- Short desktop windows shrink the cards so nothing scrolls (fixed 2026-09-08, see below).
 
 ## Resource header and defense grid, 2026-09-08
 

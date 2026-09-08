@@ -2,7 +2,8 @@
 //   GARDEN_URL=http://localhost:5174 node tests/layout-gate.mjs
 // Checks, at several common desktop sizes and the phone layout:
 //  1. the page and the sidebar (and everything inside it) never need to scroll
-//  2. the materials (wood, rock, iron, diamond) live on the map as a HUD, next to stage and lives
+//  2. the materials (wood, rock, iron, diamond) sit in the top header beside stage, lives and gold
+//     (moved off the map by the 2026-09-08 decision in DECISIONS.md)
 //  3. no "Before you build" panel: with nothing selected the detail panel is hidden, and hovering a
 //     tower card shows a note (a title attribute or a visible popover)
 import {chromium} from '@playwright/test';
@@ -57,18 +58,18 @@ for (const size of sizes) {
   if (scroll.clipped > 0) fail(size, `${scroll.clipped} sidebar controls are cut off by the window edge`);
 
   const hud = await page.evaluate(() => {
-    const scene = document.querySelector('#scene');
+    const header = document.querySelector('.resource-header');
     const ok = ['wood', 'rock', 'iron', 'diamond'].every(id => {
       const el = document.getElementById(id);
-      return el && scene?.contains(el) && el.getBoundingClientRect().width > 0;
+      return el && header?.contains(el) && el.getBoundingClientRect().width > 0;
     });
     const stage = document.querySelector('#stage-number')?.getBoundingClientRect();
     const wood = document.getElementById('wood')?.getBoundingClientRect();
     const sameBand = stage && wood && Math.abs(stage.top - wood.top) < 60;
     return {ok, sameBand};
   });
-  if (!hud.ok) fail(size, 'materials (#wood #rock #iron #diamond) are not visible inside the map area (#scene)');
-  if (!hud.sameBand) fail(size, 'materials HUD is not in the same top band as stage and lives');
+  if (!hud.ok) fail(size, 'materials (#wood #rock #iron #diamond) are not visible inside the top header (.resource-header)');
+  if (!hud.sameBand) fail(size, 'materials are not in the same top band as stage and lives');
 
   const detailHidden = await page.evaluate(() => {
     const d = document.querySelector('#detail');

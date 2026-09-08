@@ -25,7 +25,7 @@ Harvest timing, enemy order, and every-third-encounter bonuses are unchanged.
 
 Current layout: the board runs vertically, entrance at the top and exit at the bottom,
 on every screen. Desktop farm cards form a two-column grid at the bottom of the side pane,
-below defenses and above the wave button. Short windows can scroll defenses independently.
+below defenses and above the wave button. The side pane never scrolls; short windows shrink the cards.
 No Garden or Undergrowth headings. Gold and materials share a top-right
 header. Defenses use large-icon grid cards without visible keyboard shortcuts. Material
 harvests appear on the same row as each farm name, aligned right, with no level label.
