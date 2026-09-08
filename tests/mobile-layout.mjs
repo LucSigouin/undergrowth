@@ -52,7 +52,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       '#pause',
       '#speed',
       '[data-build="thorn"]',
-      '[data-hud-garden="0"]',
+      '[data-hud-works="0"]',
       '#tower-info',
       '#settings',
     ];
@@ -63,7 +63,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       assert.ok(tallEnough, selector);
     }
     await page.screenshot({ path: `test-results/${name}-mobile-${viewport.width}.png` });
-    // Choosing a piece offers an explanation before spending any coins.
+    // Choosing an engine offers an explanation before spending any coins.
     await page.locator('[data-build="sap"]').tap();
     await page.locator('#tower-info').tap();
     assert.match(await page.locator('#modal').textContent(), /52% for 2.2 seconds/);
@@ -72,10 +72,10 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     await page.locator('#modal-ok').tap();
     assert.equal(await page.locator('[data-build="sap"]').getAttribute('aria-pressed'), 'true');
     await page.locator('[data-build="thorn"]').tap();
-    await page.locator('[data-hud-garden="0"]').tap();
+    await page.locator('[data-hud-works="0"]').tap();
     await page.locator('[data-farm="0"]').tap();
     assert.equal(await page.evaluate(() => window.__garden.game.farms[0].level), 1);
-    await page.locator('#close-garden').tap();
+    await page.locator('#close-works').tap();
     const cell = await page.evaluate(() => window.__garden.world.cellScreen(3, 3));
     await page.touchscreen.tap(cell.x, cell.y);
     assert.equal(await page.evaluate(() => window.__garden.game.towers.length), 0);
@@ -117,7 +117,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
     assert.deepEqual(errors, []);
     console.log(
       `${name} ${viewport.width}×${viewport.height}: layout, 44px controls,` +
-        ' garden purchase, placement preview/confirm, zoom, tower details,' +
+        ' works purchase, placement preview/confirm, zoom, engine details,' +
         ' real-time stage, menu checked.',
     );
     await context.close();

@@ -24,3 +24,10 @@ workbench/fleet.html
 fleet-r6-art/gallery.html
 fleet-r6-art/gallery-data.js
 fleet-r6-art/.gallery-cache/
+
+fleet-r7-medieval/*/candidates/
+fleet-r7-medieval/*/*.png
+!fleet-r7-medieval/*/*@*.png
+fleet-r7-medieval/gallery.html
+fleet-r7-medieval/gallery-data.js
+fleet-r7-medieval/.gallery-cache/

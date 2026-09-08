@@ -1,5 +1,5 @@
 // Unit tests for the rules engine in src/game.js. They cover routing, building,
-// the garden economy, save migration, real combat, campaign progression, and the
+// the works economy, save migration, real combat, campaign progression, and the
 // events the renderer listens to. Nothing here touches a browser.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -33,7 +33,7 @@ test('burn kills at the gate pay once without costing a life', () => {
   assert.equal(game.kills, 1);
 });
 
-test('towers prioritize remaining maze distance and account for flying enemies', () => {
+test('engines prioritize remaining maze distance and account for flying enemies', () => {
   const game = new Game();
   game.coins = 5000;
   for (let z = 1; z < 9; z++) game.place('hedge', 9, z);
@@ -92,7 +92,7 @@ test('target priority includes the unfinished movement segment', () => {
   assert.equal(nearer.hp, 973);
 });
 
-test('Lantern growth and old power purchases use the same useful coverage path', () => {
+test('War banner growth and old power purchases use the same useful coverage path', () => {
   const game = new Game();
   game.place('lantern', 5, 4);
   const lamp = game.towers[0];
@@ -127,7 +127,7 @@ test('cannot build under an enemy or its next movement target', () => {
   assert.match(game.place('thorn', 4, 4), /creature/);
 });
 
-test('garden starts empty with only the wood plot available', () => {
+test('the works start empty with only the sawmill available', () => {
   const game = new Game();
   assert.equal(game.unlockedPlots, 1);
   assert.deepEqual(game.farms, [null, null, null, null]);
@@ -141,7 +141,7 @@ test('garden starts empty with only the wood plot available', () => {
   assert.equal(game.farms[0].type, 'wood');
 });
 
-test('money buys and upgrades harvests paid after combat', () => {
+test('money buys and upgrades payouts made after combat', () => {
   const game = new Game();
   game.farm(0);
   game.farm(0);
@@ -190,7 +190,7 @@ test('locked resources unlock sequentially and do not produce until purchased', 
   assert.equal(game.unlockedPlots, 4);
 });
 
-test('insufficient coins and maximum upgrades cannot charge or change a plot', () => {
+test('insufficient coins and maximum upgrades cannot charge or change a building', () => {
   const game = new Game();
   game.coins = 24;
   assert.match(game.farm(0), /coins/);
@@ -208,7 +208,7 @@ test('insufficient coins and maximum upgrades cannot charge or change a plot', (
   assert.equal(game.unlockedPlots, 1);
 });
 
-test('old save migration preserves expedition and refunds replaced gardens', () => {
+test('old save migration preserves the siege and refunds replaced buildings', () => {
   const old = {
     version: 1,
     stage: 4,
@@ -247,16 +247,16 @@ test('real combat earns kills and completes a wave', () => {
   assert.equal(game.wave, 1);
 });
 
-test('flying enemies ignore maze and armored enemies resist thorn damage', () => {
+test('flying enemies ignore the maze and armored enemies resist ballista bolts', () => {
   const game = new Game();
-  const moth = game.enemy('moth');
-  assert.equal(moth.flying, true);
+  const gargoyle = game.enemy('moth');
+  assert.equal(gargoyle.flying, true);
   const armor = game.enemy('armor');
   assert.ok(armor.hp > game.enemy('grub').hp);
   game.coins = 1000;
   for (let z = 0; z < 8; z++) game.place('hedge', 6, z);
   game.active = true;
-  game.enemies = [moth];
+  game.enemies = [gargoyle];
   for (let i = 0; i < 400; i++) game.tick(1 / 30);
   assert.equal(game.lives, 19);
 });
@@ -275,7 +275,7 @@ test('save resumes a live wave deterministically', () => {
   assert.deepEqual(JSON.parse(original.serialize()), JSON.parse(restored.serialize()));
 });
 
-test('thirty cleared waves finish ten stages while preserving settlement', () => {
+test('thirty cleared waves finish ten stages while preserving the keep', () => {
   const game = new Game();
   game.place('thorn', 4, 3);
   game.farm(0);
@@ -307,7 +307,7 @@ test('loss stops further simulation', () => {
   assert.equal(game.serialize(), before);
 });
 
-test('tower shots retain their event type so the renderer can draw attacks', () => {
+test('engine shots retain their event type so the renderer can draw attacks', () => {
   const game = new Game();
   game.place('thorn', 1, 3);
   game.start();
@@ -321,15 +321,15 @@ test('waves come from the hand written table and match the stage they belong to'
   const game = new Game();
   assert.equal(WAVES.length, 30);
   assert.deepEqual(game.waveQueue(0, 1), Array(6).fill('grub'));
-  // Stage 3 is Shell season, so armor has to be in all three of its waves.
+  // Stage 3 is Iron season, so armor has to be in all three of its waves.
   for (const wave of [1, 2, 3]) assert.ok(game.waveQueue(2, wave).includes('armor'));
-  // Stage 4 is On the breeze, so every wave has to carry moths.
+  // Stage 4 is Wings over the wall, so every wave has to carry gargoyles.
   for (const wave of [1, 2, 3]) assert.ok(game.waveQueue(3, wave).includes('moth'));
-  // Stage 5 is where brood sacs start, and stage 7 is where wardens start.
+  // Stage 5 is where war wagons start, and stage 7 is where paladins start.
   assert.ok(game.waveQueue(4, 1).includes('brood'));
   assert.ok(game.waveQueue(6, 1).includes('warden'));
   assert.ok(!game.waveQueue(3, 3).includes('warden'));
-  // Bosses only walk in on the stages whose text says so: 6, 9 and 10.
+  // Warlords only march in on the stages whose text says so: 6, 9 and 10.
   const bossWaves = [];
   for (let stage = 0; stage < 10; stage++) {
     for (let wave = 1; wave <= 3; wave++) {
@@ -354,23 +354,23 @@ test('a wave releases its enemies in table order at the pace the table asks for'
   assert.equal(game.enemies.length, entry.burst * 2);
 });
 
-test('a brood sac bursts into three grublings where it died', () => {
+test('a war wagon breaks open into three whelps where it died', () => {
   const game = new Game();
   game.active = true;
-  const brood = { ...game.enemy('brood'), x: 5, z: 4, hp: 0 };
-  game.enemies = [brood];
+  const wagon = { ...game.enemy('brood'), x: 5, z: 4, hp: 0 };
+  game.enemies = [wagon];
   game.tick(1 / 30);
   const litter = game.enemies.filter((enemy) => enemy.kind === 'grubling');
   assert.equal(litter.length, 3);
   assert.ok(Math.abs(litter[0].x - 5) < 0.2);
-  assert.ok(litter[0].maxHp < brood.maxHp);
+  assert.ok(litter[0].maxHp < wagon.maxHp);
   assert.equal(
     game.enemies.some((enemy) => enemy.kind === 'brood'),
     false,
   );
 });
 
-test('bloom clears a whole litter in one burst, which a thorn cannot', () => {
+test('a catapult clears a whole litter in one shot, which a ballista cannot', () => {
   const near = (game) => {
     game.active = true;
     game.enemies = [0, 0.4, -0.4].map((offset) => ({
@@ -379,32 +379,32 @@ test('bloom clears a whole litter in one burst, which a thorn cannot', () => {
       z: 4,
     }));
   };
-  const withBloom = new Game();
-  withBloom.coins = 500;
-  withBloom.place('bloom', 5, 3);
-  near(withBloom);
-  const withThorn = new Game();
-  withThorn.coins = 500;
-  withThorn.place('thorn', 5, 3);
-  near(withThorn);
-  withBloom.tick(1 / 30);
-  withThorn.tick(1 / 30);
-  assert.equal(withBloom.kills, 3);
-  assert.equal(withThorn.kills, 1);
+  const withCatapult = new Game();
+  withCatapult.coins = 500;
+  withCatapult.place('bloom', 5, 3);
+  near(withCatapult);
+  const withBallista = new Game();
+  withBallista.coins = 500;
+  withBallista.place('thorn', 5, 3);
+  near(withBallista);
+  withCatapult.tick(1 / 30);
+  withBallista.tick(1 / 30);
+  assert.equal(withCatapult.kills, 3);
+  assert.equal(withBallista.kills, 1);
 });
 
-test('a warden ignores sap and shields the enemy standing beside it', () => {
+test('a paladin ignores tar and shields the enemy standing beside it', () => {
   const game = new Game();
   game.coins = 500;
   game.place('sap', 5, 3);
   game.active = true;
-  const warden = { ...game.enemy('warden'), x: 5, z: 4 };
-  const grub = { ...game.enemy('grub'), x: 5.3, z: 4 };
-  game.enemies = [warden, grub];
-  assert.equal(game.shieldFactor(grub) < 1, true);
-  assert.equal(game.shieldFactor(warden), 1);
+  const paladin = { ...game.enemy('warden'), x: 5, z: 4 };
+  const goblin = { ...game.enemy('grub'), x: 5.3, z: 4 };
+  game.enemies = [paladin, goblin];
+  assert.equal(game.shieldFactor(goblin) < 1, true);
+  assert.equal(game.shieldFactor(paladin), 1);
   game.tick(1 / 30);
-  assert.equal(warden.slow, 0);
+  assert.equal(paladin.slow, 0);
   const alone = new Game();
   alone.active = true;
   const lonely = { ...alone.enemy('grub'), x: 5.3, z: 4 };
@@ -412,32 +412,32 @@ test('a warden ignores sap and shields the enemy standing beside it', () => {
   assert.equal(alone.shieldFactor(lonely), 1);
 });
 
-test('ember burning keeps working after the shot and ignores armor and shields', () => {
+test('brazier burning keeps working after the shot and ignores armor and shields', () => {
   const game = new Game();
   game.coins = 500;
   game.place('ember', 5, 3);
   game.active = true;
-  const beetle = { ...game.enemy('armor'), x: 5, z: 4 };
-  game.enemies = [beetle];
+  const knight = { ...game.enemy('armor'), x: 5, z: 4 };
+  game.enemies = [knight];
   game.tick(1 / 30);
-  assert.ok(beetle.burn > 0);
-  assert.equal(beetle.burnTime, 5);
-  // Walk it far out of range and check the burn is still eating hit points.
-  beetle.x = 12;
-  beetle.z = 8;
-  const before = beetle.hp;
+  assert.ok(knight.burn > 0);
+  assert.equal(knight.burnTime, 5);
+  // March it far out of range and check the burn is still eating hit points.
+  knight.x = 12;
+  knight.z = 8;
+  const before = knight.hp;
   game.tick(1);
-  assert.ok(before - beetle.hp >= beetle.burn * 0.9);
+  assert.ok(before - knight.hp >= knight.burn * 0.9);
 });
 
-test('a lantern never shoots and speeds up every tower inside its ring', () => {
+test('a war banner never shoots and speeds up every engine inside its ring', () => {
   const game = new Game();
   game.coins = 1000;
   game.place('thorn', 5, 3);
   game.place('lantern', 5, 4);
-  const [thorn, lantern] = game.towers;
-  assert.ok(game.rateBonus(thorn) > 1);
-  assert.equal(game.rateBonus(lantern), 1);
+  const [ballista, banner] = game.towers;
+  assert.ok(game.rateBonus(ballista) > 1);
+  assert.equal(game.rateBonus(banner), 1);
   game.place('thorn', 1, 1);
   assert.equal(game.rateBonus(game.towers[2]), 1);
   game.active = true;
@@ -446,7 +446,7 @@ test('a lantern never shoots and speeds up every tower inside its ring', () => {
   const fired = game.events.filter((event) => event.type === 'shot');
   assert.equal(fired.length, 1);
   assert.equal(fired[0].towerType, 'thorn');
-  assert.ok(thorn.cool < game.stats(thorn).rate);
+  assert.ok(ballista.cool < game.stats(ballista).rate);
 });
 
 test('the first upgrade costs coins only and the panel names what is missing', () => {
@@ -576,7 +576,7 @@ test('waiting and dragging out combat never produce materials', () => {
   assert.equal(game.wood, 3);
 });
 
-test('midwave purchases and upgrades only affect the following harvest, including after reload', () => {
+test('midwave purchases and upgrades only affect the following payout, including after reload', () => {
   const game = new Game();
   game.coins = 1000;
   game.farm(0);
@@ -598,7 +598,7 @@ test('midwave purchases and upgrades only affect the following harvest, includin
   assert.equal(paid.rock, 3);
 });
 
-test('a failed wave pays no harvest and the final successful wave does', () => {
+test('a failed wave pays nothing and the final successful wave does', () => {
   const game = new Game();
   game.farm(0);
   game.start();
@@ -619,7 +619,7 @@ test('a failed wave pays no harvest and the final successful wave does', () => {
   assert.equal(final.wood, 3);
 });
 
-test('version 4 live saves discard timers and use saved farm levels for one harvest', () => {
+test('version 4 live saves discard timers and use saved works levels for one payout', () => {
   const game = new Game({
     version: 4,
     active: true,
@@ -634,7 +634,7 @@ test('version 4 live saves discard timers and use saved farm levels for one harv
   assert.equal(restored.wood, 23);
 });
 
-test('selling refunds every coin spent on a tower and its upgrades exactly once', () => {
+test('selling refunds every coin spent on an engine and its upgrades exactly once', () => {
   const game = new Game();
   game.coins = 1000;
   game.wood = game.rock = game.iron = game.diamond = 1000;

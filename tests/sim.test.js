@@ -57,9 +57,9 @@ test('the naive strategy still loses, but only after it has seen most of the gam
   assert.ok(naive.lostAtStage < 9);
 });
 
-test('naive reaches level 2 on coins alone and then stops, with no garden', () => {
+test('naive reaches level 2 on coins alone and then stops, with no works', () => {
   // The level 1 to 2 upgrade is coins only in r2, so naive is no longer frozen at level 1.
-  // Level 3 still needs wood and rock, and naive never buys a plot, so level 2 is its ceiling.
+  // Level 3 still needs wood and rock, and naive never buys a works, so level 2 is its ceiling.
   const naive = runAll().strategies.find((s) => s.name === 'naive');
   const last = naive.stages[naive.stages.length - 1];
   assert.deepEqual([...new Set(last.towerLevels)], [2]);
@@ -82,14 +82,14 @@ test('at least one strategy clears all ten stages on the current constants', () 
   assert.ok(strategies.some((s) => s.won));
 });
 
-test('current balance uses the tower-only reference and excludes retired ability strategies', () => {
+test('current balance uses the engine-only reference and excludes retired ability strategies', () => {
   const { strategies } = runAll();
   assert.equal(
     strategies.some((s) => /abilities/.test(s.name)),
     false,
   );
   const reference = strategies.find((s) => s.name === 'kit-maze');
-  assert.ok(reference?.won, 'the tower-and-garden reference must clear the campaign');
+  assert.ok(reference?.won, 'the engine-and-works reference must clear the campaign');
 });
 
 test('experiments restore the shared constant tables when they finish', () => {

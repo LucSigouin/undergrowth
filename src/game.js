@@ -16,106 +16,106 @@ export const HP_GROWTH = 1.46;
 // The seven buildable pieces, with their price, combat numbers, and help text.
 export const TOWERS = {
   thorn: {
-    name: 'Thorn',
+    name: 'Ballista',
     cost: 35,
     damage: 10,
     range: 3.2,
     rate: 0.65,
     color: '#d8b773',
-    desc: 'Fast shots at one enemy.',
-    effect: 'Fires a needle at one enemy at a time. Can hit ground and flying enemies.',
-    tip: 'A good first tower. Place it beside a long stretch of your maze.',
+    desc: 'Fast bolts at one enemy.',
+    effect: 'Fires an iron bolt at one enemy at a time. Can hit marching and flying enemies.',
+    tip: 'A good first engine. Raise it beside a long stretch of your maze.',
     symbol: '↗',
   },
   sap: {
-    name: 'Sap well',
+    name: 'Tar pit',
     cost: 50,
     damage: 3,
     range: 2.6,
     rate: 0.9,
     color: '#81bdb0',
-    desc: 'Slows enemies so other towers get more shots.',
+    desc: 'Sticky tar slows the horde so other engines get more shots.',
     effect: 'Each hit slows an enemy by 52% for 2.2 seconds and deals a little damage.',
-    tip: 'Pair it with Thorn or Sunstone to keep enemies in range longer.',
+    tip: 'Pair it with a Ballista or a Mage spire to hold the horde in range longer.',
     symbol: '◉',
   },
   bloom: {
-    name: 'Bloom',
+    name: 'Catapult',
     cost: 75,
     damage: 16,
     range: 3.1,
     rate: 1.7,
     color: '#da9985',
-    desc: 'Pollen bursts damage groups of enemies.',
-    effect: 'Each burst damages the target and enemies within 1.35 squares of it.',
-    tip: 'Place it at a bend where enemies bunch together.',
+    desc: 'Baskets of stone break over a group of enemies.',
+    effect: 'Each shot damages the target and enemies within 1.35 squares of it.',
+    tip: 'Set it at a bend where the horde bunches together.',
     symbol: '✳',
   },
   prism: {
-    name: 'Sunstone',
+    name: 'Mage spire',
     cost: 100,
     damage: 27,
     range: 4.3,
     rate: 1.15,
     color: '#b4a5d3',
-    desc: 'Long-range shots that ignore armor.',
-    effect: 'Deals full damage to armored enemies. Has the longest base range of any tower.',
-    tip: 'Use it against beetles and bosses, or to cover flying enemies.',
+    desc: 'Long arcane bolts that pierce armor.',
+    effect: 'Deals full damage to armored enemies. Has the longest base range of any engine.',
+    tip: 'Use it on iron knights and warlords, or to cover flying enemies.',
     symbol: '◇',
   },
   hedge: {
-    name: 'Hedge',
+    name: 'Palisade',
     cost: 8,
     damage: 0,
     range: 0,
     rate: 1,
     color: '#86a76c',
-    desc: 'A cheap maze wall. Does not attack.',
+    desc: 'A cheap maze wall of timber stakes. Does not attack.',
     effect:
-      'Blocks a square to redirect ground enemies. Flying enemies pass over it. Cannot be upgraded.',
-    tip: 'Build longer routes past your towers, while leaving an exit open.',
+      'Blocks a square to redirect marching enemies. Flying enemies pass over it. No upgrades.',
+    tip: 'Build longer routes past your engines, while leaving a way through.',
     symbol: '▦',
   },
   ember: {
-    name: 'Ember',
+    name: 'Brazier',
     cost: 80,
     damage: 9,
     range: 2.9,
     rate: 1.2,
     color: '#e2a05c',
-    desc: 'Sets enemies alight. Burning ignores armor.',
+    desc: 'Sets the horde alight. Burning ignores armor.',
     effect:
-      'Each hit adds 5 seconds of burning. Burning damage ignores armor and warden shields,' +
+      'Each hit adds 5 seconds of burning. Burning damage ignores armor and paladin shields,' +
       ' and it keeps working after the enemy leaves range.',
-    tip: 'The answer to wardens and to thick shells. One Ember covers a whole bend.',
+    tip: 'The answer to paladins and to heavy plate. One Brazier covers a whole bend.',
     symbol: '❋',
   },
   lantern: {
-    name: 'Lantern',
+    name: 'War banner',
     cost: 90,
     damage: 0,
     range: 2.5,
     rate: 1,
     color: '#f2d884',
-    desc: 'Does not attack. Nearby towers fire faster.',
+    desc: 'Does not attack. It rallies nearby engines to fire faster.',
     effect:
-      'Attacking towers inside its ring fire 30 percent faster, 40 at level 2 and 50 at level 3.' +
-      ' The Lantern never shoots by itself.',
-    tip: 'Drop it in the middle of a tight cluster of towers, not out on its own.',
+      'Attacking engines inside its ring fire 30 percent faster, 40 at level 2 and 50 at level 3.' +
+      ' The War banner never shoots by itself.',
+    tip: 'Plant it in the middle of a tight cluster of engines, not out on its own.',
     symbol: '✦',
   },
 };
 
 // Enemy kinds: base hit points at stage 1, walking speed, coins paid, and special rules.
 export const ENEMIES = {
-  grub: { name: 'Grub', hp: 24, speed: 1.05, reward: 4 },
-  runner: { name: 'Runner', hp: 18, speed: 1.85, reward: 4 },
-  armor: { name: 'Beetle', hp: 52, speed: 0.76, reward: 4 },
-  moth: { name: 'Moth', hp: 30, speed: 1.05, reward: 5, flying: true },
-  brood: { name: 'Brood sac', hp: 88, speed: 0.7, reward: 7, splits: 3 },
-  grubling: { name: 'Grubling', hp: 9, speed: 1.35, reward: 1 },
+  grub: { name: 'Goblin', hp: 24, speed: 1.05, reward: 4 },
+  runner: { name: 'Wolf rider', hp: 18, speed: 1.85, reward: 4 },
+  armor: { name: 'Iron knight', hp: 52, speed: 0.76, reward: 4 },
+  moth: { name: 'Gargoyle', hp: 30, speed: 1.05, reward: 5, flying: true },
+  brood: { name: 'War wagon', hp: 88, speed: 0.7, reward: 7, splits: 3 },
+  grubling: { name: 'Whelp', hp: 9, speed: 1.35, reward: 1 },
   warden: {
-    name: 'Warden',
+    name: 'Paladin',
     hp: 104,
     speed: 0.82,
     reward: 8,
@@ -123,10 +123,10 @@ export const ENEMIES = {
     shield: 0.35,
     aura: 2.1,
   },
-  boss: { name: 'Guardian', hp: 400, speed: 0.55, reward: 55 },
+  boss: { name: 'Warlord', hp: 400, speed: 0.55, reward: 55 },
 };
 
-// How much of a hit an armored beetle absorbs from anything that is not a Sunstone.
+// How much of a hit an armored knight absorbs from anything that is not a Mage spire bolt.
 export const ARMOR_RESIST = 0.55;
 
 // The four garden plots in unlock order, with their prices and base harvest per completed wave.
@@ -139,20 +139,20 @@ export const MATERIALS = [
 
 // The ten stages, each as a title, a line of flavour text, and a short theme label.
 export const STAGES = [
-  ['First roots', 'A few curious visitors. A longer route means more shots.', 'Grubs'],
-  ['A stirring below', 'Runners arrive. A longer maze buys precious time.', 'Runners'],
-  ['Shell season', 'Armored beetles. Sunstone cuts through their shells.', 'Armor'],
-  ['On the breeze', 'Moths fly over your maze. Cover the direct route.', 'Flying'],
-  ['The long evening', 'Brood sacs burst into grubs. Bloom answers a crowd.', 'Swarms'],
-  ['Old growth', 'An ancient guardian leads the final wave.', 'Boss'],
+  ['First horns', 'A few scouts at the gate. A longer route means more shots.', 'Goblins'],
+  ['Drums in the hills', 'Wolf riders arrive. A longer maze buys precious time.', 'Wolf riders'],
+  ['Iron season', 'Knights in heavy plate. The Mage spire pierces armor.', 'Armor'],
+  ['Wings over the wall', 'Gargoyles fly over your maze. Cover the direct route.', 'Flying'],
+  ['The long dusk', 'War wagons break open into whelps. The Catapult answers a crowd.', 'Swarms'],
+  ['The old warlord', 'An orc warlord leads the final charge.', 'Boss'],
   [
-    'Restless soil',
-    'Wardens ignore sap and shield their neighbours. Ember burns through.',
+    'Holy orders',
+    'Paladins ignore tar and shield their neighbours. The Brazier burns through.',
     'Mixed',
   ],
-  ['Night garden', 'Moths fill the sky. Keep the straight line covered.', 'Air raid'],
-  ['The wild tide', 'Dense, relentless waves, and a guardian at the end.', 'Surge'],
-  ['Heart of the wild', 'One last stand. Two guardians walk with the horde.', 'Finale'],
+  ['Night assault', 'Gargoyles fill the sky. Keep the straight line covered.', 'Air raid'],
+  ['The black tide', 'Dense, relentless waves, and a warlord at the end.', 'Surge'],
+  ['Fall of the keep', 'One last stand. Two warlords march with the horde.', 'Finale'],
 ];
 
 // The thirty waves, hand written, three per stage in stage order. Each wave lists the
@@ -518,14 +518,14 @@ export class Game {
 
   // Try to build a tower on a square. Returns null on success or a message explaining the refusal.
   place(type, x, z) {
-    if (this.lost || this.won) return 'This expedition has ended.';
+    if (this.lost || this.won) return 'This siege has ended.';
     const offBoard = x < 0 || x >= W || z < 0 || z >= H;
     if (!TOWERS[type] || !Number.isInteger(x) || !Number.isInteger(z) || offBoard) {
-      return 'Choose a square on the meadow.';
+      return 'Choose a square in the bailey.';
     }
-    if ((x === 0 || x === 12) && z === 4) return 'Keep the entrance and garden gate open.';
+    if ((x === 0 || x === 12) && z === 4) return 'Keep the entrance and the keep gate open.';
     if (this.towers.some((tower) => tower.x === x && tower.z === z)) {
-      return 'Select this tower to tend it.';
+      return 'Select this engine to work on it.';
     }
     if (this.coins < TOWERS[type].cost) return 'You need more coins.';
     const squareInUse = this.enemies.some(
@@ -534,7 +534,7 @@ export class Game {
         ((Math.round(enemy.x) === x && Math.round(enemy.z) === z) ||
           (enemy.target?.x === x && enemy.target?.z === z)),
     );
-    if (squareInUse) return 'A creature is using that square.';
+    if (squareInUse) return 'A creature is holding that square.';
     const tower = {
       id: this.nextId++,
       type,
@@ -613,10 +613,10 @@ export class Game {
   // Grow a tower one level, picking a power or reach branch the first time. Returns null on success.
   upgrade(id, branch = 'power') {
     const tower = this.towers.find((candidate) => candidate.id === id);
-    if (!tower || tower.type === 'hedge' || tower.level >= 3) return 'This piece is fully grown.';
+    if (!tower || tower.type === 'hedge' || tower.level >= 3) return 'This engine is fully built.';
     const cost = this.upgradeCost(tower);
     if (Object.entries(cost).some(([resource, amount]) => this[resource] < amount)) {
-      return 'You need more money or materials for this upgrade.';
+      return 'You need more coin or materials for this upgrade.';
     }
     for (const [resource, amount] of Object.entries(cost)) this[resource] -= amount;
     tower.spent += cost.coins;
@@ -638,11 +638,11 @@ export class Game {
 
   // Pay to make the next garden plot available. Plots unlock in order. Returns null on success.
   unlockPlot(index) {
-    if (this.lost || this.won) return 'This expedition has ended.';
-    if (!Number.isInteger(index) || index < 1 || index >= MATERIALS.length) return 'Unknown plot.';
-    if (index < this.unlockedPlots) return 'This plot is already unlocked.';
+    if (this.lost || this.won) return 'This siege has ended.';
+    if (!Number.isInteger(index) || index < 1 || index >= MATERIALS.length) return 'Unknown works.';
+    if (index < this.unlockedPlots) return 'This works is already unlocked.';
     if (index !== this.unlockedPlots || !this.farms[index - 1]) {
-      return 'Buy the previous resource first.';
+      return 'Buy the previous works first.';
     }
     const cost = MATERIALS[index].unlock;
     if (this.coins < cost) return 'You need more coins.';
@@ -660,11 +660,11 @@ export class Game {
 
   // Buy a garden plot or raise its level. Returns null on success.
   farm(index) {
-    if (this.lost || this.won) return 'This expedition has ended.';
-    if (!Number.isInteger(index) || index < 0 || index >= MATERIALS.length) return 'Unknown plot.';
-    if (index >= this.unlockedPlots) return 'Unlock this plot first.';
+    if (this.lost || this.won) return 'This siege has ended.';
+    if (!Number.isInteger(index) || index < 0 || index >= MATERIALS.length) return 'Unknown works.';
+    if (index >= this.unlockedPlots) return 'Unlock this works first.';
     const plot = this.farms[index];
-    if (plot?.level >= 3) return 'This plot is fully upgraded.';
+    if (plot?.level >= 3) return 'This works is fully upgraded.';
     const cost = this.farmCost(index);
     if (this.coins < cost) return 'You need more coins.';
     this.coins -= cost;
@@ -852,7 +852,7 @@ export class Game {
       if (!target) continue;
       tower.cool = stats.rate / this.rateBonus(tower);
       this.emit('shot', { tower: tower.id, x: target.x, z: target.z, towerType: tower.type });
-      // Bloom splashes onto everything near the target. Every other tower hits one enemy.
+      // The Catapult splashes onto everything near the target. Others hit one enemy.
       const hits =
         tower.type === 'bloom'
           ? this.enemies.filter(
@@ -863,7 +863,7 @@ export class Game {
         const armored = hit.kind === 'armor' && tower.type !== 'prism';
         hit.hp -= stats.damage * (armored ? ARMOR_RESIST : 1) * this.shieldFactor(hit);
         if (tower.type === 'sap' && !ENEMIES[hit.kind]?.steady) hit.slow = 2.2;
-        // Ember leaves a burn that outlives the shot and ignores shells and shields.
+        // The Brazier leaves a burn that outlives the shot and ignores plate and shields.
         if (tower.type === 'ember') {
           hit.burn = Math.max(hit.burn || 0, stats.damage * 1.4);
           hit.burnTime = 5;

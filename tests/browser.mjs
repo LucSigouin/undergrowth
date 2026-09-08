@@ -1,6 +1,6 @@
 // Desktop and phone browser walkthrough against a running dev server.
-// Checks the layout, the garden economy, combat, save and reload, the controls, and the
-// Ember and Lantern cards, settings and icon costs, and the missing material note.
+// Checks the layout, the works economy, combat, save and reload, the controls, and the
+// Brazier and War banner cards, settings and icon costs, and the missing material note.
 // Run it with: npm run dev -- --port 5174, then node tests/browser.mjs
 // Point it somewhere else with GARDEN_URL=http://localhost:5175 node tests/browser.mjs
 import { chromium } from '@playwright/test';
@@ -20,7 +20,7 @@ page.on('pageerror', (error) => errors.push(error.message));
 await page.goto(URL);
 await page.waitForFunction(() => window.__garden);
 
-// The board runs top to bottom and the farm grid anchors the side pane.
+// The board runs top to bottom and the works grid anchors the side pane.
 assert.ok(
   await page.evaluate(() => {
     const world = window.__garden.world,
@@ -28,7 +28,7 @@ assert.ok(
       topRight = world.cellScreen(12, 0),
       bottomLeft = world.cellScreen(0, 8),
       scene = document.querySelector('#scene').getBoundingClientRect(),
-      garden = document.querySelector('.garden-strip').getBoundingClientRect(),
+      works = document.querySelector('.works-strip').getBoundingClientRect(),
       sidebar = document.querySelector('.sidebar').getBoundingClientRect(),
       entry = world.cellScreen(0, 4),
       exit = world.cellScreen(12, 4);
@@ -37,8 +37,8 @@ assert.ok(
       Math.abs(topLeft.y - bottomLeft.y) < 0.01 &&
       Math.abs(entry.x - exit.x) < 0.01 &&
       entry.y < exit.y &&
-      garden.left >= sidebar.left &&
-      garden.top > sidebar.top + sidebar.height / 2 &&
+      works.left >= sidebar.left &&
+      works.top > sidebar.top + sidebar.height / 2 &&
       scene.right <= sidebar.left + 1
     );
   }),
@@ -90,7 +90,7 @@ for (const i of [1, 2, 3]) {
   assert.equal(await page.locator(`[data-plot="${i}"] small`).textContent(), '0/stage');
   await page.locator(`[data-farm="${i}"]`).click();
 }
-// Newly bought plots wait for the next wave's completed harvest.
+// Newly bought works wait for the next wave's completed payout.
 await page.evaluate(() => {
   const { game, step } = window.__garden;
   if (game.active) {
@@ -120,7 +120,7 @@ await page.setViewportSize({ width: 390, height: 844 });
 await page.screenshot({ path: 'test-results/mobile.png', fullPage: true });
 assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 
-// r2: the two new towers have their own cards, and the keyboard reaches them on 6 and 7.
+// r2: the two newest engines have their own cards, and the keyboard reaches them on 6 and 7.
 // Reload first so the sidebar is not resizing under the pointer while a wave runs.
 await page.setViewportSize({ width: 1440, height: 1000 });
 await page.reload();
@@ -139,8 +139,8 @@ await page.keyboard.press('7');
 assert.equal(await page.locator('[data-build="lantern"]').getAttribute('aria-pressed'), 'true');
 await page.keyboard.press('Escape');
 
-// r5: choosing a piece no longer opens a panel. The card carries a hover note instead, and
-// the detail panel stays out of the way until a placed tower is selected.
+// r5: choosing an engine no longer opens a panel. The card carries a hover note instead, and
+// the detail panel stays out of the way until a placed engine is selected.
 assert.equal(await page.locator('#detail').isVisible(), false);
 await page.locator('[data-build="lantern"]').hover();
 await page.waitForTimeout(150);
@@ -160,8 +160,8 @@ assert.ok((await page.locator('#hover-note').textContent()).includes('burn'));
 await page.locator('#start').focus();
 assert.equal(await page.locator('#hover-note').isVisible(), false);
 
-// Gold and every material share the top-right header; defense cards form a grid.
-assert.equal(await page.locator('.wordmark, .garden-strip-heading, .tower-card kbd').count(), 0);
+// Gold and every material share the top-right header; engine cards form a grid.
+assert.equal(await page.locator('.wordmark, .works-strip-heading, .tower-card kbd').count(), 0);
 assert.ok(
   await page.evaluate(() => {
     const header = document.querySelector('.resource-header');
@@ -190,7 +190,7 @@ assert.ok(
   ),
 );
 
-// Build an Ember and a Lantern beside the route and photograph them.
+// Build a Brazier and a War banner beside the route and photograph them.
 await page.evaluate(() => {
   window.__garden.game.coins = 2000;
   window.__garden.step(0.1);
@@ -212,7 +212,7 @@ assert.equal(await page.locator('#detail [data-upgrade="power"]').count(), 0);
 assert.match(await page.locator('#detail [data-upgrade="reach"]').textContent(), /30 → 40%/);
 await page.screenshot({ path: `${SHOTS}/desktop-new-towers.png`, fullPage: true });
 
-// The detail panel of a tower that cannot afford its level 3 upgrade names the material.
+// The detail panel of an engine that cannot afford its level 3 upgrade names the material.
 await page.evaluate(() => {
   const game = window.__garden.game;
   game.wood = 0;
@@ -304,10 +304,10 @@ assert.equal(await page.locator('.resource-header #settings').count(), 1);
 
 assert.deepEqual(errors, []);
 console.log(
-  'Browser checks passed: vertical map, bottom farm grid,' +
-    ' buy/upgrade/unlock all resources, wave harvests, combat, tower upgrade,' +
-    ' save/reload, controls, mobile overflow, Ember and Lantern cards on keys 6 and 7,' +
-    ' retired ability controls absent, settings and icon costs, phone tower information,' +
+  'Browser checks passed: vertical map, bottom works grid,' +
+    ' buy/upgrade/unlock all resources, wave payouts, combat, engine upgrade,' +
+    ' save/reload, controls, mobile overflow, Brazier and War banner cards on keys 6 and 7,' +
+    ' retired ability controls absent, settings and icon costs, phone engine information,' +
     ' the missing material note, the r5 hover notes, the resource header,' +
     ' a build column that never scrolls, no JS errors.',
 );

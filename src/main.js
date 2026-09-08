@@ -1,5 +1,5 @@
 // Browser interface for Undergrowth. This file owns the page markup, the sidebar, the
-// garden panel, the tower detail card, the dialogs, the keyboard and button handlers,
+// works panel, the engine detail card, the dialogs, the keyboard and button handlers,
 // the autosave to localStorage, and the animation loop that drives the game clock. It
 // holds the one Game instance and the one World instance and wires them together. Game
 // rules live in game.js and the 3D scene lives in world.js.
@@ -12,7 +12,7 @@ import { TOWER_LOOK, MATERIAL_LOOK } from './look.js';
 const query = (selector) => document.querySelector(selector),
   SAVE = 'undergrowth-save-v2';
 
-// Load the saved settlement if it looks sane, otherwise start fresh.
+// Load the saved keep if it looks sane, otherwise start fresh.
 let game;
 try {
   const raw = JSON.parse(localStorage.getItem(SAVE) || localStorage.getItem('undergrowth-save-v1'));
@@ -41,7 +41,7 @@ let build = 'thorn',
   uiTime = 0,
   last = performance.now();
 
-// The painted icon for a piece or a material, on a plate tinted with its own accent colour.
+// The painted icon for an engine or a material, on a plate tinted with its own accent colour.
 // The art is decorative: every control that uses a chip carries its own text or aria-label,
 // so the image stays out of the accessibility tree.
 const chip = (look, extra = '') =>
@@ -56,10 +56,10 @@ const COIN = MATERIAL_LOOK.coins,
   LIFE = MATERIAL_LOOK.lives;
 
 // The page markup, built once. Every later update edits pieces of it in place.
-const gardenStrip =
-  '<section class="garden-strip" aria-label="Resource garden">' +
-  '<div id="garden-summary" class="garden-summary"></div>' +
-  '<div id="farms" class="garden-plots"></div>' +
+const worksStrip =
+  '<section class="works-strip" aria-label="The works">' +
+  '<div id="works-summary" class="works-summary"></div>' +
+  '<div id="farms" class="works-plots"></div>' +
   '</section>';
 
 const mapStatus =
@@ -71,7 +71,7 @@ const mapStatus =
   '<b id="lives">20 / 20</b></span>' +
   '</div>';
 
-// Gold and materials share a top-right header; material buttons open their farm controls.
+// Gold and materials share a top-right header; material buttons open their works controls.
 const materialHud =
   '<header class="resource-header" aria-label="Game status and resources">' +
   '<span class="game-title">Undergrowth</span>' +
@@ -81,8 +81,8 @@ const materialHud =
   '<b id="coins">200</b></span>' +
   MATERIALS.map(
     (material, i) =>
-      `<button class="material-chip" data-hud-garden="${i}"` +
-      ` aria-label="${material.name}, open the garden">` +
+      `<button class="material-chip" data-hud-works="${i}"` +
+      ` aria-label="${material.name}, open the works">` +
       chip(MATERIAL_LOOK[material.id]) +
       `<b id="${material.id}">0</b></button>`,
   ).join('') +
@@ -92,16 +92,16 @@ const mapControls =
   '<div class="map-controls">' +
   '<button id="zoom" class="mobile-only" aria-label="Zoom into battlefield">＋</button>' +
   '<button id="fit" class="mobile-only" aria-label="Fit battlefield">⤢</button>' +
-  '<button id="tower-info" class="mobile-only" aria-label="Tower information">ⓘ</button>' +
+  '<button id="tower-info" class="mobile-only" aria-label="Engine information">ⓘ</button>' +
   '</div>';
 
 const placementBar =
   '<div id="placement" class="placement" hidden>' +
   '<button id="cancel-place" aria-label="Cancel placement">×</button>' +
-  '<button id="confirm-place">Place tower</button></div>' +
+  '<button id="confirm-place">Place engine</button></div>' +
   '<div class="paused-overlay" id="paused" hidden>Paused</div>';
 
-// Defense cards show their icon, name, and coin cost.
+// Engine cards show their icon, name, and coin cost.
 const towerCards = Object.entries(TOWERS)
   .map(([id, tower]) => {
     const chosen = id === 'thorn';
@@ -116,7 +116,7 @@ const towerCards = Object.entries(TOWERS)
   .join('');
 
 const defensesSection =
-  '<section class="defenses"><h2>Defenses</h2>' +
+  '<section class="defenses"><h2>War engines</h2>' +
   `<div class="cards">${towerCards}</div>` +
   '<div id="detail" class="detail" hidden></div></section>';
 
@@ -129,8 +129,8 @@ const overlays =
   '<div id="hover-note" class="hover-note" role="tooltip" hidden></div>' +
   '<div id="toast" role="status" aria-live="polite"></div>' +
   '<dialog id="modal"></dialog>' +
-  '<dialog id="garden-modal" class="garden-sheet"><div class="sheet-heading">' +
-  '<button id="close-garden" aria-label="Close garden">×</button></div>' +
+  '<dialog id="works-modal" class="works-sheet"><div class="sheet-heading">' +
+  '<button id="close-works" aria-label="Close the works">×</button></div>' +
   '<div class="sheet-body"></div></dialog>';
 
 query('#app').innerHTML = `<main class="game-shell">
@@ -139,11 +139,11 @@ query('#app').innerHTML = `<main class="game-shell">
     ${mapControls}
     ${placementBar}
   </section>
-  </div><aside class="sidebar" aria-label="Build and garden">
+  </div><aside class="sidebar" aria-label="Build and works">
     <div class="sidebar-body">
       ${defensesSection}
     </div>
-    ${gardenStrip}
+    ${worksStrip}
     ${waveControls}
   </aside>
 </main>${overlays}`;
@@ -165,7 +165,7 @@ function persist() {
   }
 }
 
-// Pick the piece the next click will build.
+// Pick the engine the next click will build.
 function choose(type) {
   pendingPlacement = null;
   world.previewTowers = null;
@@ -177,7 +177,7 @@ function choose(type) {
   render();
 }
 
-// Handle a click on a board square: select a tower, stage a placement, or build right away.
+// Handle a click on a board square: select an engine, stage a placement, or build right away.
 function onCell(cell) {
   if (paused || game.lost || game.won) return;
   const tower = game.towers.find((candidate) => candidate.x === cell.x && candidate.z === cell.z);
@@ -190,7 +190,7 @@ function onCell(cell) {
     world.showHover(cell, null, game, tower);
     return;
   }
-  // On a phone a tap only stages the tower. A second tap on Place confirms it.
+  // On a phone a tap only stages the engine. A second tap on Place confirms it.
   if (build && mobileQuery.matches) {
     if (cell.x < 0 || cell.x >= 13 || cell.z < 0 || cell.z >= 9) return;
     pendingPlacement = { ...cell, type: build };
@@ -222,7 +222,7 @@ function onHover(cell) {
   world.showHover(cell, build, game, under || chosen);
 }
 
-// Mark the towers a Lantern is speeding up, whenever one is hovered or selected.
+// Mark the engines a War banner is rallying, whenever one is hovered or selected.
 function showBoost() {
   const at = hoverCell;
   const under = at && game.towers.find((tower) => tower.x === at.x && tower.z === at.z);
@@ -239,17 +239,17 @@ try {
   } catch {}
 } catch (error) {
   query('#scene').innerHTML =
-    '<div style="padding:35px">This garden needs WebGL. Enable hardware' +
+    '<div style="padding:35px">This keep needs WebGL. Enable hardware' +
     ' acceleration in your browser and reload.</div>';
   throw error;
 }
 
 let detailKey = '';
 
-// The three number chips under a tower name. Hedges have no combat numbers.
+// The three number chips under an engine name. A Palisade has no combat numbers.
 function defenseStats(stats, type, level = 1) {
   if (type === 'hedge') return '';
-  // A Lantern never shoots, so it shows what its ring does instead of damage numbers.
+  // A War banner never shoots, so it shows what its ring does instead of damage numbers.
   if (type === 'lantern') {
     return (
       '<div class="defense-stats">' +
@@ -300,7 +300,7 @@ function resourceAmounts(cost, check = true) {
   );
 }
 
-// The upgrade paragraph and buttons, shown while a tower can still grow.
+// The upgrade paragraph and buttons, shown while an engine can still be built up.
 function upgradeBlock(tower, cost, missing) {
   if (tower.level >= 3 || tower.type === 'hedge') return '';
   const blocked = missing.length ? ' disabled' : '';
@@ -365,7 +365,7 @@ function hideNote() {
   query('#hover-note').hidden = true;
 }
 
-// Redraw the tower detail card. It only ever describes a tower already on the board.
+// Redraw the engine detail card. It only ever describes an engine already on the board.
 function renderDetail() {
   const tower = game.towers.find((candidate) => candidate.id === selected);
   const shortKey = tower ? game.upgradeShortfall(tower) : [];
@@ -400,14 +400,14 @@ function renderDetail() {
       : `<div class="tower-growth"><span>Level ${tower.level}</span>${branchLabel ? `<span>${branchLabel}</span>` : ''}</div>`;
   query('#detail').innerHTML =
     '<button class="detail-close" id="close-detail"' +
-    ' aria-label="Close tower details">×</button>' +
+    ' aria-label="Close engine details">×</button>' +
     defenseHeading(tower.type) +
     growthBadge +
     defenseStats(stats, tower.type, tower.level) +
     boostNote +
     upgradeBlock(tower, cost, missing) +
     `<div class="detail-actions"><button id="sell" aria-label="Sell ${info.name} for ${tower.spent} coins">Sell ${resourceAmounts({ coins: tower.spent }, false)}</button>` +
-    '<button id="detail-info" aria-label="Tower information">ⓘ</button></div>';
+    '<button id="detail-info" aria-label="Engine information">ⓘ</button></div>';
   query('#detail-info').onclick = () => modal(info.name, noteMarkup(tower.type), 'Done');
 
   query('#close-detail')?.addEventListener('click', () => {
@@ -439,10 +439,10 @@ function renderDetail() {
 
 let farmKey = '';
 
-// Reach the controls for one plot. On a phone the plots live in a sheet, so open it. On a
+// Reach the controls for one building. On a phone they live in a sheet, so open it. On a
 // desktop they are already on screen in the strip above the board, so point at the right one.
-function openGarden(index) {
-  if (mobileQuery.matches) query('#garden-modal').showModal();
+function openWorks(index) {
+  if (mobileQuery.matches) query('#works-modal').showModal();
   const plot = query('#farms').querySelector(`[data-plot="${index}"]`);
   plot?.scrollIntoView({ block: 'nearest' });
   if (!plot) return;
@@ -452,8 +452,8 @@ function openGarden(index) {
   plot.classList.add('called-out');
 }
 
-document.querySelectorAll('[data-hud-garden]').forEach((button) => {
-  button.onclick = () => openGarden(Number(button.dataset.hudGarden));
+document.querySelectorAll('[data-hud-works]').forEach((button) => {
+  button.onclick = () => openWorks(Number(button.dataset.hudWorks));
 });
 
 // Refresh every number and label in the interface from the current game state.
@@ -472,13 +472,13 @@ function render() {
   query('#tower-info').disabled = !infoType;
   query('#tower-info').setAttribute(
     'aria-label',
-    infoType ? `About ${TOWERS[infoType].name}` : 'Tower information',
+    infoType ? `About the ${TOWERS[infoType].name}` : 'Engine information',
   );
   query('#start').disabled = (game.active && !paused) || game.lost || game.won;
   query('#start').textContent = game.won
-    ? 'Garden protected ✓'
+    ? 'Keep held ✓'
     : game.lost
-      ? 'Expedition ended'
+      ? 'The keep has fallen'
       : game.active
         ? paused
           ? 'Resume ▶'
@@ -511,20 +511,20 @@ function render() {
   const previewCell = pendingPlacement || (world.hover.visible ? hoverCell : null);
   if (previewCell && build) world.showHover(previewCell, build, game, null);
   if (!build || game.lost || game.won) world.clearTowerPreview();
-  renderGarden();
+  renderWorks();
   renderDetail();
 }
 
-// Redraw the garden summary chips and the four plot cards, skipping unchanged work.
-function renderGarden() {
+// Redraw the works summary chips and the four building cards, skipping unchanged work.
+function renderWorks() {
   const summaryKey = JSON.stringify([
     game.unlockedPlots,
     game.farms.map((plot) => !!plot),
     ...MATERIALS.map((material) => game[material.id]),
   ]);
-  if (query('#garden-summary').dataset.key !== summaryKey) {
-    query('#garden-summary').dataset.key = summaryKey;
-    query('#garden-summary').innerHTML = MATERIALS.map((material, i) => {
+  if (query('#works-summary').dataset.key !== summaryKey) {
+    query('#works-summary').dataset.key = summaryKey;
+    query('#works-summary').innerHTML = MATERIALS.map((material, i) => {
       const locked = i >= game.unlockedPlots;
       const value = locked
         ? '🔒'
@@ -532,16 +532,16 @@ function renderGarden() {
           ? game[material.id]
           : icon(COIN, 'coin-icon') + ' ' + material.buy;
       return (
-        `<button data-garden-open="${i}"` +
-        ` aria-label="Manage ${material.name.toLowerCase()} garden">` +
+        `<button data-works-open="${i}"` +
+        ` aria-label="Manage the ${material.name.toLowerCase()} works">` +
         chip(MATERIAL_LOOK[material.id]) +
         `<span class="plot-name">${material.name}</span><b>${value}</b></button>`
       );
     }).join('');
-    query('#garden-summary')
-      .querySelectorAll('[data-garden-open]')
+    query('#works-summary')
+      .querySelectorAll('[data-works-open]')
       .forEach((button) => {
-        button.onclick = () => openGarden(Number(button.dataset.gardenOpen));
+        button.onclick = () => openWorks(Number(button.dataset.worksOpen));
       });
   }
 
@@ -570,12 +570,12 @@ function renderGarden() {
       locked && !next
         ? 'Buy ' + MATERIALS[i - 1].name.toLowerCase() + ' first'
         : plot && plot.level < 3
-          ? 'Harvest ' + material.yield * (plot.level + 1) + ' per stage; changes apply next stage'
+          ? 'Yields ' + material.yield * (plot.level + 1) + ' per stage; changes apply next stage'
           : `${actionName} ${material.name}`;
     const action = locked ? `data-unlock="${i}"` : `data-farm="${i}"`;
     const harvestHint = game.active
       ? `This stage: ${game.waveHarvest[i]} ${material.name.toLowerCase()}. Changes apply next stage.`
-      : 'Harvest per completed stage, set when the stage starts.';
+      : 'Output per cleared stage, set when the stage starts.';
     return (
       `<article class="resource-plot ${locked ? 'locked' : ''}" data-plot="${i}">` +
       `<button class="farm-card" ${action} ${disabled ? 'disabled' : ''} title="${hint}. ${harvestHint}" aria-label="${actionName} ${material.name}${plot?.level >= 3 ? '' : ', ' + cost + ' coins'}, ${harvest} per stage">` +
@@ -639,15 +639,15 @@ function modal(title, body, button = 'Done', action) {
 }
 
 const HELP_TEXT =
-  '<p><b>Build a maze.</b> Longer routes give towers more time. Keep an exit open.</p>' +
-  '<p><b>Grow.</b> Garden plots harvest after each completed stage. Farm levels at stage start set the harvest; upgrades apply next stage. Upgrade towers with coins and materials.</p>' +
+  '<p><b>Build a maze.</b> Longer routes give your engines more time. Keep a way through open.</p>' +
+  '<p><b>Work the materials.</b> The sawmill, quarry, forge and gem cutter pay out after each cleared stage. Their levels at the start of a stage set that payout; upgrades apply next stage. Build engines up with coin and materials.</p>' +
   '<p><b>Costs.</b> Icons show each resource. Red counts show what you have / what you need.</p>' +
-  '<p><b>Enemies.</b> Moths fly over walls. Sunstone counters armor; Ember counters shields.</p>' +
-  '<p>1–7: choose a tower · Right-click / Esc: cancel</p>';
+  '<p><b>The horde.</b> Gargoyles fly over walls. The Mage spire answers armor; the Brazier answers paladin shields.</p>' +
+  '<p>1–7: choose an engine · Right-click / Esc: cancel</p>';
 
 query('#tower-info').onclick = () => {
   const type = build || game.towers.find((tower) => tower.id === selected)?.type;
-  if (type) modal(`About ${TOWERS[type].name}`, noteMarkup(type), 'Done');
+  if (type) modal(`About the ${TOWERS[type].name}`, noteMarkup(type), 'Done');
 };
 
 query('#settings').onclick = () => {
@@ -656,7 +656,7 @@ query('#settings').onclick = () => {
     '<div class="settings-list">' +
       `<button id="path" role="switch" aria-checked="${world.route.visible}"><span>Enemy route</span><b>${world.route.visible ? 'On' : 'Off'}</b></button>` +
       '<button id="help">How to play</button>' +
-      '<button id="restart">Restart garden</button>' +
+      '<button id="restart">Restart the siege</button>' +
       '</div>',
   );
   query('#path').onclick = () => {
@@ -677,9 +677,9 @@ query('#settings').onclick = () => {
   };
 };
 
-query('#close-garden').onclick = () => query('#garden-modal').close();
-query('#garden-modal').addEventListener('click', (event) => {
-  if (event.target !== query('#garden-modal')) return;
+query('#close-works').onclick = () => query('#works-modal').close();
+query('#works-modal').addEventListener('click', (event) => {
+  if (event.target !== query('#works-modal')) return;
   // A click outside the sheet closes it. Clicks inside land on a child, not the dialog.
   const rect = event.target.getBoundingClientRect();
   const outside =
@@ -711,7 +711,7 @@ function cancelSelection() {
 }
 
 query('.game-shell').addEventListener('contextmenu', (event) => {
-  if (query('#modal').open || query('#garden-modal').open) return;
+  if (query('#modal').open || query('#works-modal').open) return;
   event.preventDefault();
   cancelSelection();
 });
@@ -740,10 +740,10 @@ query('#fit').onclick = () => {
   cancelPlacement();
 };
 
-// Move the garden plots between the sidebar strip and the phone sheet when the layout changes.
+// Move the works buildings between the sidebar strip and the phone sheet when the layout changes.
 function adaptLayout() {
-  if (!mobileQuery.matches && query('#garden-modal').open) query('#garden-modal').close();
-  const host = mobileQuery.matches ? query('#garden-modal .sheet-body') : query('.garden-strip');
+  if (!mobileQuery.matches && query('#works-modal').open) query('#works-modal').close();
+  const host = mobileQuery.matches ? query('#works-modal .sheet-body') : query('.works-strip');
   host.append(query('#farms'));
   world.resize();
   cancelPlacement();
@@ -752,8 +752,8 @@ mobileQuery.addEventListener('change', adaptLayout);
 adaptLayout();
 
 const RESTART_TEXT =
-  'This replaces your saved settlement with a fresh garden.' +
-  ' Your current towers and materials will be cleared.';
+  'This replaces your saved keep with a fresh siege.' +
+  ' Your current engines and materials will be cleared.';
 
 function restartGame() {
   modal('Restart?', RESTART_TEXT, 'Restart', () => {
@@ -803,7 +803,7 @@ mobileQuery.addEventListener('change', hideNote);
 
 window.addEventListener('keydown', (event) => {
   const typing = event.target.matches('input,textarea,select');
-  if (query('#modal').open || query('#garden-modal').open || typing) return;
+  if (query('#modal').open || query('#works-modal').open || typing) return;
   const keys = Object.keys(TOWERS);
   const slot = Number(event.key);
   if (Number.isInteger(slot) && slot >= 1 && slot <= keys.length) choose(keys[slot - 1]);
@@ -825,7 +825,7 @@ document.addEventListener('visibilitychange', () => {
   render();
 });
 
-const WON_TEXT = 'All 30 stages cleared.';
+const WON_TEXT = 'All 30 stages cleared. The keep still stands.';
 const LOST_TEXT = 'Try a longer maze. Restart from Settings.';
 
 // One animation frame: step the game in fixed slices, draw, react to events, then save.
@@ -845,8 +845,8 @@ function frame(now) {
     if (event.type === 'wave') {
       toast('Stage cleared');
     }
-    if (event.type === 'won') modal('Garden protected', WON_TEXT);
-    if (event.type === 'lost') modal('Garden lost', LOST_TEXT);
+    if (event.type === 'won') modal('The keep holds', WON_TEXT);
+    if (event.type === 'lost') modal('The keep has fallen', LOST_TEXT);
   }
   game.events = [];
   uiTime += dt;

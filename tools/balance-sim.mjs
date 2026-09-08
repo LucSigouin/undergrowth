@@ -174,7 +174,7 @@ const WALLS = [
 ];
 const GUN_SLOTS = [3, 5];
 
-// Hedge cells, wall by wall, in the order they should be built.
+// Palisade cells, wall by wall, in the order they should be built.
 function hedgePlan(walls) {
   const cells = [];
   for (const wall of walls) {
@@ -185,7 +185,7 @@ function hedgePlan(walls) {
   return cells;
 }
 
-// Buys hedges in plan order while keeping a reserve so towers still get funded.
+// Buys palisades in plan order while keeping a reserve so engines still get funded.
 function buildHedges(game, api, cells, reserve) {
   for (const [x, z] of cells) {
     if (game.towers.some((t) => t.x === x && t.z === z)) continue;
@@ -207,8 +207,8 @@ const MAZE_GUNS = [
   ['thorn', 10, 5],
 ];
 
-// The same maze slots, but built with the r2 pieces: two Embers for shells and wardens,
-// and one Lantern sitting where its ring covers three neighbours.
+// The same maze slots, but built with the r2 pieces: two Braziers for plate and paladins,
+// and one War banner sitting where its ring covers three neighbours.
 const KIT_GUNS = [
   ['thorn', 2, 3],
   ['thorn', 4, 5],
@@ -222,7 +222,7 @@ const KIT_GUNS = [
   ['thorn', 10, 5],
 ];
 
-// Open meadow spots beside the straight route, used by the strategies that do not maze.
+// Open bailey spots beside the straight route, used by the strategies that do not maze.
 const OPEN_GUNS = [
   ['thorn', 3, 3],
   ['thorn', 5, 5],
@@ -245,8 +245,8 @@ function wavesPlayed(game) {
   return game.stage * 3 + game.wave;
 }
 
-// The shared maze build order: guns first, then a growing number of hedges, then upgrades.
-// deepGarden also buys the iron and diamond plots, which is what a level 3 Sunstone needs.
+// The shared maze build order: guns first, then a growing number of palisades, then upgrades.
+// deepGarden also buys the forge and gem cutter, which is what a level 3 Mage spire needs.
 function mazePolicy(game, api, branch, deepGarden = false, guns = MAZE_GUNS) {
   const played = wavesPlayed(game);
   growFarms(game, api, [1, 0, 0, 0]);
@@ -260,7 +260,7 @@ function mazePolicy(game, api, branch, deepGarden = false, guns = MAZE_GUNS) {
 const STRATEGIES = [
   {
     name: 'naive',
-    note: 'A few Thorns beside the straight route. Upgrades when affordable. No farm.',
+    note: 'A few Ballistas beside the straight route. Upgrades when affordable. No works.',
     policy(game, api) {
       buildPlan(game, api, OPEN_GUNS);
       upgradeGuns(game, api, 'power');
@@ -268,21 +268,21 @@ const STRATEGIES = [
   },
   {
     name: 'maze',
-    note: 'Serpentine hedge walls with Thorn, Sap and Sunstone in the wall. Buys wood and rock so it can upgrade.',
+    note: 'Serpentine palisades with Ballista, Tar pit and Mage spire in the wall. Buys wood and rock so it can upgrade.',
     policy(game, api) {
       mazePolicy(game, api, 'power');
     },
   },
   {
     name: 'maze-deep',
-    note: 'The maze plan plus the full garden from stage 5, the only way a Sunstone can reach level 3.',
+    note: 'The maze plan plus the full works from stage 5, the only way a Mage spire can reach level 3.',
     policy(game, api) {
       mazePolicy(game, api, 'power', true);
     },
   },
   {
     name: 'farm-first',
-    note: 'Wood then rock then iron then diamond, fully upgraded, before any tower is bought.',
+    note: 'Wood then rock then iron then diamond, fully upgraded, before any engine is bought.',
     policy(game, api) {
       growFarms(game, api, [3, 3, 3, 3]);
       const gardenDone = game.farms.every((f) => f && f.level >= 3);
@@ -294,7 +294,7 @@ const STRATEGIES = [
   },
   {
     name: 'farm-lite',
-    note: 'Two Thorns first, then the wood and rock plots, then the maze. Farming without going undefended.',
+    note: 'Two Ballistas first, then the sawmill and quarry, then the maze. Working without going undefended.',
     policy(game, api) {
       buildPlan(game, api, OPEN_GUNS.slice(0, 2));
       growFarms(game, api, [2, 0, 0, 0]);
@@ -313,7 +313,7 @@ const STRATEGIES = [
   },
   {
     name: 'kit-maze',
-    note: 'The r2 maze: the same walls and slots, but with two Embers and a Lantern. No abilities.',
+    note: 'The r2 maze: the same walls and slots, but with two Braziers and a War banner. No abilities.',
     policy(game, api) {
       mazePolicy(game, api, 'power', true, KIT_GUNS);
     },
@@ -431,7 +431,7 @@ function runAll(tuning = {}, only = null) {
 const R1_UNLOCKS = { 1: { unlock: 80 }, 2: { unlock: 160 }, 3: { unlock: 300 } };
 
 const EXPERIMENTS = [
-  { name: 'baseline', note: 'The current wave-harvest rules, for comparison.', tuning: {} },
+  { name: 'baseline', note: 'The current wave-payout rules, for comparison.', tuning: {} },
   {
     name: 'r1-hp-1.43',
     note: 'Enemy growth back to the r1 value of 1.43 per stage.',
@@ -454,7 +454,7 @@ const EXPERIMENTS = [
   },
   {
     name: 'r1-garden-prices',
-    note: 'Plot unlocks back to the r1 prices of 80/160/300.',
+    note: 'Works unlocks back to the r1 prices of 80/160/300.',
     tuning: { materials: R1_UNLOCKS },
   },
   {
@@ -474,17 +474,17 @@ const EXPERIMENTS = [
   },
   {
     name: 'thorn-damage-13',
-    note: 'Thorn base damage 10 -> 13.',
+    note: 'Ballista base damage 10 -> 13.',
     tuning: { towers: { thorn: { damage: 13 } } },
   },
   {
     name: 'ember-damage-12',
-    note: 'Ember base damage 9 -> 12, which also makes its burn hotter.',
+    note: 'Brazier base damage 9 -> 12, which also makes its burn hotter.',
     tuning: { towers: { ember: { damage: 12 } } },
   },
   {
     name: 'idle-20s',
-    note: 'Twenty seconds between waves must not change harvests or balance.',
+    note: 'Twenty seconds between waves must not change payouts or balance.',
     tuning: { idleSeconds: 20 },
   },
 ];
@@ -503,7 +503,7 @@ function runExperiments() {
 // Raw numbers. Everything here is measured from the engine, not restated from it.
 // ---------------------------------------------------------------------------
 
-// Measures how much of a shot an armored enemy absorbs from a non Sunstone tower.
+// Measures how much of a shot an armored enemy absorbs from anything but a Mage spire.
 function measureArmorResist() {
   const game = new Game();
   game.stage = 9;
@@ -541,7 +541,7 @@ function towerDps(type, level, branch) {
 // Prints the arithmetic the balance report quotes.
 function printNumbers() {
   const resist = measureArmorResist();
-  console.log('Armored enemies take this share of a non Sunstone hit:', resist.toFixed(2));
+  console.log('Armored enemies take this share of a non Mage spire hit:', resist.toFixed(2));
   console.log('\nTower damage per second (engine stats method):');
   console.log('tower   L1      L2 power  L3 power  L3 reach');
   for (const type of ['thorn', 'sap', 'bloom', 'prism', 'ember']) {
@@ -554,7 +554,7 @@ function printNumbers() {
     ];
     console.log(row.join(''));
   }
-  console.log('\nWave pressure. effHP counts armor at its real damage cost against a Thorn.');
+  console.log('\nWave pressure. effHP counts armor at its real damage cost against a Ballista.');
   console.log('stage wave enemies  rawHP   effHP   gap  burst  window  effHP/s');
   for (const stage of [0, 4, 5, 8, 9]) {
     for (const wave of [1, 3]) {

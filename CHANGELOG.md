@@ -1,5 +1,27 @@
 # Changelog
 
+## Medieval castle siege, 2026-09-08
+
+- The theme is a siege now. The seven war engines are the Ballista, Tar pit, Catapult, Mage
+  spire, Palisade, Brazier and War banner. The horde is Goblins, Wolf riders, Iron knights,
+  Gargoyles, War wagons, Whelps, Paladins and a Warlord. Wood, Rock, Iron and Diamond keep
+  their names; the four buildings that produce them are the works: sawmill, quarry, forge and
+  gem cutter.
+- Every player-facing sentence was rewritten: engine descriptions, effects and tips, the ten
+  stage titles, the help dialog, the settings, the toasts, the victory and defeat copy, every
+  aria label and the page title. The words garden, meadow, pollen, settlement and expedition
+  are gone; the keep, the bailey and the siege took their place.
+- The interface palette moved from garden green to castle stone and parchment with heraldic
+  crimson and gold. Type is Cinzel for the wordmark and headings and Alegreya Sans for
+  everything a player reads, replacing DM Sans. Body text sits at 11.1:1 on paper and 9.6:1
+  on a panel; the muted tone is 5.9:1. The four type sizes, the spacing steps and every
+  layout rule are unchanged.
+- Interface class and id names that carried the old word were renamed (`.garden-strip` to
+  `.works-strip`, `#garden-modal` to `#works-modal`, `data-hud-garden` to `data-hud-works`
+  and their siblings). `window.__garden` and the save keys are untouched, so old saves load.
+- `src/game.js` changed only inside its string literals. `tests/golden.mjs` and
+  `tests/golden.json` are untouched. Rules, numbers and the save format did not move.
+
 ## Painted art on the whole board, 2026-09-08
 
 - Every procedural shape and unicode glyph is gone. Towers, creatures, meadow tiles, the trodden

@@ -1,10 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Alegreya+Sans:wght@400;500;700&display=swap');
 
 /* One token set for the whole interface. Four type sizes, one spacing step, one palette.
    Every rule below uses these and nothing else, so the sidebar, the board furniture, the
-   phone tray and the dialogs cannot drift apart. */
+   phone tray and the dialogs cannot drift apart.
+
+   Round r7 moved the interface from leafy green to castle stone and parchment with
+   heraldic crimson and gold. Two faces: Cinzel, a Roman inscriptional serif, for the
+   wordmark and headings, and Alegreya Sans for everything a player has to read. Only the
+   token values changed; the type scale, the spacing steps and every layout rule stand. */
 :root {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Alegreya Sans', 'Optima', 'Segoe UI', sans-serif;
+  --display: 'Cinzel', 'Palatino Linotype', Palatino, Georgia, serif;
   font-synthesis: none;
 
   /* Type scale. Exactly four sizes are in play at any width. */
@@ -20,20 +26,22 @@
   --s4: 16px;
   --s5: 24px;
 
-  /* Colour. Text tokens are checked against their own background for contrast. */
-  --paper: #f7f8f0;
-  --panel: #eaeedd;
-  --sunk: #e0e6d2;
-  --ink: #24311d;
-  --body: #3e4c37;
-  --muted: #5b6a52;
-  --line: #d3dbc3;
-  --edge: #c2cdae;
-  --brand: #33563a;
-  --brand-hi: #27442c;
-  --brand-ink: #f5f8ea;
-  --warn: #8f3a25;
-  --warn-bg: #f6e6dd;
+  /* Colour. Text tokens are checked against their own background for contrast.
+     body on paper 11.1:1, body on panel 9.6:1, muted on panel 5.9:1. */
+  --paper: #f6efdd;
+  --panel: #e8dfc8;
+  --sunk: #dbd0b4;
+  --ink: #241d15;
+  --body: #3b3126;
+  --muted: #5c5040;
+  --line: #cdbfa2;
+  --edge: #b3a181;
+  --brand: #7e1f28;
+  --brand-hi: #611620;
+  --brand-ink: #f8f0dc;
+  --gold: #b08423;
+  --warn: #8a2c1d;
+  --warn-bg: #f4e3d7;
   --radius: 10px;
 
   color: var(--body);
@@ -47,10 +55,11 @@ body {
   overflow: hidden;
 }
 h2 {
+  font-family: var(--display);
   font-size: var(--t3);
   font-weight: 600;
   color: var(--ink);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin: var(--s5) 0 var(--s3);
   display: flex;
@@ -58,6 +67,7 @@ h2 {
   justify-content: space-between;
 }
 h2 small {
+  font-family: 'Alegreya Sans', 'Optima', 'Segoe UI', sans-serif;
   font-size: var(--t4);
   font-weight: 400;
   letter-spacing: 0;
@@ -94,7 +104,7 @@ kbd {
   display: none !important;
 }
 .mobile-only,
-.garden-summary {
+.works-summary {
   display: none;
 }
 
@@ -113,27 +123,27 @@ kbd {
   min-width: 0;
 }
 
-/* The garden strip above the board. */
-.garden-strip {
+/* The works strip above the board. */
+.works-strip {
   padding: var(--s3) var(--s5);
   background: var(--panel);
   border-bottom: 1px solid var(--edge);
 }
-.garden-strip-heading {
+.works-strip-heading {
   display: flex;
   align-items: baseline;
   gap: var(--s3);
   margin-bottom: var(--s2);
 }
-.garden-strip-heading h2 {
+.works-strip-heading h2 {
   margin: 0;
 }
-.garden-strip-heading p {
+.works-strip-heading p {
   margin: 0;
   color: var(--muted);
   font-size: var(--t3);
 }
-.garden-plots {
+.works-plots {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--s2);
@@ -178,7 +188,7 @@ kbd {
   font-weight: 500;
 }
 .resource-plot button:hover:not(:disabled) {
-  background: #d3ddbe;
+  background: #d0c3a4;
 }
 .resource-plot.locked button {
   background: transparent;
@@ -209,7 +219,7 @@ kbd {
   gap: var(--s3);
   font-size: var(--t3);
   color: var(--ink);
-  background: #f4f7e8e0;
+  background: #f6efddeb;
   border: 1px solid var(--edge);
   border-radius: 999px;
   padding: var(--s1) var(--s3);
@@ -231,7 +241,7 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: #a4402c;
+  color: #9c2f2c;
 }
 .heart .life-icon {
   width: 18px;
@@ -243,7 +253,7 @@ kbd {
 }
 
 /* The materials HUD. Same pill as the stage and lives chip, on the other side of the band.
-   Each chip is a button, because it is also the way back to the plot that makes it. */
+   Each chip is a button, because it is also the way back to the works that make it. */
 .map-materials {
   left: auto;
   right: var(--s4);
@@ -274,9 +284,9 @@ kbd {
   text-align: left;
 }
 .material-chip:hover {
-  background: #dbe4c6;
+  background: #dcd0b3;
 }
-/* A plot that was just asked for gets one short glow, so the click has an answer. */
+/* A works card that was just asked for gets one short glow, so the click has an answer. */
 .resource-plot.called-out {
   animation: called-out 1.4s ease-out;
 }
@@ -299,7 +309,7 @@ kbd {
 }
 .map-controls button {
   border: 1px solid var(--edge);
-  background: #f4f7e8e0;
+  background: #f6efddeb;
   color: var(--body);
   border-radius: 8px;
   min-width: 34px;
@@ -308,14 +318,14 @@ kbd {
   font-size: var(--t3);
 }
 .map-controls button:hover {
-  background: #e6ecd6;
+  background: #e6dcc2;
 }
 .paused-overlay {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: #e4ecd955;
+  background: #e6dcc888;
   pointer-events: none;
   font-size: var(--t1);
   font-weight: 600;
@@ -341,7 +351,7 @@ kbd {
   background: var(--paper);
   padding: 0 var(--s4);
   font-size: var(--t2);
-  box-shadow: 0 4px 20px #39543524;
+  box-shadow: 0 4px 20px #3b312633;
 }
 .placement #confirm-place {
   background: var(--brand);
@@ -373,8 +383,9 @@ kbd {
   padding: var(--s5) 0 var(--s4);
 }
 .wordmark {
+  font-family: var(--display);
   font-size: var(--t1);
-  letter-spacing: -0.03em;
+  letter-spacing: 0.02em;
   font-weight: 700;
   color: var(--ink);
 }
@@ -442,9 +453,9 @@ kbd {
   padding: 0 var(--s1) var(--s2);
 }
 
-/* One plate shape for every piece and every material, holding its painted icon. The plate
-   is a pale wash of that piece's accent colour from look.js, so a Bloom, an Ember, a
-   Sunstone and a Diamond stay apart even at the smallest chip size. Every size rule below
+/* One plate shape for every engine and every material, holding its painted icon. The plate
+   is a pale wash of that engine's accent colour from look.js, so a Catapult, a Brazier, a
+   Mage spire and a Diamond stay apart even at the smallest chip size. Every size rule below
    sets the plate; the art inside simply fills it. */
 .chip {
   display: grid;
@@ -454,13 +465,13 @@ kbd {
   flex: none;
   padding: 1px;
   border-radius: 8px;
-  background: linear-gradient(#fffffff0, #ffffffd6), var(--tile);
+  background: linear-gradient(#fffbf0f2, #fff7e6d6), var(--tile);
   font-size: var(--t2);
   line-height: 1;
   color: #fffdf2;
   box-shadow:
     inset 0 -2px 0 #00000018,
-    0 1px 2px #2a331e26;
+    0 1px 2px #3b312626;
 }
 .chip-art {
   display: block;
@@ -496,7 +507,7 @@ kbd {
   background: var(--sunk);
 }
 .tower-card.selected {
-  background: #e2ead1;
+  background: #e5d9bb;
   border-color: var(--edge);
 }
 .tower-summary {
@@ -549,7 +560,7 @@ kbd {
   border: 1px solid var(--edge);
   border-radius: var(--radius);
   background: var(--paper);
-  box-shadow: 0 12px 60px #30492e40;
+  box-shadow: 0 12px 60px #2a221840;
 }
 .detail-close {
   position: absolute;
@@ -577,7 +588,7 @@ kbd {
   border: 1px solid var(--edge);
   border-radius: var(--radius);
   background: var(--paper);
-  box-shadow: 0 12px 40px #30492e33;
+  box-shadow: 0 12px 40px #2a221833;
   pointer-events: none;
 }
 .hover-note p {
@@ -599,6 +610,7 @@ kbd {
   padding: var(--s2);
 }
 .eyebrow {
+  font-family: var(--display);
   font-size: var(--t4);
   color: var(--muted);
   text-transform: uppercase;
@@ -653,8 +665,8 @@ kbd {
   padding: var(--s2);
 }
 .detail p.defense-boost {
-  color: #7a5411;
-  background: #f7f0da;
+  color: #6d4f12;
+  background: #f5e7c8;
   border-radius: 8px;
   padding: var(--s2);
 }
@@ -672,7 +684,7 @@ kbd {
   flex: 1;
 }
 .upgrade-row button:hover:not(:disabled) {
-  background: #d3ddbe;
+  background: #d0c3a4;
 }
 .upgrade-row button:disabled {
   color: var(--muted);
@@ -714,13 +726,15 @@ kbd {
 .primary {
   border: 0;
   border-radius: var(--radius);
+  font-family: var(--display);
+  letter-spacing: 0.06em;
   background: var(--brand);
   color: var(--brand-ink);
   font-size: var(--t2);
   font-weight: 600;
   padding: var(--s4);
   width: 100%;
-  box-shadow: 0 2px 0 #21391f;
+  box-shadow: 0 2px 0 #4d1017;
 }
 .primary:hover:not(:disabled) {
   background: var(--brand-hi);
@@ -772,8 +786,8 @@ kbd {
   transform: translate(-50%, 12px);
   max-width: 60vw;
   padding: var(--s3) var(--s4);
-  background: #23361fee;
-  color: #f2f6e8;
+  background: #2e2620ee;
+  color: #f6efdd;
   border-radius: var(--radius);
   font-size: var(--t3);
   line-height: 1.4;
@@ -794,17 +808,17 @@ dialog {
   padding: var(--s5);
   width: 460px;
   max-width: 92vw;
-  box-shadow: 0 30px 100px #13251b40;
+  box-shadow: 0 30px 100px #1b140e55;
 }
 dialog::backdrop {
-  background: #162b2366;
+  background: #22190f77;
   backdrop-filter: blur(4px);
 }
 dialog h2 {
   font-size: var(--t1);
   margin: var(--s2) 0 var(--s3);
   text-transform: none;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
 }
 dialog p {
   font-size: var(--t2);
@@ -820,7 +834,7 @@ dialog .help-warning {
 dialog .primary {
   margin-top: var(--s4);
 }
-.garden-sheet {
+.works-sheet {
   width: min(520px, 100vw);
   padding: var(--s5) var(--s4);
   max-height: 80dvh;
@@ -852,28 +866,28 @@ dialog .primary {
   font-size: var(--t1);
   flex-shrink: 0;
 }
-.garden-sheet .garden-plots {
+.works-sheet .works-plots {
   grid-template-columns: 1fr 1fr;
   gap: var(--s2);
 }
-.garden-sheet .resource-plot {
+.works-sheet .resource-plot {
   padding: var(--s2);
 }
-.garden-sheet .plot-summary {
+.works-sheet .plot-summary {
   gap: var(--s1);
 }
-.garden-sheet .resource-plot button {
+.works-sheet .resource-plot button {
   font-size: var(--t2);
   min-height: 44px;
 }
 
-/* The little plot pictures. */
+/* The little works pictures. */
 .material-art {
   height: 38px;
   width: 36px;
   position: relative;
   flex-shrink: 0;
-  filter: drop-shadow(2px 3px 0 #52603818);
+  filter: drop-shadow(2px 3px 0 #3b312618);
 }
 .locked .material-art {
   filter: grayscale(0.8);
@@ -882,7 +896,7 @@ dialog .primary {
 .material-art.wood:before {
   content: '';
   position: absolute;
-  background: #8a6f43;
+  background: #7a5f38;
   width: 8px;
   height: 19px;
   bottom: 0;
@@ -893,7 +907,7 @@ dialog .primary {
   position: absolute;
   width: 24px;
   height: 24px;
-  background: #7f9e4f;
+  background: #9a8256;
   border-radius: 45%;
   top: 4px;
   left: 0;
@@ -901,17 +915,17 @@ dialog .primary {
 .wood i:nth-child(2) {
   left: 13px;
   top: 7px;
-  background: #648540;
+  background: #7d6842;
 }
 .wood i:nth-child(3) {
   left: 6px;
   top: 0;
-  background: #9cb96d;
+  background: #b09a6c;
 }
 .rock i {
   position: absolute;
   clip-path: polygon(25% 0, 75% 5%, 100% 70%, 70% 100%, 0 90%, 0 30%);
-  background: #8b9188;
+  background: #8b8b84;
   height: 26px;
   width: 31px;
   bottom: 0;
@@ -920,7 +934,7 @@ dialog .primary {
   width: 17px;
   height: 17px;
   right: 0;
-  background: #b3b8ad;
+  background: #b4b3a8;
 }
 .iron i {
   position: absolute;
@@ -995,7 +1009,7 @@ dialog .primary {
   .primary {
     padding: var(--s3);
   }
-  .garden-strip {
+  .works-strip {
     padding: var(--s2) var(--s4);
   }
 }
@@ -1012,7 +1026,7 @@ dialog .primary {
     --t1: 18px;
   }
   .sidebar,
-  .garden-strip {
+  .works-strip {
     padding-left: var(--s3);
     padding-right: var(--s3);
   }
@@ -1024,7 +1038,7 @@ dialog .primary {
     left: auto;
     right: var(--s3);
   }
-  .garden-plots {
+  .works-plots {
     gap: var(--s1);
   }
   .plot-summary {
@@ -1060,7 +1074,7 @@ dialog .primary {
   .defenses {
     display: contents;
   }
-  /* Portrait already shows every material in the garden row, so the HUD would just repeat it. */
+  /* Portrait already shows every material in the works row, so the HUD would just repeat it. */
   .map-materials {
     display: none;
   }
@@ -1095,23 +1109,23 @@ dialog .primary {
   .resources small {
     display: none;
   }
-  .garden-strip {
+  .works-strip {
     grid-row: 2;
     grid-column: 1;
     padding: var(--s1) var(--s2);
     min-width: 0;
     border-bottom: 1px solid var(--line);
   }
-  .garden-strip-heading {
+  .works-strip-heading {
     display: none;
   }
-  .garden-summary {
+  .works-summary {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--s1);
     height: 100%;
   }
-  .garden-summary button {
+  .works-summary button {
     display: flex;
     align-items: center;
     gap: var(--s1);
@@ -1123,17 +1137,17 @@ dialog .primary {
     padding: var(--s1) var(--s2);
     min-width: 0;
   }
-  .garden-summary .chip {
+  .works-summary .chip {
     flex: none;
     width: 20px;
     height: 20px;
     font-size: var(--t4);
     border-radius: 6px;
   }
-  .garden-summary .plot-name {
+  .works-summary .plot-name {
     display: none;
   }
-  .garden-summary b {
+  .works-summary b {
     font-size: var(--t3);
     font-weight: 700;
     color: var(--ink);
@@ -1257,7 +1271,7 @@ dialog .primary {
     min-height: 46px;
     font-size: var(--t2);
   }
-  .garden-sheet {
+  .works-sheet {
     margin: auto 0 0;
     width: 100%;
     max-width: 100%;
@@ -1265,7 +1279,7 @@ dialog .primary {
     border-radius: var(--radius) var(--radius) 0 0;
     padding: var(--s4) var(--s3) calc(var(--s4) + env(safe-area-inset-bottom));
   }
-  .garden-sheet .material-art {
+  .works-sheet .material-art {
     display: block;
   }
   #toast {
@@ -1313,12 +1327,12 @@ dialog .primary {
     background: var(--paper);
     border-bottom: 1px solid var(--line);
   }
-  .garden-strip {
+  .works-strip {
     grid-column: 1;
     grid-row: 1;
     padding: 2px var(--s2);
   }
-  .garden-summary button {
+  .works-summary button {
     min-height: 44px;
     justify-content: flex-start;
   }
@@ -1388,17 +1402,17 @@ dialog .primary {
     bottom: var(--s2);
     max-height: 88dvh;
   }
-  .garden-sheet {
+  .works-sheet {
     width: min(560px, 100vw);
     margin: auto;
     max-height: 95dvh;
     border-radius: var(--radius);
     padding: var(--s3);
   }
-  .garden-sheet .garden-plots {
+  .works-sheet .works-plots {
     grid-template-columns: repeat(4, 1fr);
   }
-  .garden-sheet .material-art {
+  .works-sheet .material-art {
     display: none;
   }
   #toast {
@@ -1536,7 +1550,7 @@ dialog .primary {
 .sheet-heading {
   justify-content: flex-end;
 }
-.garden-sheet .garden-plots {
+.works-sheet .works-plots {
   grid-template-columns: 1fr;
 }
 @media (min-width: 701px) and (pointer: fine), (min-width: 1001px) {
@@ -1573,7 +1587,7 @@ dialog .primary {
     flex: none;
   }
   .tower-card.selected {
-    background: #e2ead1;
+    background: #e5d9bb;
     border-color: var(--brand);
   }
 }
@@ -1581,7 +1595,7 @@ dialog .primary {
   .game-shell {
     grid-template-rows: 48px 0 minmax(180px, 1fr) 184px 66px;
   }
-  .garden-strip {
+  .works-strip {
     display: none;
   }
   .resource-header {
@@ -1620,7 +1634,7 @@ dialog .primary {
   }
 }
 
-/* Farms anchor the bottom of the desktop side pane. */
+/* The works anchor the bottom of the desktop side pane. */
 @media (min-width: 701px) and (pointer: fine), (min-width: 1001px) {
   .game-shell {
     --sidebar-width: clamp(320px, 28vw, 400px);
@@ -1646,14 +1660,14 @@ dialog .primary {
     width: clamp(44px, 6vh, 64px);
     height: clamp(44px, 6vh, 64px);
   }
-  .garden-strip {
+  .works-strip {
     flex-shrink: 0;
     padding: 12px 0;
     background: transparent;
     border-top: 1px solid var(--line);
     border-bottom: 0;
   }
-  .garden-plots {
+  .works-plots {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
@@ -1674,9 +1688,10 @@ dialog .primary {
 /* Title at left, followed by the grouped status and economy at right. */
 .game-title {
   margin-right: auto;
+  font-family: var(--display);
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: 0.04em;
   color: var(--ink);
 }
 .resource-header .map-status {
@@ -1830,10 +1845,10 @@ dialog .primary {
   filter: grayscale(0.6);
   opacity: 0.55;
 }
-.garden-sheet .resource-plot {
+.works-sheet .resource-plot {
   padding: 0;
 }
-.garden-sheet .garden-plots {
+.works-sheet .works-plots {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -1843,7 +1858,7 @@ dialog .primary {
   max-height: calc(100dvh - 20px);
   padding: 18px;
   background: var(--paper);
-  border-color: #a9b699;
+  border-color: var(--edge);
 }
 .defense-note .defense-stats {
   margin: 0 0 16px;
@@ -1908,14 +1923,14 @@ dialog .primary {
 }
 .tower-card.unaffordable > small,
 .tower-card.unaffordable > small i {
-  color: #b0392e;
+  color: #a32b22;
   text-decoration: none;
 }
 .resource-amount[data-resource='coins'] b {
   font-size: 18px;
 }
 .resource-amount.short[data-resource='coins'] {
-  color: #b0392e;
+  color: #a32b22;
 }
 @media (max-width: 700px), (max-width: 1000px) and (pointer: coarse) and (orientation: portrait) {
   .game-shell {
@@ -1947,7 +1962,7 @@ dialog .primary {
     height: clamp(32px, 5vh, 64px);
     font-size: clamp(22px, 3.6vh, 46px);
   }
-  .garden-strip {
+  .works-strip {
     padding: 8px 0;
   }
   .resource-plot .farm-card {

@@ -1,0 +1,3 @@
+red-proof: 2026-09-08 node fleet-r7-medieval/check-theme.mjs on d511e65 -> exit 1 THEME GATE RED (no new names, old names present, DM Sans in use). Mutant: `cost: 35` -> `cost: 36` in src/game.js flagged "changed outside its string literals"; reverted with git checkout. check-assets.mjs is the r6 gate with the folder renamed; r6 red-proof (empty lane, RGB png, wrong size) still holds.
+gate fix 2026-09-08: check-theme strip() now also removes // and /* */ comments and collapses whitespace (Rex found a comment change failed check 1). Re-proved: cost 35->36 still flagged; a comment-only edit passes check 1.
+red-proof (integrate r7): 2026-09-08 check-integrate-r7.mjs green on the r6 art, red with enemy-boss@256.png removed ("has no game-size copy of enemy-boss"), restored.
