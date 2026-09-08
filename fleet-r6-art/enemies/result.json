@@ -1,0 +1,95 @@
+{
+  "state": "done",
+  "taskId": "72B95C04-7D1D-486D-8CB3-72CB5CB88FF9",
+  "model": {
+    "requested": "gpt-6-astra",
+    "effective": "gpt-6-astra",
+    "source": "spawn flag",
+    "effort": "xhigh"
+  },
+  "files": [
+    "REPORT.md",
+    "candidates/contact-sheet.png",
+    "candidates/enemy-grub-take-1.png",
+    "candidates/enemy-grub-take-1.txt",
+    "candidates/enemy-grub-take-1@256.png",
+    "candidates/enemy-grubling-take-1.png",
+    "candidates/enemy-grubling-take-1.txt",
+    "candidates/enemy-grubling-take-1@256.png",
+    "candidates/enemy-warden-take-1.png",
+    "candidates/enemy-warden-take-1.txt",
+    "candidates/enemy-warden-take-1@256.png",
+    "candidates/grub-alpha-proof.png",
+    "candidates/pixel-checks.json",
+    "costs.jsonl",
+    "enemy-armor.png",
+    "enemy-armor@256.png",
+    "enemy-boss.png",
+    "enemy-boss@256.png",
+    "enemy-brood.png",
+    "enemy-brood@256.png",
+    "enemy-grub.png",
+    "enemy-grub@256.png",
+    "enemy-grubling.png",
+    "enemy-grubling@256.png",
+    "enemy-moth.png",
+    "enemy-moth@256.png",
+    "enemy-runner.png",
+    "enemy-runner@256.png",
+    "enemy-warden.png",
+    "enemy-warden@256.png",
+    "gen.py",
+    "prompts/enemy-armor.txt",
+    "prompts/enemy-boss.txt",
+    "prompts/enemy-brood.txt",
+    "prompts/enemy-grub.txt",
+    "prompts/enemy-grubling.txt",
+    "prompts/enemy-moth.txt",
+    "prompts/enemy-runner.txt",
+    "prompts/enemy-warden.txt",
+    "result.json",
+    "review.py"
+  ],
+  "verify": {
+    "cmd": "node fleet-r6-art/check-assets.mjs enemies",
+    "exit": 0
+  },
+  "checks": [
+    {
+      "cmd": "python3 fleet-r6-art/enemies/review.py",
+      "exit": 0,
+      "filesChecked": 16
+    },
+    {
+      "cmd": "git diff --exit-code -- src",
+      "exit": 0
+    }
+  ],
+  "generation": {
+    "provider": "openai",
+    "model": "gpt-image-2",
+    "quality": "high",
+    "generatedImages": 11,
+    "rejectedTakes": 3,
+    "totalUsd": 2.33873,
+    "takes": {
+      "enemy-grub.png": 2,
+      "enemy-moth.png": 1,
+      "enemy-warden.png": 2,
+      "enemy-brood.png": 1,
+      "enemy-runner.png": 1,
+      "enemy-armor.png": 1,
+      "enemy-boss.png": 1,
+      "enemy-grubling.png": 2
+    }
+  },
+  "sizes": {
+    "mastersBytes": 10669749,
+    "downscaledBytes": 573744
+  },
+  "unverified": [
+    "Integration into the running game, including rotation and relative enemy scales.",
+    "Visual consistency with other art lanes.",
+    "Combined 6 MB art budget and 60 fps runtime performance."
+  ]
+}

@@ -1,0 +1,353 @@
+[
+  {
+    "file": "icon-thorn.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 683485,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 344206,
+    "transparent_fraction": 0.6518,
+    "alpha_bbox": [
+      57,
+      62,
+      958,
+      975
+    ],
+    "visible_alpha_bbox_above_2": [
+      63,
+      62,
+      957,
+      829
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-sap.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 429204,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 596377,
+    "transparent_fraction": 0.4093,
+    "alpha_bbox": [
+      83,
+      16,
+      943,
+      1006
+    ],
+    "visible_alpha_bbox_above_2": [
+      87,
+      17,
+      942,
+      1006
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-bloom.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 446449,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 579375,
+    "transparent_fraction": 0.4258,
+    "alpha_bbox": [
+      33,
+      17,
+      984,
+      974
+    ],
+    "visible_alpha_bbox_above_2": [
+      64,
+      17,
+      983,
+      973
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-prism.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 746989,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 291561,
+    "transparent_fraction": 0.7124,
+    "alpha_bbox": [
+      293,
+      23,
+      732,
+      1000
+    ],
+    "visible_alpha_bbox_above_2": [
+      296,
+      24,
+      732,
+      997
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-hedge.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 426113,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 606338,
+    "transparent_fraction": 0.4064,
+    "alpha_bbox": [
+      55,
+      8,
+      984,
+      984
+    ],
+    "visible_alpha_bbox_above_2": [
+      56,
+      62,
+      972,
+      969
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-ember.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 536953,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 490124,
+    "transparent_fraction": 0.5121,
+    "alpha_bbox": [
+      0,
+      6,
+      988,
+      1024
+    ],
+    "visible_alpha_bbox_above_2": [
+      95,
+      8,
+      937,
+      995
+    ],
+    "outer_edge_max_alpha": 1
+  },
+  {
+    "file": "icon-lantern.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 563579,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 463811,
+    "transparent_fraction": 0.5375,
+    "alpha_bbox": [
+      0,
+      26,
+      994,
+      1007
+    ],
+    "visible_alpha_bbox_above_2": [
+      86,
+      26,
+      938,
+      994
+    ],
+    "outer_edge_max_alpha": 1
+  },
+  {
+    "file": "icon-wood.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 444388,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 591813,
+    "transparent_fraction": 0.4238,
+    "alpha_bbox": [
+      27,
+      63,
+      994,
+      972
+    ],
+    "visible_alpha_bbox_above_2": [
+      29,
+      64,
+      992,
+      971
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-rock.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 491873,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 546106,
+    "transparent_fraction": 0.4691,
+    "alpha_bbox": [
+      89,
+      74,
+      942,
+      930
+    ],
+    "visible_alpha_bbox_above_2": [
+      89,
+      74,
+      941,
+      930
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-iron.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 577911,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 461140,
+    "transparent_fraction": 0.5511,
+    "alpha_bbox": [
+      18,
+      64,
+      1009,
+      1000
+    ],
+    "visible_alpha_bbox_above_2": [
+      19,
+      134,
+      1008,
+      890
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-diamond.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 590948,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 447102,
+    "transparent_fraction": 0.5636,
+    "alpha_bbox": [
+      33,
+      123,
+      991,
+      902
+    ],
+    "visible_alpha_bbox_above_2": [
+      33,
+      123,
+      991,
+      902
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-coin.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 407733,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 630157,
+    "transparent_fraction": 0.3888,
+    "alpha_bbox": [
+      72,
+      42,
+      962,
+      975
+    ],
+    "visible_alpha_bbox_above_2": [
+      74,
+      43,
+      961,
+      975
+    ],
+    "outer_edge_max_alpha": 0
+  },
+  {
+    "file": "icon-life.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 254,
+    "fully_transparent_pixels": 562370,
+    "fully_opaque_pixels": 0,
+    "near_opaque_pixels": 471993,
+    "transparent_fraction": 0.5363,
+    "alpha_bbox": [
+      101,
+      39,
+      921,
+      970
+    ],
+    "visible_alpha_bbox_above_2": [
+      102,
+      40,
+      920,
+      969
+    ],
+    "outer_edge_max_alpha": 0
+  }
+]

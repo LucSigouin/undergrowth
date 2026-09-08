@@ -1,0 +1,115 @@
+{
+  "state": "done",
+  "taskId": "BC95CA80-8584-4F90-98B4-946C65988D9C",
+  "laneToken": "r6-icons-a1c4",
+  "model": {
+    "requested": "gpt-6-astra",
+    "effective": "gpt-6-astra",
+    "source": "spawn flag"
+  },
+  "effort": "xhigh",
+  "files": [
+    "fleet-r6-art/icons/REPORT.md",
+    "fleet-r6-art/icons/candidates/icon-bloom-take1.png",
+    "fleet-r6-art/icons/candidates/icon-bloom-take1.txt",
+    "fleet-r6-art/icons/candidates/icon-bloom-take1@256.png",
+    "fleet-r6-art/icons/candidates/icon-thorn-take1.png",
+    "fleet-r6-art/icons/candidates/icon-thorn-take1.txt",
+    "fleet-r6-art/icons/candidates/icon-thorn-take1@256.png",
+    "fleet-r6-art/icons/costs.jsonl",
+    "fleet-r6-art/icons/gen.py",
+    "fleet-r6-art/icons/icon-bloom.png",
+    "fleet-r6-art/icons/icon-bloom@256.png",
+    "fleet-r6-art/icons/icon-coin.png",
+    "fleet-r6-art/icons/icon-coin@256.png",
+    "fleet-r6-art/icons/icon-diamond.png",
+    "fleet-r6-art/icons/icon-diamond@256.png",
+    "fleet-r6-art/icons/icon-ember.png",
+    "fleet-r6-art/icons/icon-ember@256.png",
+    "fleet-r6-art/icons/icon-hedge.png",
+    "fleet-r6-art/icons/icon-hedge@256.png",
+    "fleet-r6-art/icons/icon-iron.png",
+    "fleet-r6-art/icons/icon-iron@256.png",
+    "fleet-r6-art/icons/icon-lantern.png",
+    "fleet-r6-art/icons/icon-lantern@256.png",
+    "fleet-r6-art/icons/icon-life.png",
+    "fleet-r6-art/icons/icon-life@256.png",
+    "fleet-r6-art/icons/icon-prism.png",
+    "fleet-r6-art/icons/icon-prism@256.png",
+    "fleet-r6-art/icons/icon-rock.png",
+    "fleet-r6-art/icons/icon-rock@256.png",
+    "fleet-r6-art/icons/icon-sap.png",
+    "fleet-r6-art/icons/icon-sap@256.png",
+    "fleet-r6-art/icons/icon-thorn.png",
+    "fleet-r6-art/icons/icon-thorn@256.png",
+    "fleet-r6-art/icons/icon-wood.png",
+    "fleet-r6-art/icons/icon-wood@256.png",
+    "fleet-r6-art/icons/prompts/icon-bloom.txt",
+    "fleet-r6-art/icons/prompts/icon-coin.txt",
+    "fleet-r6-art/icons/prompts/icon-diamond.txt",
+    "fleet-r6-art/icons/prompts/icon-ember.txt",
+    "fleet-r6-art/icons/prompts/icon-hedge.txt",
+    "fleet-r6-art/icons/prompts/icon-iron.txt",
+    "fleet-r6-art/icons/prompts/icon-lantern.txt",
+    "fleet-r6-art/icons/prompts/icon-life.txt",
+    "fleet-r6-art/icons/prompts/icon-prism.txt",
+    "fleet-r6-art/icons/prompts/icon-rock.txt",
+    "fleet-r6-art/icons/prompts/icon-sap.txt",
+    "fleet-r6-art/icons/prompts/icon-thorn.txt",
+    "fleet-r6-art/icons/prompts/icon-wood.txt",
+    "fleet-r6-art/icons/result.json",
+    "fleet-r6-art/icons/review.py",
+    "fleet-r6-art/icons/review/alpha-audit.json",
+    "fleet-r6-art/icons/review/icons-256-sheet.png",
+    "fleet-r6-art/icons/review/icons-game-size.png"
+  ],
+  "verify": {
+    "cmd": "node fleet-r6-art/check-assets.mjs icons",
+    "exit": 0
+  },
+  "unverified": [
+    "The assets have not been integrated into the running game by this lane.",
+    "The combined art bundle size, 60 fps target, and integrated gameplay/golden gates remain for the orchestrator.",
+    "Full visual consistency across all 58 assets is unverified. Only the current thorn level 1 tower and grub sprite were spot-checked."
+  ],
+  "generation": {
+    "provider": "openai",
+    "model": "gpt-image-2",
+    "quality": "high",
+    "workflow": "gen.py from COMMON.md API template",
+    "images": 15,
+    "costTotalUSD": 3.17904
+  },
+  "assets": {
+    "finals": 13,
+    "downscaledCopies": 13,
+    "masterSize": [
+      1024,
+      1024
+    ],
+    "deliverySize": [
+      256,
+      256
+    ],
+    "masterBytes": 18037443,
+    "deliveryBytes": 1181284
+  },
+  "review": {
+    "visualSizes": [
+      1024,
+      256,
+      64,
+      32
+    ],
+    "allFinalsInspected": true,
+    "allPNGsDecoded": true,
+    "alphaAudit": "fleet-r6-art/icons/review/alpha-audit.json",
+    "scriptExit": 0,
+    "rejectedTakes": 2,
+    "notes": [
+      "Thorn take 1 rejected for thin limbs and dense ornament at 32 px.",
+      "Bloom take 1 rejected for five main petals instead of six.",
+      "Ember and lantern each have outer-edge alpha at most 1/255. Their visible silhouettes are fully in frame, with no visible background halo."
+    ]
+  }
+}

@@ -12,3 +12,10 @@ fleet-r3-polish/a/
 fleet-r3-polish/b/
 !fleet-r3-polish/a/REPORT.md
 !fleet-r3-polish/b/REPORT.md
+
+# r6 art: the 1024px originals and rejected takes stay on disk but out of git (about 90 MB per round).
+# The game-size copies (@256, @512) plus prompts, costs and reports are committed.
+fleet-r6-art/*/candidates/
+fleet-r6-art/*/*.png
+!fleet-r6-art/*/*@*.png
+workbench/fleet.html
