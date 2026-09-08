@@ -1,0 +1,2 @@
+60.1 fps over 3s, 12 hedge towers, enemies 22 at start of run and 5 at end (stage 8 wave), 1440x900, chromium headless with --use-angle=metal --enable-gpu.
+Default software headless measured 27-37 fps on the same scene (environment limit, not the game).

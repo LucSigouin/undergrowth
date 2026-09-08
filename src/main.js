@@ -41,9 +41,19 @@ let build = 'thorn',
   uiTime = 0,
   last = performance.now();
 
-// The chip colour and symbol for a piece or a material, kept out of the rules file.
+// The painted icon for a piece or a material, on a plate tinted with its own accent colour.
+// The art is decorative: every control that uses a chip carries its own text or aria-label,
+// so the image stays out of the accessibility tree.
 const chip = (look, extra = '') =>
-  `<span class="chip ${extra}" style="--tile:${look.color}">${look.symbol}</span>`;
+  `<span class="chip ${extra}" style="--tile:${look.color}">` +
+  `<img class="chip-art" src="${look.art}" alt="" draggable="false"></span>`;
+
+// A bare painted icon with no plate, for the header counters and the inline costs.
+const icon = (look, extra = '') =>
+  `<img class="icon-art ${extra}" src="${look.art}" alt="" draggable="false">`;
+
+const COIN = MATERIAL_LOOK.coins,
+  LIFE = MATERIAL_LOOK.lives;
 
 // The page markup, built once. Every later update edits pieces of it in place.
 const gardenStrip =
@@ -56,7 +66,9 @@ const mapStatus =
   '<div class="map-status">' +
   '<span>Stage <b id="stage-number">01</b><span class="status-muted"> / 30</span></span>' +
   '<span class="status-divider"></span>' +
-  '<span class="heart">♥ <b id="lives">20 / 20</b></span>' +
+  '<span class="heart">' +
+  icon(LIFE, 'life-icon') +
+  '<b id="lives">20 / 20</b></span>' +
   '</div>';
 
 // Gold and materials share a top-right header; material buttons open their farm controls.
@@ -64,7 +76,9 @@ const materialHud =
   '<header class="resource-header" aria-label="Game status and resources">' +
   '<span class="game-title">Undergrowth</span>' +
   mapStatus +
-  '<span class="gold-total" aria-label="Gold"><i class="coin">◈</i><b id="coins">200</b></span>' +
+  '<span class="gold-total" aria-label="Gold">' +
+  icon(COIN, 'coin-icon') +
+  '<b id="coins">200</b></span>' +
   MATERIALS.map(
     (material, i) =>
       `<button class="material-chip" data-hud-garden="${i}"` +
@@ -96,7 +110,7 @@ const towerCards = Object.entries(TOWERS)
       ` aria-pressed="${chosen}" aria-describedby="hover-note">` +
       chip(TOWER_LOOK[id], 'tower-icon') +
       `<span class="tower-summary"><b>${tower.name}</b></span>` +
-      `<small><i>◈</i>${tower.cost}</small></button>`
+      `<small>${icon(COIN, 'coin-icon')}${tower.cost}</small></button>`
     );
   })
   .join('');
@@ -274,13 +288,10 @@ function resourceAmounts(cost, check = true) {
         const label = short
           ? `${name}: ${have} / ${need}; ${need - have} more needed`
           : `${need} ${name.toLowerCase()}`;
-        const icon =
-          id === 'coins'
-            ? '<span class="coin" aria-hidden="true">◈</span>'
-            : chip(MATERIAL_LOOK[id]);
+        const art = id === 'coins' ? icon(COIN, 'coin-icon') : chip(MATERIAL_LOOK[id]);
         return (
           `<span class="resource-amount ${short ? 'short' : ''}" data-resource="${id}" role="img" title="${label}" aria-label="${label}">` +
-          icon +
+          art +
           `<b aria-hidden="true">${short ? have + '/' : ''}${need}</b></span>`
         );
       })
@@ -379,7 +390,9 @@ function renderDetail() {
     missing = game.upgradeShortfall(tower);
   const boost = game.rateBonus(tower);
   const boostNote =
-    boost > 1 ? `<p class="defense-boost">✦ +${Math.round((boost - 1) * 100)}%</p>` : '';
+    boost > 1
+      ? `<p class="defense-boost">${icon(TOWER_LOOK.lantern, 'coin-icon')} +${Math.round((boost - 1) * 100)}%</p>`
+      : '';
   const branchLabel = tower.branch === 'reach' ? 'Range' : tower.branch === 'power' ? 'Power' : '';
   const growthBadge =
     tower.type === 'hedge'
@@ -492,7 +505,8 @@ function render() {
   query('#placement').hidden = !pendingPlacement;
   if (pendingPlacement) {
     const staged = TOWERS[pendingPlacement.type];
-    query('#confirm-place').textContent = `✓ ${staged.name} · ◈ ${staged.cost}`;
+    query('#confirm-place').innerHTML =
+      `✓ ${staged.name} · ${icon(COIN, 'coin-icon')} ${staged.cost}`;
   }
   const previewCell = pendingPlacement || (world.hover.visible ? hoverCell : null);
   if (previewCell && build) world.showHover(previewCell, build, game, null);
@@ -512,7 +526,11 @@ function renderGarden() {
     query('#garden-summary').dataset.key = summaryKey;
     query('#garden-summary').innerHTML = MATERIALS.map((material, i) => {
       const locked = i >= game.unlockedPlots;
-      const value = locked ? '🔒' : game.farms[i] ? game[material.id] : '◈ ' + material.buy;
+      const value = locked
+        ? '🔒'
+        : game.farms[i]
+          ? game[material.id]
+          : icon(COIN, 'coin-icon') + ' ' + material.buy;
       return (
         `<button data-garden-open="${i}"` +
         ` aria-label="Manage ${material.name.toLowerCase()} garden">` +

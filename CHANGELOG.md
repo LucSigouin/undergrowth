@@ -1,5 +1,19 @@
 # Changelog
 
+## Painted art on the whole board, 2026-09-08
+
+- Every procedural shape and unicode glyph is gone. Towers, creatures, meadow tiles, the trodden
+  path, the outer ground, the wooden apron, both gates, the edge scenery and all 13 interface
+  icons are hand-painted sprites from `public/art/`, wired in through `src/look.js`.
+- Sprites are flat planes turned so their painted top points at screen up. Creatures swing to
+  face where they are walking and a Thorn's whole sprite swings with its head. Shadow blots,
+  health bars, range rings, the placement ghost, boost halos and every effect still work.
+- Shadow mapping and tone mapping are off, because unlit painted planes need neither. Frame
+  timing at 1440x900 with 12 towers and 20 creatures is a locked 60 fps on a real GPU.
+- Level pips are gone: the tower painting shows its level. Chips carry the painted icon on a
+  pale wash of the piece's accent colour instead of a symbol.
+- `src/game.js`, `tests/golden.mjs` and `tests/golden.json` are untouched. Rules did not move.
+
 ## Layout gate green again, 2026-09-08
 
 - Short desktop windows (1366x768, 1280x720) no longer scroll the build column. Card rows share

@@ -19,3 +19,8 @@ fleet-r6-art/*/candidates/
 fleet-r6-art/*/*.png
 !fleet-r6-art/*/*@*.png
 workbench/fleet.html
+
+# live gallery output, regenerated every 10 s by imagegen/live-gallery.py
+fleet-r6-art/gallery.html
+fleet-r6-art/gallery-data.js
+fleet-r6-art/.gallery-cache/

@@ -1,0 +1,42 @@
+{
+  "state": "done",
+  "taskId": "6BB43B56-D6E0-4B36-B634-B2B2A8843428",
+  "model": { "requested": "claude-fable-5", "effective": "claude-fable-5", "source": "spawn flag" },
+  "files": [
+    "fleet-r6-art/scorer/SCORE.md",
+    "fleet-r6-art/scorer/score.json",
+    "fleet-r6-art/scorer/result.json",
+    "fleet-r6-art/scorer/shoot-extra.mjs",
+    "fleet-r6-art/scorer/reshoot-07.mjs",
+    "fleet-r6-art/scorer/fps-check.mjs",
+    "fleet-r6-art/scorer/tiles.mjs",
+    "fleet-r6-art/scorer/sheets.mjs",
+    "fleet-r6-art/scorer/shots/01-fresh-desktop.png",
+    "fleet-r6-art/scorer/shots/02-midwave-desktop.png",
+    "fleet-r6-art/scorer/shots/03-missing-material.png",
+    "fleet-r6-art/scorer/shots/04-phone-portrait.png",
+    "fleet-r6-art/scorer/shots/05-phone-landscape.png",
+    "fleet-r6-art/scorer/shots/06-all-towers.png",
+    "fleet-r6-art/scorer/shots/07-many-enemies.png",
+    "fleet-r6-art/scorer/shots/08-tower-zoom.png",
+    "fleet-r6-art/scorer/shots/09-enemy-zoom.png",
+    "fleet-r6-art/scorer/shots/sheet-towers-512.png",
+    "fleet-r6-art/scorer/shots/sheet-towers-l1l2l3.png",
+    "fleet-r6-art/scorer/shots/sheet-icons-256.png",
+    "fleet-r6-art/scorer/shots/sheet-enemies-256.png",
+    "fleet-r6-art/scorer/shots/tile3x3-tile-meadow-a.png",
+    "fleet-r6-art/scorer/shots/tile3x3-tile-meadow-b.png",
+    "fleet-r6-art/scorer/shots/tile3x3-tile-meadow-c.png",
+    "fleet-r6-art/scorer/shots/tile3x3-tile-path.png",
+    "fleet-r6-art/scorer/shots/tile3x3-ground-outer.png",
+    "fleet-r6-art/scorer/shots/tile3x3-apron-wood.png",
+    "fleet-r6-art/scorer/shots/fps.txt",
+    "fleet-r6-art/scorer/shots/notes.md",
+    "fleet-r6-art/scorer/shots/extra-notes.md"
+  ],
+  "verify": { "cmd": "test -s fleet-r6-art/scorer/SCORE.md -a -s fleet-r6-art/scorer/score.json", "exit": 0 },
+  "unverified": [
+    "fps was measured in headless Chromium with GPU args, not in a real desktop browser window",
+    "hedge l2/l3 sprites cannot be shown in-game because the frozen rules forbid hedge upgrades"
+  ]
+}

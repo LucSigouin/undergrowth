@@ -69,9 +69,21 @@ browser. Rebuild it after any change with `npm run log`, and refresh the screens
 `npm run shoot -- --url http://localhost:5174 --out workbench/shots/r2` against a running dev
 server. `npm run check:ship` checks that the project is in a shippable state.
 
+## Art
+
+Everything on the board and in the sidebar is hand-painted 2D art, generated for round r6 and
+kept in `public/art/`. Towers, creatures, tiles, gates and props are flat textured planes lying
+on the board under a camera that looks straight down; the icons in the header, the tower cards
+and the farm cards are the same paintings as `<img>` elements. Nothing on screen is procedural
+geometry or a unicode glyph any more. Alpha sprites ship as PNG and the opaque tileable ground
+textures as WebP, about 4.2 MB in total. `fleet-r6-art/integrate/build-art.py` rebuilds the
+folder from the full size masters in `fleet-r6-art/`: it crops each cut-out to its paint, so one
+plane size gives a whole family the same size on the board, and it downscales everything to game
+size. The art paths live in `src/look.js` and nowhere else.
+
 ## Development
 
-`npm test` checks routing, economy, combat, the wave table, the enemies and towers, persistence, and campaign progression. `node tests/golden.mjs` replays a fixed scripted game and fails on any behaviour drift. `node tools/balance-sim.mjs` plays every scripted strategy headless and prints the per stage tables; `--experiments` compares constant changes. `node tests/balance-gate.mjs` checks the difficulty targets. `npm run build` creates a static deployable `dist/` folder. All 3D models are generated locally from geometry; fonts have system fallbacks. No backend or account required.
+`npm test` checks routing, economy, combat, the wave table, the enemies and towers, persistence, and campaign progression. `node tests/golden.mjs` replays a fixed scripted game and fails on any behaviour drift. `node tools/balance-sim.mjs` plays every scripted strategy headless and prints the per stage tables; `--experiments` compares constant changes. `node tests/balance-gate.mjs` checks the difficulty targets. `npm run build` creates a static deployable `dist/` folder. Board art loads from `public/art/`; fonts have system fallbacks. No backend or account required.
 
 The map runs vertically from the entrance at the top to the exit at the bottom on every screen. Undergrowth sits at the top left; stage and lives precede gold and materials on the right, with Settings at the far end. The bottom bar has Start, Pause/Resume, and Speed (1×, 2×, 3×) buttons. Click a material to manage its farm; farm cards use large clickable material icons with prices underneath and a per-stage harvest badge, without visible names or levels. The sidebar presents defenses in a two-column grid with large icons, names, and coin costs. Farm cards form a second grid anchored below defenses, above the wave button. The side pane never scrolls: in short desktop windows the cards and farm icons shrink so everything stays in view. Keyboard shortcuts still work but are not printed on the cards. Hover or focus a card for details. Phones use a two-row defense grid in portrait and a side grid in landscape. Tap a resource to open farm controls. Tap a square, then confirm placement. Pinch or use + to zoom, drag to pan when zoomed, and use the fit button to return to the full board. The ⚙ Settings menu contains help, route visibility, restart, and autosave status.
 

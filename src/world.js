@@ -5,10 +5,43 @@
 // stay in game.js. Colours and symbols come from look.js.
 import * as THREE from 'three';
 import { TOWERS, path } from './game.js';
-import { TOWER_LOOK, ENEMY_LOOK, SCENE } from './look.js';
+import { TOWER_LOOK, ENEMY_LOOK, BOARD_ART, SCENE } from './look.js';
 
 // The reduced motion setting, watched so a change during play is picked up.
 const calmQuery = matchMedia('(prefers-reduced-motion: reduce)');
+
+// One loader and one cache for the whole page, so a texture is fetched once however many
+// meshes use it. Loading never blocks a frame: the mesh is added with an empty texture and
+// the picture appears on the frame after the file arrives.
+const textureLoader = new THREE.TextureLoader();
+const textureCache = new Map();
+
+// A flat plane already turned to lie on the board with its image-top pointing at screen-up.
+// The camera looks straight down with up = (-1, 0, 0), so screen-up is world -x and
+// screen-right is world -z. Rotating the geometry (not the mesh) leaves mesh.rotation.y free
+// for facing, and every sprite shares this one buffer.
+const SPRITE_GEOMETRY = new THREE.PlaneGeometry(1, 1);
+SPRITE_GEOMETRY.rotateX(-Math.PI / 2);
+SPRITE_GEOMETRY.rotateY(Math.PI / 2);
+SPRITE_GEOMETRY.userData.shared = true;
+
+// Draw order for the flat sprites, low to high. Depth alone cannot separate planes this
+// close together, so every layer says where it belongs.
+const LAYER = {
+  outer: 0,
+  apron: 1,
+  seam: 2,
+  tile: 3,
+  path: 4,
+  gate: 5,
+  prop: 6,
+  tower: 12,
+  enemy: 20,
+  bar: 22,
+};
+
+// Which world-Y rotation makes a sprite's image-top point along the given board direction.
+const facing = (dx, dz) => Math.atan2(dz, -dx);
 
 // The 3D battlefield. Owns one canvas inside the given container and redraws it every frame.
 export class World {
@@ -28,12 +61,14 @@ export class World {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, coarsePointer() ? 1.5 : 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Nothing casts a shadow any more: the board is painted sprites and the paint already
+    // carries its own light. Turning the shadow map off is the single biggest frame saving.
+    this.renderer.shadowMap.enabled = false;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1;
+    // No tone mapping. The art is finished as it is and must reach the screen unaltered.
+    this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.setClearColor(SCENE.sky);
+    this.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
     container.prepend(this.renderer.domElement);
 
     this.camera = new THREE.OrthographicCamera();
@@ -41,27 +76,12 @@ export class World {
     this.target = new THREE.Vector3(6, 0, 4);
     this.camera.lookAt(this.target);
 
-    // Depth comes from three lights, not from fog: warm sun, cool sky, and a soft bounce.
-    this.scene.add(new THREE.HemisphereLight('#f4f6d8', '#4c5a3a', 0.9));
-    const sun = new THREE.DirectionalLight('#fff3d2', 2.7);
+    // The painted sprites are unlit on purpose. These two lights only reach the few pieces
+    // still made of plain geometry: the hover square and the boost rope.
+    this.scene.add(new THREE.HemisphereLight('#f4f6d8', '#4c5a3a', 1.1));
+    const sun = new THREE.DirectionalLight('#fff3d2', 1.4);
     sun.position.set(-8, 19, 7);
-    sun.castShadow = true;
-    const shadowSize = coarsePointer() ? 1024 : 2048;
-    sun.shadow.mapSize.set(shadowSize, shadowSize);
-    Object.assign(sun.shadow.camera, {
-      left: -23,
-      right: 23,
-      top: 23,
-      bottom: -23,
-      near: 0.1,
-      far: 70,
-    });
-    sun.shadow.bias = -0.0004;
-    sun.shadow.normalBias = 0.03;
     this.scene.add(sun);
-    const bounce = new THREE.DirectionalLight('#b9d2ae', 0.5);
-    bounce.position.set(9, 6, -8);
-    this.scene.add(bounce);
 
     this.materials = new Map();
     this.towerMeshes = new Map();
@@ -70,6 +90,10 @@ export class World {
     this.effects = [];
     this.board = new THREE.Group();
     this.scene.add(this.board);
+    // The painted lane under the route. It is a separate group from the chevrons because
+    // turning the route hint off in Settings must not take the painted path with it.
+    this.pathTiles = new THREE.Group();
+    this.scene.add(this.pathTiles);
     this.farmGroup = new THREE.Group();
     this.scene.add(this.farmGroup);
     this.route = new THREE.Group();
@@ -82,8 +106,10 @@ export class World {
     this.pointer = new THREE.Vector2();
     this.ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.hover = this.box(0.94, 0.045, 0.94, SCENE.hoverOk, this.scene, 0, 0.075, 0);
+    this.hover.renderOrder = LAYER.tower - 3;
     this.hover.visible = false;
     this.range = this.flatRing(0.986, 1, SCENE.ring, 0.85, 64, true);
+    this.range.renderOrder = LAYER.enemy + 5;
     this.range.visible = false;
     this.scene.add(this.range);
     this.zoom = 1;
@@ -198,6 +224,64 @@ export class World {
     this.resize();
   }
 
+  // Fetch a painted texture once and share it. The texture object comes back straight away
+  // with nothing in it, so the caller can build its mesh and the first frame still draws;
+  // the loader fills the image in later and marks it for upload. `repeat` tiles it.
+  texture(path, repeatX = 1, repeatY = 1) {
+    const key = `${path}|${repeatX}|${repeatY}`;
+    if (!textureCache.has(key)) {
+      const map = textureLoader.load(
+        path,
+        (loaded) => {
+          loaded.needsUpdate = true;
+        },
+        undefined,
+        // A missing file is served as the index page by the dev server, so it fails to decode
+        // and the sprite would just be invisible. Say so instead of drawing nothing.
+        () => console.error(`missing board art: ${path}`),
+      );
+      map.colorSpace = THREE.SRGBColorSpace;
+      map.generateMipmaps = true;
+      map.minFilter = THREE.LinearMipmapLinearFilter;
+      map.magFilter = THREE.LinearFilter;
+      map.anisotropy = this.anisotropy;
+      if (repeatX !== 1 || repeatY !== 1) {
+        map.wrapS = THREE.RepeatWrapping;
+        map.wrapT = THREE.RepeatWrapping;
+        map.repeat.set(repeatX, repeatY);
+      }
+      textureCache.set(key, map);
+    }
+    return textureCache.get(key);
+  }
+
+  // A flat painted plane lying on the board. Sprites never cast or receive a shadow and
+  // never write depth; `renderOrder` decides what covers what.
+  // `size` is a number for a square, or [down, across] in world squares for a rectangle,
+  // where "down" runs along world x (screen up and down) and "across" along world z.
+  spriteMesh(path, size, layer, { opaque = false, repeatX = 1, repeatY = 1 } = {}) {
+    const key = `sprite|${path}|${repeatX}|${repeatY}|${opaque}`;
+    if (!this.materials.has(key)) {
+      this.materials.set(
+        key,
+        new THREE.MeshBasicMaterial({
+          map: this.texture(path, repeatX, repeatY),
+          transparent: !opaque,
+          alphaTest: opaque ? 0 : 0.05,
+          depthWrite: opaque,
+          toneMapped: false,
+        }),
+      );
+    }
+    const mesh = new THREE.Mesh(SPRITE_GEOMETRY, this.materials.get(key));
+    const [down, across] = Array.isArray(size) ? size : [size, size];
+    mesh.scale.set(down, 1, across);
+    mesh.renderOrder = layer;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    return mesh;
+  }
+
   // One shared material per colour and finish, so the board reuses a handful of materials.
   mat(color, finish = 'matte') {
     const key = color + finish;
@@ -241,18 +325,6 @@ export class World {
     return this.mesh(geometry, color, parent, x, y, z, finish);
   }
 
-  // Add a low polygon sphere.
-  sphere(radius, color, parent, x, y, z, finish = 'matte') {
-    const geometry = new THREE.IcosahedronGeometry(radius, 1);
-    return this.mesh(geometry, color, parent, x, y, z, finish);
-  }
-
-  // Add a cylinder or cone, given a top and bottom radius.
-  cylinder(topRadius, bottomRadius, height, color, parent, x, y, z, sides = 8, finish = 'matte') {
-    const geometry = new THREE.CylinderGeometry(topRadius, bottomRadius, height, sides);
-    return this.mesh(geometry, color, parent, x, y, z, finish);
-  }
-
   // A flat material for ground markers. Shared unless the caller needs to fade its own copy.
   markMat(color, opacity, own) {
     const key = 'mark' + color + opacity;
@@ -281,172 +353,132 @@ export class World {
     return ring;
   }
 
-  // Build the static scenery: ground, board tiles, the heart tree, gateposts, and plants.
+  // Build the painted board: outer ground, the wooden apron, the 13 by 9 meadow grid, the
+  // two gates, and the scenery around the edge. Everything here is a flat painted plane.
   buildWorld() {
-    this.box(200, 0.2, 200, SCENE.sky, this.board, 0, -1.4, 0);
-    this.box(14.6, 1.1, 10.6, SCENE.soil, this.board, 6, -0.75, 4);
-    this.box(14.3, 0.22, 10.3, SCENE.rim, this.board, 6, -0.22, 4);
-    this.box(14, 0.14, 10, SCENE.apron, this.board, 6, -0.06, 4, 'soft');
+    const add = (mesh, x, y, z) => {
+      mesh.position.set(x, y, z);
+      this.board.add(mesh);
+      return mesh;
+    };
+
+    // Forest floor, far wider than any camera fit, with the texture repeating across it.
+    add(
+      this.spriteMesh(BOARD_ART.outer, [120, 120], LAYER.outer, {
+        opaque: true,
+        repeatX: 10,
+        repeatY: 10,
+      }),
+      6,
+      -0.06,
+      4,
+    );
+    // The wooden apron the meadow is built on, one board length per two squares.
+    add(
+      this.spriteMesh(BOARD_ART.apron, [14, 10], LAYER.apron, {
+        opaque: true,
+        repeatX: 5,
+        repeatY: 7,
+      }),
+      6,
+      -0.04,
+      4,
+    );
+    // A dark plate under the grid. The tiles are cut slightly small, so this shows through
+    // as a thin seam and the 13 by 9 squares stay countable.
+    const seam = new THREE.Mesh(
+      SPRITE_GEOMETRY,
+      new THREE.MeshBasicMaterial({ color: SCENE.seam, toneMapped: false }),
+    );
+    seam.scale.set(13.08, 1, 9.08);
+    seam.renderOrder = LAYER.seam;
+    add(seam, 6, -0.02, 4);
+
+    // One painted meadow tile per square. The variant index is the same deterministic
+    // formula the flat colours used, folded from four choices down to three paintings.
     for (let x = 0; x < 13; x++) {
       for (let z = 0; z < 9; z++) {
-        const color = SCENE.tiles[(x + z) % 2 ? ((x * 7 + z * 11) % 2) + 2 : (x * 5 + z) % 2];
-        this.box(0.955, 0.07, 0.955, color, this.board, x, 0.035, z, 'soft');
+        const index = (x + z) % 2 ? ((x * 7 + z * 11) % 2) + 2 : (x * 5 + z) % 2;
+        add(
+          this.spriteMesh(BOARD_ART.meadow[index % 3], 0.965, LAYER.tile, { opaque: true }),
+          x,
+          0,
+          z,
+        );
       }
     }
 
-    // The lane the horde walks between: a paler strip so the straight line reads.
-    for (let x = 0; x < 13; x++) {
-      this.box(0.955, 0.012, 0.955, '#c9d9a4', this.board, x, 0.073, 4);
-    }
+    // The two gates. Entry is the burrow the horde comes out of, exit is what it wants.
+    add(this.spriteMesh(BOARD_ART.gateEntry, 1.6, LAYER.gate), 0, 0.02, 4);
+    add(this.spriteMesh(BOARD_ART.gateExit, 1.6, LAYER.gate), 12, 0.02, 4);
 
-    // The heart tree at the exit.
-    this.cylinder(0.16, 0.25, 1.7, SCENE.bark, this.board, 13.05, 0.8, 4);
-    for (const [x, y, z, radius] of [
-      [13, 1.9, 4, 0.75],
-      [12.6, 1.6, 4.15, 0.5],
-      [13.45, 1.65, 4, 0.55],
-    ]) {
-      this.sphere(radius, SCENE.leaf, this.board, x, y, z, 'soft');
-    }
-    this.sphere(0.28, '#e8bf46', this.board, 13, 1.5, 4.5, 'soft');
-    // A gold pad on the exit square, so the thing being defended is obvious.
-    const exitPad = this.flatRing(0.3, 0.46, '#e8bf46', 0.85, 32);
-    exitPad.position.set(12, 0.085, 4);
-    this.board.add(exitPad);
+    this.plantScenery(add);
+  }
 
-    // The two gateposts at the entrance, and a dark pad on the square enemies walk in from.
-    for (const z of [3.3, 4.7]) {
-      this.box(0.3, 0.9, 0.3, '#efe6c6', this.board, -0.67, 0.35, z);
-      this.sphere(0.16, '#c98f2f', this.board, -0.67, 0.9, z, 'soft');
-    }
-    const entryPad = this.flatRing(0.3, 0.46, '#9b4f38', 0.85, 32);
-    entryPad.position.set(0, 0.085, 4);
-    this.board.add(entryPad);
-
-    // Deterministic landscaping, kept clear of clickable tiles.
+  // Trees, rocks, flowers and a stump around the apron. The placement is seeded, never
+  // random, so two runs of the screenshot tool produce the same picture.
+  plantScenery(add) {
     let seed = 17;
     const rand = () => {
       seed = (seed * 16807) % 2147483647;
       return (seed - 1) / 2147483646;
     };
-    for (let i = 0; i < 48; i++) {
-      const x = -0.4 + rand() * 13,
-        z = i % 2 ? -0.95 : 8.98;
-      const radius = 0.13 + rand() * 0.18;
-      this.sphere(radius, ['#4f7a41', '#5d8a4c', '#71a05c'][i % 3], this.board, x, 0.11, z, 'soft');
-      if (i % 5 === 0) {
-        this.cylinder(0.025, 0.03, 0.28, '#5f7a45', this.board, x, 0.2, z);
-        this.sphere(0.09, i % 3 ? '#f2e6b0' : '#d1735f', this.board, x, 0.38, z, 'soft');
+    const { tree, rock, flowers, stump } = BOARD_ART.props;
+    // Rings of scenery outside the apron, which spans x -1 to 13 and z -1 to 9.
+    const lanes = [
+      { x: [-4.2, -2.2], z: [-4.2, 12.2], count: 9 },
+      { x: [14.2, 16.2], z: [-4.2, 12.2], count: 9 },
+      { x: [-4, 16], z: [-4.2, -2.2], count: 8 },
+      { x: [-4, 16], z: [10.2, 12.2], count: 8 },
+    ];
+    for (const lane of lanes) {
+      for (let i = 0; i < lane.count; i++) {
+        const x = lane.x[0] + rand() * (lane.x[1] - lane.x[0]);
+        const z = lane.z[0] + rand() * (lane.z[1] - lane.z[0]);
+        const roll = rand();
+        const [art, base, layer] =
+          roll < 0.52
+            ? [tree[Math.floor(rand() * tree.length)], 2.5, LAYER.prop + 2]
+            : roll < 0.72
+              ? [rock[Math.floor(rand() * rock.length)], 1.2, LAYER.prop]
+              : roll < 0.92
+                ? [flowers[Math.floor(rand() * flowers.length)], 1, LAYER.prop + 1]
+                : [stump[0], 1.1, LAYER.prop];
+        const sprite = this.spriteMesh(art, base * (0.82 + rand() * 0.4), layer);
+        // A quarter turn either way keeps the painted light roughly where it belongs.
+        sprite.rotation.y = (rand() - 0.5) * 0.9;
+        add(sprite, x, 0.03 + i * 0.001, z);
       }
-    }
-    for (const [x, z] of [
-      [-1.3, -0.6],
-      [13.3, 9],
-      [-1.4, 8.6],
-    ]) {
-      this.cylinder(0.13, 0.21, 1, SCENE.bark, this.board, x, 0.4, z);
-      this.sphere(0.68, '#4c7742', this.board, x, 1.25, z, 'soft');
-      this.sphere(0.46, '#659154', this.board, x + 0.2, 1.72, z, 'soft');
-    }
-    for (let i = 0; i < 7; i++) {
-      const z = i % 2 ? 9.2 : -1.2;
-      this.sphere(0.18 + rand() * 0.1, '#96a081', this.board, rand() * 12, -0.03, z);
     }
   }
 
-  // Build the mesh group for one tower, including its rotating head and level pips.
+  // Build the mesh group for one tower: one painted sprite for its type and level. The
+  // level is in the painting, so there are no pips to count. A Thorn's sprite hangs off the
+  // head group, which swings toward whatever it is shooting.
   makeTower(tower) {
     const group = new THREE.Group();
     group.position.set(tower.x, 0, tower.z);
     this.scene.add(group);
     const look = TOWER_LOOK[tower.type];
-    const color = look.color;
-    // Every piece stands on a plate in its own colour, so the top down view still shows
-    // which tower is which without reading a single label.
-    this.cylinder(0.47, 0.5, 0.18, color, group, 0, 0.13, 0, 8, 'soft');
-    this.cylinder(0.36, 0.38, 0.1, '#f6efd4', group, 0, 0.26, 0, 8, 'soft');
     const head = new THREE.Group();
     group.add(head);
     group.userData.head = head;
-
-    if (look.shape === 'wall') {
-      // A hedge is a solid block that fills its square, so a maze reads as a wall.
-      this.box(0.92, 0.66, 0.92, color, group, 0, 0.45, 0, 'soft');
-      this.box(0.72, 0.16, 0.72, '#79a45f', group, 0, 0.85, 0, 'soft');
-      this.box(0.2, 0.2, 0.96, '#3e6a2c', group, 0, 0.62, 0);
-      this.box(0.96, 0.2, 0.2, '#3e6a2c', group, 0, 0.62, 0);
-    }
+    // A hedge is a wall and grows past its seam so a maze reads as one solid run. Every
+    // other tower sits inside its square. The build step trimmed each sprite to its paint,
+    // so one number here really does give the whole set the same size on the board.
+    const size = look.shape === 'wall' ? 1.08 : 1;
+    const sprite = this.spriteMesh(look.levels[tower.level - 1], size, LAYER.tower);
+    sprite.position.y = 0.1;
     if (look.shape === 'needle') {
-      // A long barrel that swings toward its target, so the aim is visible from above.
-      this.cylinder(0.2, 0.26, 0.42, '#a37c46', head, 0, 0.5, 0, 6);
-      this.box(0.13, 0.13, 0.86, color, head, 0, 0.74, 0.3, 'soft');
-      this.cylinder(0.2, 0.2, 0.14, '#f6efd4', head, 0, 0.75, -0.1, 8);
-      this.sphere(0.11, color, head, 0, 0.9, 0.66, 'soft');
+      // Inside the head group the sprite needs a fixed quarter turn: the head is aimed with
+      // atan2(dx, dz) and a sprite points with atan2(dz, -dx), which differ by exactly 90.
+      sprite.rotation.y = Math.PI / 2;
+      head.rotation.y = Math.PI / 2;
+      head.add(sprite);
+    } else {
+      group.add(sprite);
     }
-    if (look.shape === 'well') {
-      // Concentric rings around a full basin, the only round tower on the board.
-      this.cylinder(0.4, 0.34, 0.36, '#3d6f68', head, 0, 0.48, 0, 24);
-      this.cylinder(0.34, 0.34, 0.08, color, head, 0, 0.68, 0, 24, 'gem');
-      this.cylinder(0.19, 0.19, 0.14, '#bdeade', head, 0, 0.74, 0, 20, 'gem');
-      this.sphere(0.1, '#e8f7ee', head, 0, 0.84, 0, 'gem');
-    }
-    if (look.shape === 'flower') {
-      // Six petals in a wheel. Nothing else on the board is petalled.
-      this.cylinder(0.11, 0.16, 0.4, '#4f7a41', head, 0, 0.48, 0);
-      for (let i = 0; i < 6; i++) {
-        const angle = (i * Math.PI * 2) / 6;
-        const petal = this.sphere(0.19, color, head, 0, 0.72, 0, 'soft');
-        petal.position.set(Math.cos(angle) * 0.27, 0.72, Math.sin(angle) * 0.27);
-        petal.scale.set(1.15, 0.55, 1.15);
-      }
-      this.cylinder(0.15, 0.15, 0.1, '#f7e39a', head, 0, 0.8, 0, 16, 'soft');
-    }
-    if (look.shape === 'gem') {
-      // A tall six sided crystal that catches the light, unlike anything else here.
-      this.cylinder(0.28, 0.34, 0.3, '#4a4066', head, 0, 0.45, 0, 6);
-      this.cylinder(0.26, 0.3, 0.5, color, head, 0, 0.83, 0, 6, 'gem');
-      this.cylinder(0.02, 0.26, 0.34, '#cfc0f2', head, 0, 1.24, 0, 6, 'gem');
-      this.sphere(0.07, '#f4eeff', head, 0, 1.42, 0, 'gem');
-    }
-    if (look.shape === 'brazier') {
-      // A stone bowl with three flames standing up out of it.
-      this.cylinder(0.24, 0.34, 0.34, '#6d5a48', head, 0, 0.46, 0, 8);
-      this.cylinder(0.38, 0.3, 0.14, '#8a7358', head, 0, 0.68, 0, 8);
-      this.cylinder(0.3, 0.3, 0.06, color, head, 0, 0.76, 0, 16, 'soft');
-      for (let i = 0; i < 3; i++) {
-        const angle = (i * Math.PI * 2) / 3;
-        const flame = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 6), this.glow('#f3a83a'));
-        flame.position.set(Math.cos(angle) * 0.14, 0.98, Math.sin(angle) * 0.14);
-        head.add(flame);
-      }
-      const core = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.5, 6), this.glow('#fbe08a'));
-      core.position.set(0, 1.05, 0);
-      head.add(core);
-    }
-    if (look.shape === 'lamp') {
-      // A square lamp on four posts with a lit core, the only square top on the board.
-      for (const [x, z] of [
-        [-0.22, -0.22],
-        [0.22, -0.22],
-        [-0.22, 0.22],
-        [0.22, 0.22],
-      ]) {
-        this.box(0.07, 0.6, 0.07, '#7d6a45', head, x, 0.6, z);
-      }
-      this.box(0.56, 0.1, 0.56, '#f6efd4', head, 0, 0.95, 0, 'soft');
-      const lens = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.34, 0.4), this.glow(color, 0.92));
-      lens.position.set(0, 1.17, 0);
-      head.add(lens);
-      this.cylinder(0.06, 0.3, 0.2, '#7d6a45', head, 0, 1.42, 0, 4);
-      const spark = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 1), this.glow('#fff6cc'));
-      spark.position.set(0, 1.17, 0);
-      head.add(spark);
-    }
-
-    for (let i = 1; i < tower.level; i++) {
-      const pip = this.sphere(0.065, '#fff3bd', group, 0, 0.29, 0, 'soft');
-      pip.position.set(-0.2 + (i - 1) * 0.2, 0.29, 0.42);
-    }
+    group.userData.sprite = sprite;
     group.userData.level = tower.level;
     group.userData.type = tower.type;
     return group;
@@ -455,7 +487,8 @@ export class World {
   // Free the geometry inside a group and take it out of the scene.
   disposeGroup(group) {
     group.traverse((object) => {
-      if (object.geometry) object.geometry.dispose();
+      // Every sprite shares one plane buffer. Freeing it would empty the whole board.
+      if (object.geometry && !object.geometry.userData.shared) object.geometry.dispose();
     });
     group.removeFromParent();
   }
@@ -466,7 +499,18 @@ export class World {
     if (key === this.pathKey) return;
     this.pathKey = key;
     for (const child of [...this.route.children]) this.disposeGroup(child);
+    for (const child of [...this.pathTiles.children]) this.disposeGroup(child);
     const points = path(towers) || [];
+    // A painted trodden lane under every square the route passes through, turned to follow
+    // the step that leaves it so corners read as corners.
+    for (let i = 0; i < points.length; i++) {
+      const here = points[i];
+      const next = points[i + 1] || points[i - 1] || here;
+      const tile = this.spriteMesh(BOARD_ART.path, 0.965, LAYER.path);
+      tile.position.set(here.x, 0.008, here.z);
+      tile.rotation.y = facing(next.x - here.x, next.z - here.z);
+      this.pathTiles.add(tile);
+    }
     for (let i = 0; i < points.length - 1; i++) {
       const from = points[i],
         to = points[i + 1];
@@ -476,10 +520,11 @@ export class World {
         const x = from.x + (to.x - from.x) * k;
         const z = from.z + (to.z - from.z) * k;
         const mark = new THREE.Mesh(
-          new THREE.ConeGeometry(0.15, 0.3, 3),
-          this.glow(SCENE.route, 0.85),
+          new THREE.ConeGeometry(0.1, 0.2, 3),
+          this.glow(SCENE.route, 0.5),
         );
         mark.position.set(x, 0.082, z);
+        mark.renderOrder = LAYER.tower - 4;
         mark.rotation.set(Math.PI / 2, 0, 0);
         mark.rotation.z = -heading;
         this.route.add(mark);
@@ -501,6 +546,7 @@ export class World {
       if (tower.id === lantern.id || tower.type === 'hedge' || tower.type === 'lantern') continue;
       if (Math.hypot(tower.x - lantern.x, tower.z - lantern.z) > reach) continue;
       const halo = this.flatRing(0.56, 0.72, TOWER_LOOK.lantern.color, 0.95, 24);
+      halo.renderOrder = LAYER.enemy + 6;
       halo.position.set(tower.x, 0.1, tower.z);
       this.boost.add(halo);
       // A short bar from the Lantern to the tower it is helping.
@@ -595,6 +641,7 @@ export class World {
   effectMesh(geometry, color, opacity = 1) {
     const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity });
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.renderOrder = LAYER.enemy + 10;
     this.scene.add(mesh);
     return mesh;
   }
@@ -637,6 +684,7 @@ export class World {
     }
     if (event.type === 'kill') {
       const puff = this.flatRing(0.05, 0.55, '#fff3bd', 0.8, 24, true);
+      puff.renderOrder = LAYER.enemy + 10;
       puff.position.set(event.x, 0.1, event.z);
       this.scene.add(puff);
       this.spark(puff, 0.35);
@@ -649,78 +697,53 @@ export class World {
     // A leak flashes red at the heart tree, so losing a life is never silent.
     if (event.type === 'leak') {
       const alarm = this.flatRing(0.4, 2.2, '#c14a32', 0.65, 40, true);
+      alarm.renderOrder = LAYER.enemy + 10;
       alarm.position.set(12, 0.12, 4);
       this.scene.add(alarm);
       this.spark(alarm, 0.6);
     }
   }
 
-  // Build the mesh group for one enemy, with its shadow, eyes, legs and health bar.
+  // Build the mesh group for one enemy: a shadow blot, the painted creature, and a health
+  // bar. The creature is one sprite, so the collar, eyes, legs and body spheres are gone.
   makeEnemy(enemy) {
     const group = new THREE.Group();
     this.scene.add(group);
     const look = ENEMY_LOOK[enemy.kind] || ENEMY_LOOK.grub;
     // A dark disc under every creature. It is what makes them read against the tiles.
-    const blot = this.flatRing(0, look.size * 1.5, SCENE.shadow, 0.28, 20);
-    blot.position.y = -0.26;
+    // The blot is the creature's footprint, so it comes off the sprite size, not the old
+    // body radius. Dividing by the group scale keeps it in step with the sprite.
+    const blot = this.flatRing(0, (look.sprite * 0.3) / look.scale, SCENE.shadow, 0.24, 20);
+    blot.renderOrder = LAYER.enemy - 2;
+    // Above the tiles, not under them: the tiles are opaque and would swallow it.
+    blot.position.y = 0.06;
     group.add(blot);
-    const body = this.sphere(look.size, look.color, group, 0, 0.28, 0, 'soft');
-    body.scale.z = 1.25;
-    // A pale collar around the body, so a dark creature still has an edge on dark ground.
-    const collar = this.flatRing(look.size * 0.95, look.size * 1.2, '#f6f2d8', 0.75, 20);
-    collar.position.y = 0.12;
-    group.add(collar);
-    // A brood sac wears the litter it is about to release on its back.
-    if (enemy.kind === 'brood') {
-      for (const [x, z] of [
-        [-0.16, -0.1],
-        [0.16, -0.1],
-        [0, -0.24],
-      ]) {
-        this.sphere(0.12, '#c25b7d', group, x, 0.5, z, 'soft');
-      }
-    }
-    // A warden carries three shield plates that ride around it.
-    if (enemy.kind === 'warden') {
-      for (let i = 0; i < 3; i++) {
-        const angle = (i * Math.PI * 2) / 3;
-        const plate = this.box(0.05, 0.32, 0.28, '#8fc4ab', group, 0, 0.34, 0, 'gem');
-        plate.position.set(Math.cos(angle) * 0.36, 0.34, Math.sin(angle) * 0.36);
-        plate.rotation.y = -angle;
-      }
-    }
-    // A guardian wears a crown, because the boss should be obvious before it arrives.
-    if (enemy.kind === 'boss') {
-      for (let i = 0; i < 5; i++) {
-        const angle = (i * Math.PI * 2) / 5;
-        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 4), this.glow('#f0d05e'));
-        spike.position.set(Math.cos(angle) * 0.24, 0.58, Math.sin(angle) * 0.24);
-        group.add(spike);
-      }
-    }
-    for (const x of [-0.085, 0.085]) {
-      this.sphere(0.05, '#fdf8e6', group, x, 0.37, 0.22, 'soft');
-      this.sphere(0.026, '#22261d', group, x, 0.37, 0.259);
-    }
-    if (enemy.flying) {
-      for (const x of [-0.3, 0.3]) {
-        const wing = this.sphere(0.26, '#e4dcf0', group, x, 0.32, 0, 'soft');
-        wing.scale.set(1, 0.12, 1.1);
-      }
-      group.userData.wings = group.children.slice(-2);
-    } else {
-      for (const x of [-0.23, 0.23]) {
-        for (const z of [-0.13, 0.13]) {
-          this.box(0.14, 0.07, 0.07, '#43382c', group, x, 0.14, z);
-        }
-      }
-    }
-    const track = this.box(0.54, 0.05, 0.06, '#2c3327', group, 0, 0.84, 0, 'soft');
-    track.castShadow = false;
-    const healthBar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.055, 0.05), this.glow('#8fce54'));
-    healthBar.position.set(0, 0.84, 0.01);
+    group.userData.blot = blot;
+
+    // The group is scaled by look.scale, so divide it back out and the sprite ends up
+    // exactly look.sprite squares across on the board.
+    const size = look.sprite / look.scale;
+    const sprite = this.spriteMesh(look.art, size, LAYER.enemy);
+    sprite.position.y = 0.3;
+    group.add(sprite);
+    group.userData.sprite = sprite;
+
+    // The health bar runs across the screen, which is world z, and sits above the creature,
+    // which is world -x. Both are plain bars, because a number on a bug is unreadable.
+    const reach = size / 2 + 0.1;
+    const track = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.05, 0.56),
+      this.glow('#20261a', 0.85),
+    );
+    track.position.set(-reach, 0.84, 0);
+    track.renderOrder = LAYER.bar;
+    group.add(track);
+    const healthBar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.055, 0.5), this.glow('#8fce54'));
+    healthBar.position.set(-reach, 0.85, 0);
+    healthBar.renderOrder = LAYER.bar + 1;
     group.add(healthBar);
     group.userData.hp = healthBar;
+    group.userData.barX = -reach;
     group.scale.setScalar(look.scale);
     return group;
   }
@@ -765,15 +788,24 @@ export class World {
           ? 0
           : Math.sin(game.time * 12 + enemy.id) * 0.025;
       group.position.set(enemy.x, bob, enemy.z);
+      // Straight down there is no perspective, so height alone cannot show that a moth is
+      // in the air. Its shadow slides out from under it instead, and drifts as it flaps.
+      group.userData.blot.position.x = enemy.flying
+        ? 0.34 + (this.calm ? 0 : Math.sin(game.time * 8 + enemy.id) * 0.05)
+        : 0;
       const share = Math.max(0.01, enemy.hp / enemy.maxHp);
-      group.userData.hp.scale.x = share;
-      group.userData.hp.position.x = -0.25 * (1 - share) * group.scale.x;
+      group.userData.hp.scale.z = share;
+      group.userData.hp.position.z = 0.25 * (1 - share);
       // Green while healthy, amber when worn down, red when nearly gone.
       group.userData.hp.material = this.glow(
         share > 0.6 ? '#8fce54' : share > 0.3 ? '#e8b62c' : '#d0492c',
       );
+      // The creature is painted head up, so turn the sprite to face where it is walking.
+      // Only the sprite turns: the shadow is a disc and the health bar must stay level.
       if (enemy.target) {
-        group.rotation.y = Math.atan2(enemy.target.x - enemy.x, enemy.target.z - enemy.z);
+        const dx = enemy.target.x - enemy.x,
+          dz = enemy.target.z - enemy.z;
+        if (dx || dz) group.userData.sprite.rotation.y = facing(dx, dz);
       }
     }
 

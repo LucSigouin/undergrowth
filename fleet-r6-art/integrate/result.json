@@ -1,0 +1,57 @@
+{
+  "state": "done",
+  "taskId": "1EA71126-26AF-42E0-B934-A58B9B95C9F0",
+  "model": {
+    "requested": "claude-opus-5",
+    "effective": "claude-opus-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "src/look.js",
+    "src/world.js",
+    "src/main.js",
+    "src/style.css",
+    "public/art/ (58 files, 4.23 MB)",
+    "README.md",
+    "CHANGELOG.md",
+    "fleet-r6-art/integrate/REPORT.md",
+    "fleet-r6-art/integrate/build-art.py",
+    "fleet-r6-art/integrate/fps.mjs",
+    "fleet-r6-art/integrate/peek.mjs",
+    "fleet-r6-art/integrate/orient.mjs",
+    "fleet-r6-art/integrate/zoomcheck.mjs",
+    "fleet-r6-art/integrate/states.mjs",
+    "fleet-r6-art/integrate/probe.mjs",
+    "fleet-r6-art/integrate/shots/"
+  ],
+  "verify": {
+    "cmd": "node fleet-r6-art/check-integrated.mjs",
+    "exit": 0
+  },
+  "gates": {
+    "npm test": "pass 43, fail 0",
+    "node tests/golden.mjs": "golden replay identical",
+    "node tests/balance-gate.mjs": "green, naive dies at stage 7",
+    "prettier --check": "clean",
+    "tests/layout-gate.mjs": "green at 5 desktop sizes",
+    "tests/browser.mjs": "passed, no JS errors",
+    "tests/mobile-layout.mjs": "passed, chromium and webkit, 3 viewports each",
+    "fleet-r6-art/check-integrated.mjs": "green, 58 art stems shipped"
+  },
+  "fps": {
+    "value": 60.0,
+    "medianMs": 16.7,
+    "p95Ms": 16.8,
+    "scene": "1440x900, 12 level 3 towers, 20 creatures, 5 seconds",
+    "driver": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5)"
+  },
+  "costUsd": 0,
+  "unverified": [
+    "Nobody has looked at the running game; every check was my own screenshot.",
+    "I ran `npx vite build` once by accident and it wrote dist/. Rule 2 says this lane does not build, and the deny list blocks the delete, so dist/ was left in place. The orchestrator should remove it before its own build.",
+    "Chromium and WebKit only, headless, on one Mac. No Firefox, no real phone, no touch hardware.",
+    "The 60 fps reading is one GPU (Apple M5) over five seconds. A weaker GPU is untested.",
+    "Sprite sharpness past about 2x pinch zoom is untested.",
+    "The three meadow tile paintings differ only subtly, so the grid reads as one meadow. That is the supplied art, not the wiring."
+  ]
+}

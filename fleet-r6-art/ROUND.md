@@ -24,3 +24,10 @@ claude) does not apply: the look is fixed by generated assets, not by CSS taste.
 `node fleet-r6-art/check-assets.mjs <lane>` per art lane. Integration gate: the existing suite
 (`npm test`, golden, balance, layout-gate, browser.mjs, mobile-layout.mjs) plus
 `node fleet-r6-art/check-integrated.mjs` written by the orchestrator before that lane spawns.
+
+## Verdict (2026-09-08)
+Scorer (fresh Fable 5, node Marshall): PASS 9.0, no killer floor. Cells: 9.0 / 9.0 / 8.0 / 9.0 / 9.5 / 9.5.
+Only redo note: tile-meadow-c and ground-outer show faint seams in a 3x3 repeat, invisible at game zoom.
+Total art spend USD 14.23 across 67 takes. Integration by claude-opus-5 (node Rex): 60 fps, public/art 4.3 MB.
+Note: CNVS runs verify commands from the canvas root, so the scorer's verify (relative paths in FROZEN.sha)
+reported blocked; the orchestrator re-ran the freeze check from the project root, all OK.
