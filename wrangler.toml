@@ -1,0 +1,6 @@
+# Cloudflare Pages config for Undergrowth v2.
+# The game is a static build: Vite writes dist/, Pages serves it. No Worker code, no bindings,
+# no backend. Deploying is a separate manual step, see deploy/README.md.
+name = "undergrowth"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-07"

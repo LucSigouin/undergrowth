@@ -1,0 +1,26 @@
+{
+  "state": "done",
+  "taskId": "4ED3FEAD-218D-4B01-8F16-2E837A30E677",
+  "model": {
+    "requested": "claude-fable-5",
+    "effective": "claude-fable-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "fleet-r4-ship/scorer/SCORE.md",
+    "fleet-r4-ship/scorer/score.json",
+    "fleet-r4-ship/scorer/result.json",
+    "fleet-r4-ship/scorer/render-log.mjs"
+  ],
+  "verify": {
+    "cmd": "cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && node tools/check-ship.mjs && git diff --quiet 6bced06 -- tools/check-ship.mjs && npm test && node tests/golden.mjs && test -x deploy/deploy.sh && test -s deploy/README.md",
+    "exit": 0
+  },
+  "unverified": [
+    "actual deploy and pages.dev URL (nothing deployed, by design)",
+    "npx wrangler pages project list (needs login, skipped)",
+    "npm run build reproducibility (scorer forbidden to build)",
+    "build-log.mjs double run in place (no output flag; determinism judged from code)",
+    "log page in Safari or on a real phone"
+  ]
+}

@@ -7,6 +7,9 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "test": "node --test tests/*.test.js",
+    "shoot": "node tools/shoot.mjs",
+    "log": "node tools/build-log.mjs",
+    "check:ship": "node tools/check-ship.mjs",
     "format": "prettier --write \"src/**/*.{js,css}\" \"tests/*.{js,mjs}\"",
     "format:check": "prettier --check \"src/**/*.{js,css}\" \"tests/*.{js,mjs}\""
   },

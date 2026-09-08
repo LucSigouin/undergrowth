@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Undergrowth mission log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<style>
+:root{
+  --ink:#1d2a24; --soft:#5b6b62; --line:#d7e0d5; --paper:#f6f8f3; --card:#ffffff;
+  --leaf:#274636; --leaf-soft:#e6efe1; --accent:#7fa05f;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font:16px/1.6 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+}
+img{max-width:100%; display:block}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em;
+  background:var(--leaf-soft); padding:.1em .35em; border-radius:4px}
+pre{background:var(--leaf); color:#e9f2e2; padding:1rem; border-radius:10px; overflow-x:auto}
+pre code{background:none; color:inherit; padding:0}
+a{color:var(--leaf)}
+
+/* Full bleed header band, edge to edge, no centred column anywhere on this page. */
+.top{background:var(--leaf); color:#eaf3e4; padding:clamp(1.5rem,5vw,3.5rem) clamp(1rem,4vw,3rem)}
+.top h1{margin:0 0 .4rem; font-size:clamp(1.9rem,5vw,3.2rem); line-height:1.05; letter-spacing:-.02em}
+.top p{margin:0; max-width:62ch; color:#cadfc2}
+.top nav{display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.4rem}
+.top nav a{
+  color:#eaf3e4; text-decoration:none; border:1px solid rgba(234,243,228,.45);
+  border-radius:999px; padding:.35rem .9rem; font-weight:600; font-size:.95rem;
+}
+
+.band{padding:clamp(1.25rem,4vw,3rem); border-bottom:1px solid var(--line)}
+.band.tint{background:var(--leaf-soft)}
+.facts{display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}
+.fact{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:1rem 1.1rem}
+.fact b{display:block; font-size:1.6rem; line-height:1.1}
+.fact span{color:var(--soft); font-size:.9rem}
+
+section{padding:clamp(1.5rem,4vw,3rem) clamp(1rem,4vw,3rem); border-bottom:1px solid var(--line)}
+section:nth-of-type(even){background:#fff}
+.round-head{display:flex; flex-wrap:wrap; gap:.75rem 2rem; align-items:baseline;
+  justify-content:space-between; margin-bottom:1rem}
+.round-head h2{margin:0; font-size:clamp(1.35rem,3.2vw,2rem); line-height:1.15}
+.tag{display:inline-block; background:var(--accent); color:#fff; border-radius:6px;
+  padding:.05em .45em; font-size:.7em; vertical-align:.15em; letter-spacing:.04em}
+.scoreline{font-size:.95rem; color:var(--soft)}
+.scoreline b{color:var(--ink); font-size:1.15rem}
+.verdict{display:inline-block; background:var(--leaf); color:#eaf3e4; border-radius:999px;
+  padding:.15rem .7rem; font-weight:700; font-size:.8rem; letter-spacing:.05em}
+.verdict.pending{background:#c9d3c6; color:#33403a}
+.round-body{max-width:none}
+.round-body h4,.round-body h3{margin:1.6rem 0 .5rem; font-size:1.05rem; letter-spacing:.01em}
+.note{color:var(--soft); font-size:.92rem}
+
+/* Screenshot pairs. Two across on a desktop, one across on a phone. */
+.shots{display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr))}
+figure{margin:0; background:var(--card); border:1px solid var(--line); border-radius:12px;
+  overflow:hidden}
+figcaption{padding:.55rem .8rem; font-size:.85rem; font-weight:600; color:var(--soft);
+  border-bottom:1px solid var(--line); background:#fbfdf9}
+
+.scroller{overflow-x:auto; margin:1rem 0}
+table{border-collapse:collapse; width:100%; min-width:min(100%,32rem); font-size:.92rem}
+th,td{text-align:left; padding:.5rem .7rem; border-bottom:1px solid var(--line);
+  vertical-align:top}
+thead th{background:var(--leaf-soft); font-size:.82rem; letter-spacing:.03em;
+  text-transform:uppercase; color:#3d5347; white-space:nowrap}
+tbody th{font-weight:600; white-space:nowrap}
+footer{padding:clamp(1.5rem,4vw,3rem) clamp(1rem,4vw,3rem); color:var(--soft)}
+@media (max-width:430px){
+  body{font-size:15px}
+  .top nav a{padding:.3rem .7rem; font-size:.85rem}
+  th,td{padding:.4rem .5rem}
+}
+</style>
+</head>
+<body>
+<header class="top">
+<h1>Undergrowth mission log</h1>
+<p>How a small tower defence garden was rebuilt, round by round: what changed, what it
+ scored, how it looked before and after, and what the headless simulator says about the
+ difficulty curve.</p>
+<nav><a href="#r1">r1</a><a href="#r2">r2</a><a href="#r3">r3</a><a href="#r4">r4</a><a href="#balance">balance</a></nav>
+</header>
+<div class="band tint">
+<div class="facts">
+<div class="fact"><b>10</b><span>stages of 3 waves</span></div>
+<div class="fact"><b>7</b><span>pieces to build</span></div>
+<div class="fact"><b>9</b><span>creature types</span></div>
+<div class="fact"><b>4</b><span>rounds of work</span></div>
+<div class="fact"><b>9</b><span>scripted strategies tested</span></div>
+</div>
+</div>
+<section id="r1">
+<header class="round-head">
+<h2><span class="tag">r1</span> foundation</h2>
+<div class="scoreline"><span class="verdict">PASS</span> <b>9.75</b> out of 10</div><div class="scroller"><table><thead><tr><th>Item 1</th><th>Item 2</th><th>Item 3</th><th>Item 4</th><th>Item 5</th><th>Item 6</th></tr></thead><tbody><tr><td>10</td><td>9.5</td><td>9</td><td>10</td><td>10</td><td>10</td></tr></tbody></table></div>
+</header>
+<div class="round-body"><p>v1 stays untouched at `personal/undergrowth/`. v2 is a verbatim clone at `personal/undergrowth-v2/` (git, baseline commit cd2659a). Four workstreams were agreed: make it winnable, make it richer, ship it, make it prettier. This round lays the floor the other three stand on.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
+<h3>Before and after</h3>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/01-fresh-desktop.png" alt="Version 1: The board on opening the game." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/01-fresh-desktop.png" alt="Version 2: The board on opening the game." loading="lazy"></figure></div><p class="note">The board on opening the game.</p>
+</section>
+<section id="r2">
+<header class="round-head">
+<h2><span class="tag">r2</span> 2026-09-07: a real curve, hand written waves, and the r2 kit</h2>
+<div class="scoreline"><span class="verdict">PASS</span> <b>9</b> out of 10</div><div class="scroller"><table><thead><tr><th>Item 1</th><th>Item 2</th><th>Item 3</th><th>Item 4</th><th>Item 5</th><th>Item 6</th></tr></thead><tbody><tr><td>8.5</td><td>9.5</td><td>9</td><td>9</td><td>9</td><td>9.5</td></tr></tbody></table></div>
+</header>
+<div class="round-body"><p>Round r2 acts on <code>fleet-r1-foundation/sim/BALANCE-REPORT.md</code>. The r1 game had a hidden gate (every upgrade needed wood, so a player without a garden was frozen at level 1) and a flat difficulty that turned vertical in stage 10. <code>node tests/balance-gate.mjs</code> is green on this tree.</p>
+<p>Every number below is old value first, then new value.</p>
+<h4>Balance</h4>
+<div class="scroller"><table><thead><tr><th>Rule</th><th>r1</th><th>r2</th></tr></thead><tbody><tr><td>Enemy hit point growth per stage</td><td>1.43</td><td>1.46</td></tr><tr><td>Level 1 to 2 upgrade materials</td><td>5 wood per level</td><td>none, coins only</td></tr><tr><td>Level 2 to 3 upgrade materials</td><td>10 wood, 4 rock, iron and diamond by type</td><td>unchanged, plus 3 iron for Ember</td></tr><tr><td>Upgrade damage step per level</td><td>0.75</td><td>1.0</td></tr><tr><td>Power branch damage bonus</td><td>1.45</td><td>1.55</td></tr><tr><td>Rock plot unlock</td><td>80 coins</td><td>60 coins</td></tr><tr><td>Iron plot unlock</td><td>160 coins</td><td>110 coins</td></tr><tr><td>Diamond plot unlock</td><td>300 coins</td><td>180 coins</td></tr><tr><td>Moth hit points at stage 1</td><td>25</td><td>30</td></tr><tr><td>Moth coins per kill</td><td>4</td><td>5</td></tr><tr><td>Guardian (boss) hit points at stage 1</td><td>450</td><td>400</td></tr><tr><td>Coins per kill</td><td>flat 4, or 55 for a boss</td><td>per creature, see the enemy table below</td></tr><tr><td>Armor absorption of a non Sunstone hit</td><td>0.55, written inline</td><td>0.55, now the named <code>ARMOR_RESIST</code></td></tr><tr><td>Save file version</td><td>2</td><td>3</td></tr></tbody></table></div>
+<p>The level 1 to 2 change is the report's change 1 and it is the largest single fix. In the simulator's <code>r1-upgrade-mats</code> experiment, putting the r1 wood bill back drops the <code>naive</code> strategy from losing at stage 7 to losing at stage 5.</p>
+<h4>Waves</h4>
+<p>The spawn formula is gone. It was:</p>
+<pre><code>count = 7 + stage * 2 + wave * 2
+kind  = grub, then runner at i % 4 === 2, armor at i % 5 === 3, moth at i % 6 === 4,
+        more moths at i % 3 === 1 from stage 8, boss on the last slot of stages 6 and 10
+gap   = max(0.35, 0.95 - stage * 0.045) for every wave in the game</code></pre>
+<p>It is replaced by <code>WAVES</code> in <code>src/game.js</code>: 30 hand written entries, three per stage, each one a list of creatures in the order they walk out plus its own <code>gap</code> in seconds and an optional <code>burst</code> count for waves that release in pairs. Gaps now range from 1.05 s in stage 1 wave 1 to 0.55 s in the late waves, and bursts of 2 start in stage 5. Wave sizes run from 6 creatures in stage 1 wave 1 to 18 in stage 10 wave 3, which is fewer bodies than r1's 31 but far more hit points each.</p>
+<p>Guardians now appear only where the stage text says so: stage 6 wave 3, stage 9 wave 3, and two of them in stage 10 wave 3. In r1 they appeared in stages 6 and 10 only, and the stage 9 text promised nothing.</p>
+<p>Stage text changed to match what actually spawns:</p>
+<ul><li>Stage 1 now reads &quot;A few curious visitors. A longer route means more shots.&quot; It used to read &quot;Give them the scenic route&quot;, which never said why.</li><li>Stage 5 now reads &quot;Brood sacs burst into grubs. Bloom answers a crowd.&quot;</li><li>Stage 7 now reads &quot;Wardens ignore sap and shield their neighbours. Ember burns through.&quot;</li><li>Stage 9 now says a guardian arrives at the end, because one does.</li><li>Stage 10 now says two guardians walk with the horde, because two do.</li></ul>
+<h4>Two new enemies</h4>
+<div class="scroller"><table><thead><tr><th>Creature</th><th>HP at stage 1</th><th>Speed</th><th>Coins</th><th>Rule</th></tr></thead><tbody><tr><td>Brood sac</td><td>88</td><td>0.70</td><td>7</td><td>Bursts into 3 grublings where it dies</td></tr><tr><td>Grubling</td><td>9</td><td>1.35</td><td>1</td><td>What a brood sac leaves behind</td></tr><tr><td>Warden</td><td>104</td><td>0.82</td><td>8</td><td>Immune to Sap slow, and takes 35% off every hit landed on any enemy within 2.1 squares of it</td></tr></tbody></table></div>
+<p>The counters: Bloom splashes 1.35 squares, so one burst clears a whole litter where a Thorn kills one grubling. Ember burning is applied outside the hit loop, so it ignores both beetle armor and a warden's shield.</p>
+<h4>Two new towers</h4>
+<div class="scroller"><table><thead><tr><th>Tower</th><th>Key</th><th>Cost</th><th>Damage</th><th>Range</th><th>Rate</th><th>Rule</th></tr></thead><tbody><tr><td>Ember</td><td>6</td><td>80</td><td>9</td><td>2.9</td><td>1.20s</td><td>Each hit sets 5 seconds of burning at 1.4 times its damage per second, ignoring armor and shields</td></tr><tr><td>Lantern</td><td>7</td><td>90</td><td>0</td><td>2.5</td><td>n/a</td><td>Never shoots. Every attacking tower inside its ring fires faster: +30% at level 1, +40% at level 2, +50% at level 3, capped at +90% from all Lanterns together</td></tr></tbody></table></div>
+<p>Keys 1 to 5 are unchanged, so Thorn, Sap well, Bloom, Sunstone and Hedge keep their positions. The keyboard handler no longer hard codes the string <code>'12345'</code>; it reads the length of <code>TOWERS</code>.</p>
+<h4>Two abilities</h4>
+<div class="scroller"><table><thead><tr><th>Ability</th><th>Key</th><th>Cooldown</th><th>Effect</th></tr></thead><tbody><tr><td>Rootgrip</td><td>Q</td><td>45 s</td><td>Every walking enemy is held still for 3 s. Flying enemies are unaffected.</td></tr><tr><td>Sunburst</td><td>E</td><td>38 s</td><td>Arms, then the next click on the board deals 70 damage at stage 1, growing 24% per stage, to everything within 3 squares. It ignores armor but not a warden's shield.</td></tr></tbody></table></div>
+<p>Both are new in r2, both have buttons over the top right of the board sized 44 px for a phone, both show the seconds left while they recharge, both refuse politely while cooling, and both cooldowns are part of the save file, so they survive a reload.</p>
+<h4>The player is told</h4>
+<ul><li>An upgrade the player cannot afford now names the missing material, the amount short, and where it comes from (&quot;Materials only come from garden plots&quot;), and the upgrade buttons are disabled rather than silently failing. In r1 the only feedback was a toast after the click.</li><li>Stage 1 says &quot;A longer route means more shots&quot; in the stage text, in the first wave toast, and in the help dialog.</li><li>The detail panel of a boosted tower says which percentage a Lantern is adding.</li><li>The help dialog and README describe the new towers, the new creatures and both abilities.</li></ul>
+<h4>Save migration</h4>
+<p>Version 3. A version 2 save loads with every tower, farm, stage, wave, coin and material intact and gains two ability clocks at zero. A version 1 save still migrates through the same version 2 step it always did, and then on to 3. Unit tests cover both paths.</p>
+<h4>Tests</h4>
+<p><code>tests/game.test.js</code> gained 11 tests: the wave table against the stage text, wave pacing and bursts, brood splitting, Bloom versus a litter, warden slow immunity and shields, Ember burning outside range, the Lantern rate ring and its refusal to shoot, Rootgrip hold plus refusal plus persistence, Sunburst targeting, the coins only first upgrade with the shortfall list, and both save migrations. <code>tests/sim.test.js</code> was updated to the r2 truths, including a check that every winning strategy bleeds across three or more stages.</p>
+<p><code>tools/balance-sim.mjs</code> gained an in wave hook so a strategy can use abilities, plus three strategies: <code>kit-maze</code> (the same maze slots built with Ember and Lantern), <code>kit-abilities</code> (the same, plus Rootgrip and Sunburst) and <code>naive-abilities</code>. The six r1 strategies keep their tower plans and spending rules unchanged. The experiment list was re-based on the r2 constants.</p></div>
+<h3>Before and after</h3>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/02-midwave-desktop.png" alt="Version 1: A wave running, with a tower selected." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/02-midwave-desktop.png" alt="Version 2: A wave running, with a tower selected." loading="lazy"></figure></div><p class="note">A wave running, with a tower selected.</p>
+</section>
+<section id="r3">
+<header class="round-head">
+<h2><span class="tag">r3</span> polish</h2>
+<div class="scoreline"><span class="verdict pending">not scored yet</span></div>
+</header>
+<div class="round-body"><p>Luc's fourth workstream: a visual and UX polish pass on the 3D scene and the UI, with zero change to game rules. Two lanes build the same brief on their own full copy of the project; a fresh scorer picks the winner; the orchestrator copies the winning src/ back into the main tree.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
+<h3>Before and after</h3>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/03-missing-material.png" alt="Version 1: The panel of a tower that cannot afford its next level." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/03-missing-material.png" alt="Version 2: The panel of a tower that cannot afford its next level." loading="lazy"></figure></div><p class="note">The panel of a tower that cannot afford its next level.</p>
+</section>
+<section id="r4">
+<header class="round-head">
+<h2><span class="tag">r4</span> ship</h2>
+<div class="scoreline"><span class="verdict pending">not scored yet</span></div>
+</header>
+<div class="round-body"><p>Luc's third workstream: make v2 deployable to Cloudflare Pages with a playable URL, and give the project the mission log Luc asked for (per round: what changed, before/after screenshots, balance numbers). Nothing is deployed this round; deploying needs Luc's go.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
+<h3>Before and after</h3>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/04-phone-portrait.png" alt="Version 1: The same game on a phone sized screen." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/04-phone-portrait.png" alt="Version 2: The same game on a phone sized screen." loading="lazy"></figure></div><p class="note">The same game on a phone sized screen.</p>
+</section>
+<section id="balance">
+<header class="round-head"><h2><span class="tag">sim</span> The difficulty curve</h2></header>
+<p>2 of 9 scripted strategies win all ten stages, and every winner bleeds on the way. That is the whole point of the curve.</p>
+<div class="scroller"><table><thead><tr><th>Strategy</th><th>Outcome</th><th>Stages cleared</th><th>Lives lost</th><th>Kills</th><th>What it does</th></tr></thead><tbody><tr><th scope="row"><code>naive</code></th><td>lost in stage 7, wave 3</td><td>6</td><td>20</td><td>305</td><td class="note">A few Thorns beside the straight route. Upgrades when affordable. No farm.</td></tr><tr><th scope="row"><code>maze</code></th><td>lost in stage 9, wave 3</td><td>8</td><td>22</td><td>478</td><td class="note">Serpentine hedge walls with Thorn, Sap and Sunstone in the wall. Buys wood and rock so it can upgrade.</td></tr><tr><th scope="row"><code>maze-deep</code></th><td>lost in stage 10, wave 3</td><td>9</td><td>24</td><td>577</td><td class="note">The maze plan plus the full garden from stage 5, the only way a Sunstone can reach level 3.</td></tr><tr><th scope="row"><code>farm-first</code></th><td>lost in stage 1, wave 3</td><td>0</td><td>20</td><td>0</td><td class="note">Wood then rock then iron then diamond, fully upgraded, before any tower is bought.</td></tr><tr><th scope="row"><code>farm-lite</code></th><td>lost in stage 9, wave 2</td><td>8</td><td>21</td><td>468</td><td class="note">Two Thorns first, then the wood and rock plots, then the maze. Farming without going undefended.</td></tr><tr><th scope="row"><code>reach-maze</code></th><td>lost in stage 9, wave 2</td><td>8</td><td>22</td><td>443</td><td class="note">The maze plan with the reach upgrade branch instead of power. Shows what the damage cap costs.</td></tr><tr><th scope="row"><code>kit-maze</code></th><td>won all 10 stages</td><td>10</td><td>9</td><td>593</td><td class="note">The r2 maze: the same walls and slots, but with two Embers and a Lantern. No abilities.</td></tr><tr><th scope="row"><code>kit-abilities</code></th><td>won all 10 stages</td><td>10</td><td>8</td><td>594</td><td class="note">The r2 maze plus Rootgrip and Sunburst, fired whenever six or more creatures are alive.</td></tr><tr><th scope="row"><code>naive-abilities</code></th><td>lost in stage 7, wave 3</td><td>6</td><td>20</td><td>316</td><td class="note">The naive open field build, but the player does remember the two abilities.</td></tr></tbody></table></div>
+<p class="note">Every row is a scripted player run headless by
+ <code>node tools/balance-sim.mjs</code>. Nothing in the game is random, so these numbers
+ are the same on every run.</p>
+</section>
+<footer>
+<p>Built by <code>node tools/build-log.mjs</code> from the changelog, the round records, the
+ score files and the screenshot folders. Rebuild it after any change with
+ <code>npm run log</code>.</p>
+</footer>
+</body>
+</html>

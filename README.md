@@ -44,6 +44,26 @@ Two abilities are always available and cost nothing but time.
 
 Both buttons sit over the top right of the board, work with a tap on a phone, show the seconds left while they recharge, and are saved with the game, so a cooldown survives a reload.
 
+## Deploy
+
+The game is a folder of static files served by Cloudflare Pages. `wrangler.toml` declares the
+project name `undergrowth` and `dist` as the build output. Deploying is one command,
+`./deploy/deploy.sh`, and it refuses to run if the tests fail, if the behaviour freeze fails, if
+`src/` has uncommitted changes, or if the ship gate is red. Nothing in `package.json` deploys, so
+no `npm` command can push to production by accident.
+
+Read [deploy/README.md](deploy/README.md) first. It covers the one time setup, how to verify the
+deploy with `curl` and `shasum`, and the custom domain, which comes later. Nothing has been
+deployed yet.
+
+## Mission log
+
+[workbench/log.html](workbench/log.html) is the mission log: one section per round of work with
+what changed, the score, before and after screenshots, and the balance table. Open the file in a
+browser. Rebuild it after any change with `npm run log`, and refresh the screenshots with
+`npm run shoot -- --url http://localhost:5174 --out workbench/shots/r2` against a running dev
+server. `npm run check:ship` checks that the project is in a shippable state.
+
 ## Development
 
 `npm test` checks routing, economy, combat, the wave table, the new enemies, towers and abilities, persistence, and campaign progression. `node tests/golden.mjs` replays a fixed scripted game and fails on any behaviour drift. `node tools/balance-sim.mjs` plays every scripted strategy headless and prints the per stage tables; `--experiments` compares constant changes. `node tests/balance-gate.mjs` checks the difficulty targets. `npm run build` creates a static deployable `dist/` folder. All 3D models are generated locally from geometry; fonts have system fallbacks. No backend or account required.

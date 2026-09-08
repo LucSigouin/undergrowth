@@ -1,0 +1,46 @@
+{
+  "state": "done",
+  "taskId": "71B5CE76-5257-4F76-AA48-6C5332A47E7B",
+  "model": {
+    "requested": "claude-opus-5",
+    "effective": "claude-opus-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "wrangler.toml",
+    "deploy/deploy.sh",
+    "deploy/README.md",
+    "tools/shoot.mjs",
+    "tools/build-log.mjs",
+    "workbench/log.html",
+    "workbench/shots/v1/01-fresh-desktop.png",
+    "workbench/shots/v1/02-midwave-desktop.png",
+    "workbench/shots/v1/03-missing-material.png",
+    "workbench/shots/v1/04-phone-portrait.png",
+    "workbench/shots/v1/05-phone-landscape.png",
+    "workbench/shots/v1/notes.md",
+    "workbench/shots/r2/01-fresh-desktop.png",
+    "workbench/shots/r2/02-midwave-desktop.png",
+    "workbench/shots/r2/03-missing-material.png",
+    "workbench/shots/r2/04-phone-portrait.png",
+    "workbench/shots/r2/05-phone-landscape.png",
+    "workbench/shots/r2/notes.md",
+    "README.md",
+    "package.json",
+    ".gitignore",
+    "fleet-r4-ship/ship/REPORT.md",
+    "fleet-r4-ship/ship/result.json"
+  ],
+  "verify": {
+    "cmd": "cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && node tools/check-ship.mjs && git diff --quiet HEAD -- tools/check-ship.mjs && npm test && node tests/golden.mjs && test -x deploy/deploy.sh && test -s deploy/README.md && test -s fleet-r4-ship/ship/REPORT.md && node -e \"const r=require('./fleet-r4-ship/ship/result.json');if(r.state!=='done'||!r.model||!r.taskId)process.exit(1)\"",
+    "exit": 0
+  },
+  "unverified": [
+    "The deploy itself. deploy/deploy.sh was never run, wrangler is not installed, no Pages project exists, no live URL was checked.",
+    "npx wrangler pages project list was not run, so its output cannot be quoted.",
+    "The custom domain. Not set up and not tested.",
+    "A real phone. The phone shots are Chromium with an iPhone 13 profile.",
+    "The log page in any browser other than headless Chromium.",
+    "Pixel identical screenshots of a running wave. The engine state repeats exactly, the rendered pixels do not."
+  ]
+}
