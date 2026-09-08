@@ -44,6 +44,10 @@ let build = 'thorn',
   last = performance.now(),
   audio;
 
+// The chip colour and symbol for a piece or a material, kept out of the rules file.
+const chip = (look, extra = '') =>
+  `<span class="chip ${extra}" style="--tile:${look.color}">${look.symbol}</span>`;
+
 // The page markup, built once. Every later update edits pieces of it in place.
 const gardenStrip =
   '<section class="garden-strip" aria-label="Resource garden">' +
@@ -58,6 +62,19 @@ const mapStatus =
   '<span>Stage <b id="stage-number">01</b><span class="status-muted"> / 10</span></span>' +
   '<span class="status-divider"></span>' +
   '<span class="heart">♥ <b id="lives">20 / 20</b></span>' +
+  '</div>';
+
+// The four materials, as a HUD in the top band of the map beside the stage and lives chip.
+// The ids stay where they were, so every counter update in render() still finds them.
+const materialHud =
+  '<div class="map-status map-materials" aria-label="Materials">' +
+  MATERIALS.map(
+    (material, i) =>
+      `<button class="material-chip" data-hud-garden="${i}"` +
+      ` aria-label="${material.name}, open the garden">` +
+      chip(MATERIAL_LOOK[material.id]) +
+      `<b id="${material.id}">0</b></button>`,
+  ).join('') +
   '</div>';
 
 const mapControls =
@@ -105,20 +122,16 @@ const resourceRow =
   '<div class="resources"><span title="Coins"><i class="coin">◈</i>' +
   '<b id="coins">200</b><small>Coins</small></span></div>';
 
-// The chip colour and symbol for a piece or a material, kept out of the rules file.
-const chip = (look, extra = '') =>
-  `<span class="chip ${extra}" style="--tile:${look.color}">${look.symbol}</span>`;
-
-// One card per buildable defense, in the order they appear in TOWERS.
+// One card per buildable defense, in the order they appear in TOWERS. Each card is a single
+// line now. The description, the numbers and the tip live in the hover note instead.
 const towerCards = Object.entries(TOWERS)
   .map(([id, tower], i) => {
     const chosen = id === 'thorn';
     return (
       `<button class="tower-card ${chosen ? 'selected' : ''}" data-build="${id}"` +
-      ` title="${tower.desc}" aria-pressed="${chosen}">` +
+      ` aria-pressed="${chosen}" aria-describedby="hover-note">` +
       chip(TOWER_LOOK[id], 'tower-icon') +
-      `<span class="tower-summary"><b>${tower.name}</b>` +
-      `<span class="tower-description">${tower.desc}</span></span>` +
+      `<span class="tower-summary"><b>${tower.name}</b></span>` +
       `<small><i>◈</i>${tower.cost}</small>` +
       `<kbd>${i + 1}</kbd></button>`
     );
@@ -129,19 +142,6 @@ const defensesSection =
   '<section class="defenses"><h2>Defenses <small>Keys 1 to 7</small></h2>' +
   `<div class="cards">${towerCards}</div>` +
   '<div id="detail" class="detail" hidden></div></section>';
-
-const inventoryRows = MATERIALS.map(
-  (material) =>
-    '<div class="inventory-row">' +
-    chip(MATERIAL_LOOK[material.id]) +
-    `<span>${material.name}</span>` +
-    `<b id="${material.id}">0</b></div>`,
-).join('');
-
-const inventorySection =
-  '<section class="garden inventory"><h2>Materials</h2>' +
-  inventoryRows +
-  '<p>Used to upgrade your towers.</p></section>';
 
 const waveControls =
   '<div class="wave-controls"><div class="wave-meta">' +
@@ -154,6 +154,7 @@ const waveControls =
   '</div></div></div>';
 
 const overlays =
+  '<div id="hover-note" class="hover-note" role="tooltip" hidden></div>' +
   '<div id="toast" role="status" aria-live="polite"></div>' +
   '<dialog id="modal"></dialog>' +
   '<dialog id="garden-modal" class="garden-sheet"><div class="sheet-heading">' +
@@ -164,6 +165,7 @@ const overlays =
 query('#app').innerHTML = `<main class="game-shell">
   <div class="map-area">${gardenStrip}<section class="scene-wrap" id="scene" aria-label="Battlefield">
     ${mapStatus}
+    ${materialHud}
     ${mapControls}
     ${abilityBar}
     ${placementBar}
@@ -172,9 +174,8 @@ query('#app').innerHTML = `<main class="game-shell">
   </div><aside class="sidebar" aria-label="Build and garden">
     ${sidebarHeading}
     ${resourceRow}
-    <div class="sidebar-scroll">
+    <div class="sidebar-body">
       ${defensesSection}
-      ${inventorySection}
     </div>
     ${waveControls}
   </aside>
@@ -368,47 +369,60 @@ function upgradeBlock(tower, cost, missing) {
   );
 }
 
-// Redraw the tower detail card, either as a preview of the chosen piece or the selected tower.
+// The small note that hovering or focusing a tower card puts up beside the card. It carries
+// what the old "Before you build" panel said: the level 1 numbers, the effect and the tip.
+function noteMarkup(type) {
+  const info = TOWERS[type],
+    stats = game.stats({ type, level: 1 });
+  const short = game.coins < info.cost;
+  const shortNote = short
+    ? `<p class="defense-missing">You have ${Math.floor(game.coins)} coins, so this` +
+      ' costs more than you can pay. Clear a wave or sell a piece.</p>'
+    : '';
+  return (
+    `<div class="eyebrow">${type === 'hedge' ? 'Maze building' : 'Level 1'} · ` +
+    `${info.cost} coins</div>` +
+    defenseHeading(type) +
+    defenseStats(stats, type) +
+    shortNote +
+    `<p class="defense-effect">${info.effect}</p>` +
+    `<p class="defense-tip">${info.tip}</p>`
+  );
+}
+
+// Put the note beside its card, kept inside the window at every height.
+function showNote(card) {
+  if (mobileQuery.matches) return;
+  const note = query('#hover-note');
+  note.innerHTML = noteMarkup(card.dataset.build);
+  note.hidden = false;
+  const gap = 10;
+  const box = card.getBoundingClientRect(),
+    own = note.getBoundingClientRect();
+  const top = Math.min(box.top - gap, innerHeight - own.height - gap);
+  note.style.top = `${Math.max(gap, top)}px`;
+  note.style.left = `${Math.max(gap, box.left - own.width - gap)}px`;
+}
+
+function hideNote() {
+  query('#hover-note').hidden = true;
+}
+
+// Redraw the tower detail card. It only ever describes a tower already on the board.
 function renderDetail() {
-  const tower = game.towers.find((candidate) => candidate.id === selected),
-    info = TOWERS[tower?.type || build || 'thorn'];
+  const tower = game.towers.find((candidate) => candidate.id === selected);
   const shortKey = tower ? game.upgradeShortfall(tower).map((item) => item.id) : [];
-  const key = JSON.stringify([
-    tower?.id,
-    tower?.level,
-    tower?.branch,
-    build,
-    shortKey,
-    mobileQuery.matches,
-    !tower && !!build && game.coins < info.cost,
-  ]);
+  const key = JSON.stringify([tower?.id, tower?.level, tower?.branch, shortKey]);
   if (key === detailKey) return;
   detailKey = key;
-  query('#detail').hidden = !tower && (!build || mobileQuery.matches);
-
+  query('#detail').hidden = !tower;
   if (!tower) {
-    if (!build || mobileQuery.matches) {
-      query('#detail').innerHTML = '';
-      return;
-    }
-    const stats = game.stats({ type: build, level: 1 });
-    const eyebrow = build === 'hedge' ? 'Maze building' : 'Before you build';
-    const short = game.coins < info.cost;
-    const shortNote = short
-      ? `<p class="defense-missing">You have ${Math.floor(game.coins)} coins, so this` +
-        ' costs more than you can pay. Clear a wave or sell a piece.</p>'
-      : '';
-    query('#detail').innerHTML =
-      `<div class="eyebrow">${eyebrow} · ${info.cost} coins</div>` +
-      defenseHeading(build) +
-      defenseStats(stats, build) +
-      shortNote +
-      `<p class="defense-effect">${info.effect}</p>` +
-      `<p class="defense-tip">${info.tip}</p>`;
+    query('#detail').innerHTML = '';
     return;
   }
 
-  const stats = game.stats(tower),
+  const info = TOWERS[tower.type],
+    stats = game.stats(tower),
     cost = game.upgradeCost(tower),
     missing = game.upgradeShortfall(tower);
   const boost = game.rateBonus(tower);
@@ -418,7 +432,7 @@ function renderDetail() {
       : '';
   const branchLabel = tower.branch ? ' · ' + tower.branch : '';
   query('#detail').innerHTML =
-    '<button class="detail-close mobile-only" id="close-detail"' +
+    '<button class="detail-close" id="close-detail"' +
     ' aria-label="Close tower details">×</button>' +
     `<div class="eyebrow">Level ${tower.level}${branchLabel}</div>` +
     defenseHeading(tower.type) +
@@ -457,6 +471,23 @@ function renderDetail() {
 }
 
 let farmKey = '';
+
+// Reach the controls for one plot. On a phone the plots live in a sheet, so open it. On a
+// desktop they are already on screen in the strip above the board, so point at the right one.
+function openGarden(index) {
+  if (mobileQuery.matches) query('#garden-modal').showModal();
+  const plot = query('#farms').querySelector(`[data-plot="${index}"]`);
+  plot?.scrollIntoView({ block: 'nearest' });
+  if (!plot) return;
+  plot.classList.remove('called-out');
+  // Restart the flash even when the same plot is clicked twice in a row.
+  void plot.offsetWidth;
+  plot.classList.add('called-out');
+}
+
+document.querySelectorAll('[data-hud-garden]').forEach((button) => {
+  button.onclick = () => openGarden(Number(button.dataset.hudGarden));
+});
 
 // Refresh every number and label in the interface from the current game state.
 function render() {
@@ -575,12 +606,7 @@ function renderGarden() {
     query('#garden-summary')
       .querySelectorAll('[data-garden-open]')
       .forEach((button) => {
-        button.onclick = () => {
-          query('#garden-modal').showModal();
-          query('#farms')
-            .querySelector(`[data-plot="${button.dataset.gardenOpen}"]`)
-            ?.scrollIntoView({ block: 'nearest' });
-        };
+        button.onclick = () => openGarden(Number(button.dataset.gardenOpen));
       });
   }
 
@@ -859,7 +885,14 @@ query('#path').onclick = () => {
 
 document.querySelectorAll('[data-build]').forEach((button) => {
   button.onclick = () => choose(button.dataset.build);
+  button.addEventListener('mouseenter', () => showNote(button));
+  button.addEventListener('focus', () => showNote(button));
+  button.addEventListener('mouseleave', hideNote);
+  button.addEventListener('blur', hideNote);
 });
+// The note is a hint, not a layer to click through. Anything else on the page dismisses it.
+window.addEventListener('scroll', hideNote, true);
+mobileQuery.addEventListener('change', hideNote);
 
 document.querySelectorAll('[data-ability]').forEach((button) => {
   button.onclick = () => fireAbility(button.dataset.ability);

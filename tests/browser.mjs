@@ -106,16 +106,56 @@ await page.evaluate(() => {
 assert.equal(await page.locator('[data-build="ember"]').count(), 1);
 assert.equal(await page.locator('[data-build="lantern"]').count(), 1);
 await page.keyboard.press('6');
-assert.ok((await page.locator('#detail').textContent()).includes('Ember'));
+assert.equal(await page.locator('[data-build="ember"]').getAttribute('aria-pressed'), 'true');
 await page.keyboard.press('7');
-assert.ok((await page.locator('#detail').textContent()).includes('Lantern'));
+assert.equal(await page.locator('[data-build="lantern"]').getAttribute('aria-pressed'), 'true');
 await page.keyboard.press('Escape');
+
+// r5: choosing a piece no longer opens a panel. The card carries a hover note instead, and
+// the detail panel stays out of the way until a placed tower is selected.
+assert.equal(await page.locator('#detail').isVisible(), false);
+await page.locator('[data-build="lantern"]').hover();
+await page.waitForTimeout(150);
+const note = await page.locator('#hover-note').textContent();
+assert.ok(note.includes('Lantern'), note);
+assert.ok(note.includes('Fire rate nearby'), note);
+assert.ok(note.includes('faster'), note);
+assert.ok(await page.locator('#hover-note').isVisible());
+// The same note answers the keyboard, so a card can be read without a pointer.
+await page.locator('[data-build="ember"]').focus();
+await page.waitForTimeout(150);
+assert.ok((await page.locator('#hover-note').textContent()).includes('Ember'));
+await page.locator('#start').focus();
+assert.equal(await page.locator('#hover-note').isVisible(), false);
+
+// r5: the materials are a HUD on the map, in the same band as the stage and lives chip.
+assert.ok(
+  await page.evaluate(() => {
+    const scene = document.querySelector('#scene');
+    const inside = ['wood', 'rock', 'iron', 'diamond'].every((id) =>
+      scene.contains(document.getElementById(id)),
+    );
+    const stage = document.querySelector('#stage-number').getBoundingClientRect();
+    const wood = document.getElementById('wood').getBoundingClientRect();
+    return inside && Math.abs(stage.top - wood.top) < 60 && wood.left > stage.left;
+  }),
+);
+// Nothing in the build column may need scrolling at any desktop height.
+assert.ok(
+  await page.evaluate(
+    () =>
+      ![...document.querySelectorAll('.sidebar, .sidebar *')].some(
+        (el) =>
+          el.scrollHeight > el.clientHeight + 1 &&
+          /(auto|scroll)/.test(getComputedStyle(el).overflowY),
+      ),
+  ),
+);
 
 // Build an Ember and a Lantern beside the route and photograph them.
 await page.evaluate(() => {
   window.__garden.game.coins = 2000;
   window.__garden.step(0.1);
-  document.querySelector('.sidebar-scroll').scrollTop = 0;
 });
 await page.locator('[data-build="ember"]').click();
 await clickCell(5, 5);
@@ -193,6 +233,7 @@ console.log(
     ' buy/upgrade/unlock all resources, automatic production, combat, tower upgrade,' +
     ' save/reload, controls, mobile overflow, Ember and Lantern cards on keys 6 and 7,' +
     ' Rootgrip and Sunburst with a cooldown that survives reload, 44px phone buttons,' +
-    ' the missing material note, no JS errors.',
+    ' the missing material note, the r5 hover notes, the materials HUD on the map,' +
+    ' a build column that never scrolls, no JS errors.',
 );
 await browser.close();

@@ -1,0 +1,34 @@
+{
+  "state": "done",
+  "taskId": "0FAFEEBF-C883-485D-AF94-58F289048D41",
+  "model": {
+    "requested": "claude-opus-5",
+    "effective": "claude-opus-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "src/main.js",
+    "src/style.css",
+    "tests/browser.mjs",
+    "README.md",
+    ".prettierignore",
+    "fleet-r5-layout/layout/REPORT.md",
+    "fleet-r5-layout/layout/result.json",
+    "fleet-r5-layout/layout/lane-shots.mjs",
+    "fleet-r5-layout/layout/shots/desktop-1280x720.png",
+    "fleet-r5-layout/layout/shots/desktop-1920x1080.png",
+    "fleet-r5-layout/layout/shots/phone-390x844.png",
+    "fleet-r5-layout/layout/shots/phone-844x390.png",
+    "fleet-r5-layout/layout/shots/desktop-1280x720-hover-note.png",
+    "fleet-r5-layout/layout/shots/desktop-1920x1080-hover-note.png"
+  ],
+  "verify": {
+    "cmd": "cd /Users/ls/Claude-Workspace/personal/undergrowth-v2 && npm test && node tests/golden.mjs && node tests/balance-gate.mjs && git diff --quiet HEAD -- tests/layout-gate.mjs src/game.js && npx prettier --check \"src/**/*.{js,css}\" \"tests/*.{js,mjs}\" && awk 'length>110{f=1} END{exit f}' src/*.js && GARDEN_URL=http://localhost:5174 node tests/layout-gate.mjs && GARDEN_URL=http://localhost:5174 node tests/browser.mjs && test -s fleet-r5-layout/layout/REPORT.md && test \"$(ls fleet-r5-layout/layout/shots/*.png 2>/dev/null | wc -l)\" -ge 4 && node -e \"const r=require('./fleet-r5-layout/layout/result.json');if(r.state!=='done'||!r.model||!r.taskId)process.exit(1)\"",
+    "exit": 0
+  },
+  "unverified": [
+    "No real browser window was opened. Every check is headless Chromium or headless WebKit, so the look and feel of the hover note in motion is unconfirmed.",
+    "HUD text contrast was not measured with a tool. It reuses the r3 Stage and lives chip colours unchanged.",
+    "The hover note is clamped to a 10px left margin, so on a window too narrow for it beside the card it would overlap the card. The phone rules suppress the note below 1000px, so this was never observed."
+  ]
+}

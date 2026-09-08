@@ -1,0 +1,8 @@
+{
+  "round": "r5",
+  "items": {"1": 10, "2": 9.5, "3": 9.5, "4": 10, "5": 9.5, "6": 10},
+  "overall": 9.75,
+  "verdict": "PASS",
+  "gate": {"exit": 0, "mobile_exit": 0},
+  "traced": {"checked": 3, "reproduced": 3}
+}

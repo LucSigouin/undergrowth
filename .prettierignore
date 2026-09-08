@@ -5,3 +5,6 @@ tests/golden.json
 # tests/balance-gate.mjs is the r2 difficulty gate. No lane may touch it either, and
 # formatting it would count as touching it, so prettier leaves it alone.
 tests/balance-gate.mjs
+# tests/layout-gate.mjs is the r5 layout gate. Same rule: the lane may not edit it, and
+# `prettier --write` counts as an edit, so it is ignored here instead.
+tests/layout-gate.mjs
