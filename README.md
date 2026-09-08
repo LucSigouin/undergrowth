@@ -57,8 +57,9 @@ project name `undergrowth` and `dist` as the build output. Deploying is one comm
 no `npm` command can push to production by accident.
 
 Read [deploy/README.md](deploy/README.md) first. It covers the one time setup, how to verify the
-deploy with `curl` and `shasum`, and the custom domain, which comes later. Nothing has been
-deployed yet.
+deploy with `curl` and `shasum`, and the custom domain, which comes later. The game is live at
+https://undergrowth.pages.dev (first deploy 2026-09-08); the source is at
+https://github.com/LucSigouin/undergrowth.
 
 ## Mission log
 

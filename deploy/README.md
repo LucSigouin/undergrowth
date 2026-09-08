@@ -3,8 +3,9 @@
 The game is a folder of static files. There is no server, no database, no login. Cloudflare Pages
 takes the built `dist/` folder and serves it on a URL. That is the whole deployment.
 
-Nothing here has been deployed yet. The Pages project does not exist yet either. The steps below
-are written for the first time you do it.
+The Pages project `undergrowth` exists and the first deploy went live on 2026-09-08 at
+https://undergrowth.pages.dev. The one time steps below are already done on this machine; they
+stay here for a fresh machine.
 
 ## First time, once
 
