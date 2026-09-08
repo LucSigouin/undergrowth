@@ -1,0 +1,23 @@
+{
+  "state": "done",
+  "taskId": "A8065BFC-7885-48EF-9C33-1EE95E9E474E",
+  "model": {
+    "requested": "claude-fable-5",
+    "effective": "claude-fable-5",
+    "source": "spawn flag"
+  },
+  "files": [
+    "fleet-r3-polish/scorer/SCORE.md",
+    "fleet-r3-polish/scorer/score.json",
+    "fleet-r3-polish/scorer/result.json"
+  ],
+  "verify": {
+    "cmd": "cd fleet-r3-polish/<lane> && npm test && node tests/golden.mjs && node tests/balance-gate.mjs && npx prettier --check 'src/**/*.{js,css}' 'tests/*.{js,mjs}' && awk 'length>110{f=1} END{exit f}' src/*.js",
+    "exit": 0
+  },
+  "unverified": [
+    "focus outlines (claimed by both lanes, not keyboard-walked)",
+    "real-device touch, sound, safe areas, OS-level reduced motion",
+    "frame rate on low-end hardware"
+  ]
+}

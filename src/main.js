@@ -6,6 +6,7 @@
 import './style.css';
 import { Game, TOWERS, STAGES, MATERIALS, ABILITIES } from './game.js';
 import { World } from './world.js';
+import { TOWER_LOOK, MATERIAL_LOOK, ABILITY_LOOK } from './look.js';
 
 // Short name for document.querySelector, used all over this file.
 const query = (selector) => document.querySelector(selector),
@@ -30,6 +31,7 @@ const mobileQuery = matchMedia('(max-width: 700px), (max-width: 1000px) and (poi
 // Interface state. None of this belongs in the save file.
 let pendingPlacement = null;
 let aiming = null;
+let hoverCell = null;
 let build = 'thorn',
   selected = null,
   paused = false,
@@ -76,7 +78,7 @@ const abilityBar =
       ([id, ability]) =>
         `<button class="ability" data-ability="${id}" title="${ability.desc}">` +
         `<span class="ability-fill"></span>` +
-        `<span class="ability-face"><i>${ability.symbol}</i>` +
+        `<span class="ability-face"><i>${ABILITY_LOOK[id].symbol}</i>` +
         `<b>${ability.name}</b><small>${ability.key}</small></span></button>`,
     )
     .join('') +
@@ -88,6 +90,13 @@ const placementBar =
   '<button id="confirm-place">Place tower</button></div>' +
   '<div class="paused-overlay" id="paused" hidden>Paused</div>';
 
+// Shown across the board while Sunburst is armed, so an armed burst is never a surprise.
+const aimBar =
+  '<div id="aiming" class="aiming" role="status" hidden>' +
+  `<i aria-hidden="true">${ABILITY_LOOK.sunburst.symbol}</i>` +
+  '<span><b>Sunburst armed</b>Pick a square. No tower will be built.</span>' +
+  '<button id="cancel-aim">Cancel</button></div>';
+
 const sidebarHeading =
   '<div class="sidebar-heading"><span class="wordmark">undergrowth.</span>' +
   '<button id="help" class="icon-button" aria-label="How to play">?</button></div>';
@@ -96,29 +105,36 @@ const resourceRow =
   '<div class="resources"><span title="Coins"><i class="coin">◈</i>' +
   '<b id="coins">200</b><small>Coins</small></span></div>';
 
+// The chip colour and symbol for a piece or a material, kept out of the rules file.
+const chip = (look, extra = '') =>
+  `<span class="chip ${extra}" style="--tile:${look.color}">${look.symbol}</span>`;
+
 // One card per buildable defense, in the order they appear in TOWERS.
 const towerCards = Object.entries(TOWERS)
-  .map(([id, tower]) => {
+  .map(([id, tower], i) => {
     const chosen = id === 'thorn';
     return (
       `<button class="tower-card ${chosen ? 'selected' : ''}" data-build="${id}"` +
       ` title="${tower.desc}" aria-pressed="${chosen}">` +
-      `<span class="tower-icon" style="--tile:${tower.color}">${tower.symbol}</span>` +
+      chip(TOWER_LOOK[id], 'tower-icon') +
       `<span class="tower-summary"><b>${tower.name}</b>` +
       `<span class="tower-description">${tower.desc}</span></span>` +
-      `<small>◈ ${tower.cost}</small></button>`
+      `<small><i>◈</i>${tower.cost}</small>` +
+      `<kbd>${i + 1}</kbd></button>`
     );
   })
   .join('');
 
 const defensesSection =
-  '<section class="defenses"><h2>Defenses <small>1–7</small></h2>' +
+  '<section class="defenses"><h2>Defenses <small>Keys 1 to 7</small></h2>' +
   `<div class="cards">${towerCards}</div>` +
   '<div id="detail" class="detail" hidden></div></section>';
 
 const inventoryRows = MATERIALS.map(
   (material) =>
-    `<div class="inventory-row"><span>${material.name}</span>` +
+    '<div class="inventory-row">' +
+    chip(MATERIAL_LOOK[material.id]) +
+    `<span>${material.name}</span>` +
     `<b id="${material.id}">0</b></div>`,
 ).join('');
 
@@ -151,6 +167,7 @@ query('#app').innerHTML = `<main class="game-shell">
     ${mapControls}
     ${abilityBar}
     ${placementBar}
+    ${aimBar}
   </section>
   </div><aside class="sidebar" aria-label="Build and garden">
     ${sidebarHeading}
@@ -203,6 +220,7 @@ function persist() {
 // Pick the piece the next click will build.
 function choose(type) {
   pendingPlacement = null;
+  aiming = null;
   world.previewTowers = null;
   world.range.visible = false;
   build = type;
@@ -262,8 +280,20 @@ function onCell(cell) {
 
 // Move the hover square and range ring as the pointer travels over the board.
 function onHover(cell) {
-  const tower = game.towers.find((candidate) => candidate.id === selected);
-  world.showHover(cell, build, game, tower);
+  hoverCell = cell;
+  const under = game.towers.find((tower) => tower.x === cell.x && tower.z === cell.z);
+  const chosen = game.towers.find((tower) => tower.id === selected);
+  showBoost();
+  world.showHover(cell, build, game, under || chosen);
+}
+
+// Mark the towers a Lantern is speeding up, whenever one is hovered or selected.
+function showBoost() {
+  const at = hoverCell;
+  const under = at && game.towers.find((tower) => tower.x === at.x && tower.z === at.z);
+  const chosen = game.towers.find((tower) => tower.id === selected);
+  const lamp = under?.type === 'lantern' ? under : chosen?.type === 'lantern' ? chosen : null;
+  world.boostFrom = lamp || null;
 }
 
 let world;
@@ -298,13 +328,12 @@ function defenseStats(stats, type, level = 1) {
   );
 }
 
-// The icon, name, and effect line shared by both states of the detail card.
-function defenseHeading(info) {
+// The icon and name at the top of the detail card. The effect line follows the numbers.
+function defenseHeading(type) {
   return (
     '<div class="detail-title">' +
-    `<span class="tower-icon" style="--tile:${info.color}">${info.symbol}</span>` +
-    `<h2>${info.name}</h2></div>` +
-    `<p class="defense-effect">${info.effect}</p>`
+    chip(TOWER_LOOK[type], 'tower-icon') +
+    `<h2>${TOWERS[type].name}</h2></div>`
   );
 }
 
@@ -351,6 +380,7 @@ function renderDetail() {
     build,
     shortKey,
     mobileQuery.matches,
+    !tower && !!build && game.coins < info.cost,
   ]);
   if (key === detailKey) return;
   detailKey = key;
@@ -363,10 +393,17 @@ function renderDetail() {
     }
     const stats = game.stats({ type: build, level: 1 });
     const eyebrow = build === 'hedge' ? 'Maze building' : 'Before you build';
+    const short = game.coins < info.cost;
+    const shortNote = short
+      ? `<p class="defense-missing">You have ${Math.floor(game.coins)} coins, so this` +
+        ' costs more than you can pay. Clear a wave or sell a piece.</p>'
+      : '';
     query('#detail').innerHTML =
-      `<div class="eyebrow">${eyebrow}</div>` +
-      defenseHeading(info) +
+      `<div class="eyebrow">${eyebrow} · ${info.cost} coins</div>` +
+      defenseHeading(build) +
       defenseStats(stats, build) +
+      shortNote +
+      `<p class="defense-effect">${info.effect}</p>` +
       `<p class="defense-tip">${info.tip}</p>`;
     return;
   }
@@ -384,10 +421,11 @@ function renderDetail() {
     '<button class="detail-close mobile-only" id="close-detail"' +
     ' aria-label="Close tower details">×</button>' +
     `<div class="eyebrow">Level ${tower.level}${branchLabel}</div>` +
-    defenseHeading(info) +
+    defenseHeading(tower.type) +
     defenseStats(stats, tower.type, tower.level) +
-    `<p class="defense-tip">${info.tip}</p>` +
     boostNote +
+    `<p class="defense-effect">${info.effect}</p>` +
+    `<p class="defense-tip">${info.tip}</p>` +
     upgradeBlock(tower, cost, missing) +
     `<button class="text-button" id="sell">Reclaim · ${Math.floor(tower.spent * 0.7)} coins</button>`;
 
@@ -453,6 +491,17 @@ function render() {
     button.classList.toggle('selected', button.dataset.build === build);
     button.setAttribute('aria-pressed', String(button.dataset.build === build));
   });
+  // A card the player cannot pay for has to look unpayable.
+  document.querySelectorAll('[data-build]').forEach((button) => {
+    const short = game.coins < TOWERS[button.dataset.build].cost;
+    button.classList.toggle('unaffordable', short);
+    button.setAttribute('aria-description', short ? 'Not enough coins' : 'Affordable');
+  });
+  world.aiming = !!aiming;
+  query('#aiming').hidden = !aiming;
+  query('#scene').classList.toggle('armed', !!aiming);
+  if (!aiming) world.burst.visible = false;
+  showBoost();
   query('#paused').hidden = !paused;
   query('#pause').textContent = paused ? '▶' : 'Ⅱ';
   query('#speed').textContent = speed + '×';
@@ -519,7 +568,8 @@ function renderGarden() {
       return (
         `<button data-garden-open="${i}"` +
         ` aria-label="Manage ${material.name.toLowerCase()} garden">` +
-        `<span>${material.name}</span><b>${value}</b></button>`
+        chip(MATERIAL_LOOK[material.id]) +
+        `<span class="plot-name">${material.name}</span><b>${value}</b></button>`
       );
     }).join('');
     query('#garden-summary')
@@ -638,6 +688,10 @@ function modal(title, body, button = 'Back to the garden', action) {
 }
 
 const HELP_TEXT =
+  '<b class="help-warning">Played this before?</b> The wild grew back stronger this season.' +
+  ' Every creature has more hit points, and the maze that held last time will not hold on' +
+  ' its own. You need the new kit with it: an Ember for shells and wardens, and a Lantern' +
+  ' in the middle of your towers.<br><br>' +
   '<b>1. Shape the maze.</b> Choose a tower, then click a meadow square.' +
   ' The dotted line shows the horde’s route. A longer route means more shots, so the' +
   ' scenic way round is worth more than any single tower. Keep an exit open.<br><br>' +
@@ -651,11 +705,14 @@ const HELP_TEXT =
   ' bursts clear them best. A warden ignores sap and shields everything beside it,' +
   ' and only Ember burning gets past that shield.<br><br>' +
   '<b>4. Your two abilities.</b> Rootgrip (Q) holds every walking enemy still for 3' +
-  ' seconds. Sunburst (E) arms a burst, then you pick the square it lands on. Both' +
-  ' recharge on their own and both are saved with your game.<br><br>' +
+  ' seconds. Sunburst (E) arms a burst, then you pick the square it lands on. While it is' +
+  ' armed the board says so and a board tap fires the burst instead of building a tower,' +
+  ' so use Cancel or press Escape if you change your mind. Both recharge on their own and' +
+  ' both are saved with your game.<br><br>' +
   '<b>5. New towers.</b> Ember (6) sets enemies alight, and burning ignores armor and' +
   ' shields. Lantern (7) never shoots, it makes every attacking tower in its ring fire' +
-  ' faster, so it belongs in the middle of a cluster.<br><br>' +
+  ' faster, so it belongs in the middle of a cluster. Point at a Lantern and the board rings' +
+  ' every tower it is speeding up.<br><br>' +
   '<b>Controls:</b> 1–7 choose pieces, Q and E fire abilities, Esc inspects,' +
   ' Space pauses. Progress saves automatically on this browser.';
 
@@ -698,6 +755,13 @@ function cancelPlacement() {
   world.range.visible = false;
   render();
 }
+
+query('#cancel-aim').onclick = () => {
+  aiming = null;
+  world.burst.visible = false;
+  toast('Sunburst put away.');
+  render();
+};
 
 query('#cancel-place').onclick = cancelPlacement;
 query('#confirm-place').onclick = () => {

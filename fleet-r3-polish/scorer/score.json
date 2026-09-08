@@ -1,0 +1,23 @@
+{
+  "round": "r3",
+  "lanes": {
+    "a": {
+      "items": { "1": 10, "2": 8.5, "3": 7.5, "4": 9.5, "5": 9.5, "6": 9.5 },
+      "overall": 9.08,
+      "verdict": "PASS",
+      "browser_runs": [0, 1, 0]
+    },
+    "b": {
+      "items": { "1": 10, "2": 9.5, "3": 9, "4": 10, "5": 10, "6": 10 },
+      "overall": 9.75,
+      "verdict": "PASS",
+      "browser_runs": [0, 0, 0]
+    }
+  },
+  "winner": "b",
+  "gate": { "a_exit": 0, "b_exit": 0 },
+  "notes": {
+    "flake": "lane a browser.mjs failure is a pre-existing test flake: identical failure reproduced on the untouched main tree (runs 0,1,0); lane b fixed the root cause in its copy",
+    "main_control_browser_runs": [0, 1, 0]
+  }
+}

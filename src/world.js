@@ -2,9 +2,13 @@
 // the scenery around the board, and the meshes for towers, enemies, the route markers,
 // and the shot and kill effects. It also handles pointer input on the canvas and turns it
 // into board squares for main.js. It reads game state but never changes it, so all rules
-// stay in game.js.
+// stay in game.js. Colours and symbols come from look.js.
 import * as THREE from 'three';
 import { TOWERS, path } from './game.js';
+import { TOWER_LOOK, ENEMY_LOOK, SCENE } from './look.js';
+
+// The reduced motion setting, watched so a change during play is picked up.
+const calmQuery = matchMedia('(prefers-reduced-motion: reduce)');
 
 // The 3D battlefield. Owns one canvas inside the given container and redraws it every frame.
 export class World {
@@ -13,8 +17,12 @@ export class World {
     this.container = container;
     this.onCell = onCell;
     this.onHover = onHover;
+    this.calm = calmQuery.matches;
+    calmQuery.addEventListener('change', (event) => {
+      this.calm = event.matches;
+    });
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color('#dce4ce');
+    this.scene.background = new THREE.Color(SCENE.sky);
 
     const coarsePointer = () => matchMedia('(pointer: coarse)').matches;
 
@@ -24,8 +32,8 @@ export class World {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
-    this.renderer.setClearColor('#dce4ce');
+    this.renderer.toneMappingExposure = 1;
+    this.renderer.setClearColor(SCENE.sky);
     container.prepend(this.renderer.domElement);
 
     this.camera = new THREE.OrthographicCamera();
@@ -33,9 +41,10 @@ export class World {
     this.target = new THREE.Vector3(6, 0, 4);
     this.camera.lookAt(this.target);
 
-    this.scene.add(new THREE.HemisphereLight('#fff9df', '#788d66', 1.8));
-    const sun = new THREE.DirectionalLight('#fff6df', 2.4);
-    sun.position.set(-7, 20, 8);
+    // Depth comes from three lights, not from fog: warm sun, cool sky, and a soft bounce.
+    this.scene.add(new THREE.HemisphereLight('#f4f6d8', '#4c5a3a', 0.9));
+    const sun = new THREE.DirectionalLight('#fff3d2', 2.7);
+    sun.position.set(-8, 19, 7);
     sun.castShadow = true;
     const shadowSize = coarsePointer() ? 1024 : 2048;
     sun.shadow.mapSize.set(shadowSize, shadowSize);
@@ -50,6 +59,9 @@ export class World {
     sun.shadow.bias = -0.0004;
     sun.shadow.normalBias = 0.03;
     this.scene.add(sun);
+    const bounce = new THREE.DirectionalLight('#b9d2ae', 0.5);
+    bounce.position.set(9, 6, -8);
+    this.scene.add(bounce);
 
     this.materials = new Map();
     this.towerMeshes = new Map();
@@ -61,28 +73,25 @@ export class World {
     this.scene.add(this.farmGroup);
     this.route = new THREE.Group();
     this.scene.add(this.route);
+    this.boost = new THREE.Group();
+    this.scene.add(this.boost);
     this.buildWorld();
 
     this.ray = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     this.ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    this.hover = this.box(0.94, 0.045, 0.94, '#b7d486', this.scene, 0, 0.075, 0);
+    this.hover = this.box(0.94, 0.045, 0.94, SCENE.hoverOk, this.scene, 0, 0.075, 0);
     this.hover.visible = false;
-    this.range = new THREE.Mesh(
-      new THREE.RingGeometry(0.97, 1, 64),
-      new THREE.MeshBasicMaterial({
-        color: '#f5f5ce',
-        transparent: true,
-        opacity: 0.65,
-        side: THREE.DoubleSide,
-      }),
-    );
-    this.range.rotation.x = -Math.PI / 2;
-    this.range.position.y = 0.09;
+    this.range = this.flatRing(0.986, 1, SCENE.ring, 0.85, 64, true);
     this.range.visible = false;
     this.scene.add(this.range);
+    // The Sunburst target ring. It only appears while the ability is armed.
+    this.burst = this.flatRing(0.9, 1, '#f0a93c', 0.9, 64, true);
+    this.burst.visible = false;
+    this.scene.add(this.burst);
     this.zoom = 1;
     this.top = true;
+    this.boostFrom = null;
 
     // Turn a pointer event into the board square under it.
     const pick = (event) => {
@@ -187,17 +196,36 @@ export class World {
     this.resize();
   }
 
-  // One shared material per colour, so the whole board reuses a handful of materials.
-  mat(color) {
-    if (!this.materials.has(color)) {
-      this.materials.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.85 }));
+  // One shared material per colour and finish, so the board reuses a handful of materials.
+  mat(color, finish = 'matte') {
+    const key = color + finish;
+    if (!this.materials.has(key)) {
+      const settings = {
+        matte: { roughness: 0.92, metalness: 0 },
+        soft: { roughness: 0.7, metalness: 0 },
+        gem: { roughness: 0.22, metalness: 0.15 },
+        metal: { roughness: 0.4, metalness: 0.55 },
+      }[finish];
+      this.materials.set(key, new THREE.MeshStandardMaterial({ color, ...settings }));
     }
-    return this.materials.get(color);
+    return this.materials.get(key);
+  }
+
+  // A material that glows on its own, for lit cores, flames and markers.
+  glow(color, opacity = 1) {
+    const key = 'glow' + color + opacity;
+    if (!this.materials.has(key)) {
+      this.materials.set(
+        key,
+        new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity }),
+      );
+    }
+    return this.materials.get(key);
   }
 
   // Add a mesh of the given geometry and colour to a parent at a position.
-  mesh(geometry, color, parent, x = 0, y = 0, z = 0) {
-    const object = new THREE.Mesh(geometry, this.mat(color));
+  mesh(geometry, color, parent, x = 0, y = 0, z = 0, finish = 'matte') {
+    const object = new THREE.Mesh(geometry, this.mat(color, finish));
     object.position.set(x, y, z);
     object.castShadow = true;
     object.receiveShadow = true;
@@ -206,50 +234,92 @@ export class World {
   }
 
   // Add a box.
-  box(width, height, depth, color, parent, x = 0, y = 0, z = 0) {
-    return this.mesh(new THREE.BoxGeometry(width, height, depth), color, parent, x, y, z);
+  box(width, height, depth, color, parent, x = 0, y = 0, z = 0, finish = 'matte') {
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    return this.mesh(geometry, color, parent, x, y, z, finish);
   }
 
   // Add a low polygon sphere.
-  sphere(radius, color, parent, x, y, z) {
-    return this.mesh(new THREE.IcosahedronGeometry(radius, 1), color, parent, x, y, z);
+  sphere(radius, color, parent, x, y, z, finish = 'matte') {
+    const geometry = new THREE.IcosahedronGeometry(radius, 1);
+    return this.mesh(geometry, color, parent, x, y, z, finish);
   }
 
   // Add a cylinder or cone, given a top and bottom radius.
-  cylinder(topRadius, bottomRadius, height, color, parent, x, y, z, sides = 8) {
+  cylinder(topRadius, bottomRadius, height, color, parent, x, y, z, sides = 8, finish = 'matte') {
     const geometry = new THREE.CylinderGeometry(topRadius, bottomRadius, height, sides);
-    return this.mesh(geometry, color, parent, x, y, z);
+    return this.mesh(geometry, color, parent, x, y, z, finish);
+  }
+
+  // A flat material for ground markers. Shared unless the caller needs to fade its own copy.
+  markMat(color, opacity, own) {
+    const key = 'mark' + color + opacity;
+    if (own || !this.materials.has(key)) {
+      const material = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      if (own) return material;
+      this.materials.set(key, material);
+    }
+    return this.materials.get(key);
+  }
+
+  // A flat ring lying on the ground, used for ranges, targets and boost markers.
+  flatRing(inner, outer, color, opacity = 1, segments = 64, own = false) {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(inner, outer, segments),
+      this.markMat(color, opacity, own),
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.09;
+    return ring;
   }
 
   // Build the static scenery: ground, board tiles, the heart tree, gateposts, and plants.
   buildWorld() {
-    this.box(200, 0.2, 200, '#dce4ce', this.board, 0, -1.4, 0);
-    this.box(14.2, 0.75, 10.2, '#8b9b6d', this.board, 6, -0.6, 4);
-    this.box(14.35, 0.15, 10.35, '#a4b581', this.board, 6, -0.2, 4);
-    this.box(13.5, 0.16, 9.5, '#c0ce9e', this.board, 6, -0.07, 4);
+    this.box(200, 0.2, 200, SCENE.sky, this.board, 0, -1.4, 0);
+    this.box(14.6, 1.1, 10.6, SCENE.soil, this.board, 6, -0.75, 4);
+    this.box(14.3, 0.22, 10.3, SCENE.rim, this.board, 6, -0.22, 4);
+    this.box(14, 0.14, 10, SCENE.apron, this.board, 6, -0.06, 4, 'soft');
     for (let x = 0; x < 13; x++) {
       for (let z = 0; z < 9; z++) {
-        const colors = ['#c4d2a9', '#bdcca0', '#c1d0a4', '#c8d5ae'];
-        this.box(0.963, 0.055, 0.963, colors[(x * 7 + z * 11) % 4], this.board, x, 0.025, z);
+        const color = SCENE.tiles[(x + z) % 2 ? ((x * 7 + z * 11) % 2) + 2 : (x * 5 + z) % 2];
+        this.box(0.955, 0.07, 0.955, color, this.board, x, 0.035, z, 'soft');
       }
     }
 
+    // The lane the horde walks between: a paler strip so the straight line reads.
+    for (let x = 0; x < 13; x++) {
+      this.box(0.955, 0.012, 0.955, '#c9d9a4', this.board, x, 0.073, 4);
+    }
+
     // The heart tree at the exit.
-    this.cylinder(0.16, 0.25, 1.7, '#8b7750', this.board, 13.05, 0.8, 4);
+    this.cylinder(0.16, 0.25, 1.7, SCENE.bark, this.board, 13.05, 0.8, 4);
     for (const [x, y, z, radius] of [
       [13, 1.9, 4, 0.75],
       [12.6, 1.6, 4.15, 0.5],
       [13.45, 1.65, 4, 0.55],
     ]) {
-      this.sphere(radius, '#729a61', this.board, x, y, z);
+      this.sphere(radius, SCENE.leaf, this.board, x, y, z, 'soft');
     }
-    this.sphere(0.28, '#e5c86b', this.board, 13, 1.5, 4.5);
+    this.sphere(0.28, '#e8bf46', this.board, 13, 1.5, 4.5, 'soft');
+    // A gold pad on the exit square, so the thing being defended is obvious.
+    const exitPad = this.flatRing(0.3, 0.46, '#e8bf46', 0.85, 32);
+    exitPad.position.set(12, 0.085, 4);
+    this.board.add(exitPad);
 
-    // The two gateposts at the entrance.
+    // The two gateposts at the entrance, and a dark pad on the square enemies walk in from.
     for (const z of [3.3, 4.7]) {
-      this.box(0.3, 0.8, 0.3, '#e6dcc0', this.board, -0.67, 0.3, z);
-      this.sphere(0.16, '#d6aa66', this.board, -0.67, 0.84, z);
+      this.box(0.3, 0.9, 0.3, '#efe6c6', this.board, -0.67, 0.35, z);
+      this.sphere(0.16, '#c98f2f', this.board, -0.67, 0.9, z, 'soft');
     }
+    const entryPad = this.flatRing(0.3, 0.46, '#9b4f38', 0.85, 32);
+    entryPad.position.set(0, 0.085, 4);
+    this.board.add(entryPad);
 
     // Deterministic landscaping, kept clear of clickable tiles.
     let seed = 17;
@@ -259,26 +329,26 @@ export class World {
     };
     for (let i = 0; i < 48; i++) {
       const x = -0.4 + rand() * 13,
-        z = i % 2 ? -0.82 : 8.85;
+        z = i % 2 ? -0.95 : 8.98;
       const radius = 0.13 + rand() * 0.18;
-      this.sphere(radius, ['#87a16a', '#91ab70', '#a1b97b'][i % 3], this.board, x, 0.11, z);
+      this.sphere(radius, ['#4f7a41', '#5d8a4c', '#71a05c'][i % 3], this.board, x, 0.11, z, 'soft');
       if (i % 5 === 0) {
-        this.cylinder(0.025, 0.03, 0.28, '#83965e', this.board, x, 0.2, z);
-        this.sphere(0.09, i % 3 ? '#eee1af' : '#d5a08a', this.board, x, 0.38, z);
+        this.cylinder(0.025, 0.03, 0.28, '#5f7a45', this.board, x, 0.2, z);
+        this.sphere(0.09, i % 3 ? '#f2e6b0' : '#d1735f', this.board, x, 0.38, z, 'soft');
       }
     }
     for (const [x, z] of [
-      [-1.2, -0.5],
-      [13.2, 8.9],
-      [-1.3, 8.5],
+      [-1.3, -0.6],
+      [13.3, 9],
+      [-1.4, 8.6],
     ]) {
-      this.cylinder(0.13, 0.21, 1, '#8f7952', this.board, x, 0.4, z);
-      this.sphere(0.65, '#8da876', this.board, x, 1.25, z);
-      this.sphere(0.45, '#9ab47d', this.board, x + 0.2, 1.7, z);
+      this.cylinder(0.13, 0.21, 1, SCENE.bark, this.board, x, 0.4, z);
+      this.sphere(0.68, '#4c7742', this.board, x, 1.25, z, 'soft');
+      this.sphere(0.46, '#659154', this.board, x + 0.2, 1.72, z, 'soft');
     }
     for (let i = 0; i < 7; i++) {
-      const z = i % 2 ? 9.1 : -1.1;
-      this.sphere(0.18 + rand() * 0.1, '#b5b69a', this.board, rand() * 12, -0.03, z);
+      const z = i % 2 ? 9.2 : -1.2;
+      this.sphere(0.18 + rand() * 0.1, '#96a081', this.board, rand() * 12, -0.03, z);
     }
   }
 
@@ -287,64 +357,93 @@ export class World {
     const group = new THREE.Group();
     group.position.set(tower.x, 0, tower.z);
     this.scene.add(group);
-    this.box(0.84, 0.22, 0.84, '#ede3c6', group, 0, 0.15, 0);
-    this.box(0.69, 0.11, 0.69, '#9eaa7e', group, 0, 0.32, 0);
-    const color = TOWERS[tower.type].color;
+    const look = TOWER_LOOK[tower.type];
+    const color = look.color;
+    // Every piece stands on a plate in its own colour, so the top down view still shows
+    // which tower is which without reading a single label.
+    this.cylinder(0.47, 0.5, 0.18, color, group, 0, 0.13, 0, 8, 'soft');
+    this.cylinder(0.36, 0.38, 0.1, '#f6efd4', group, 0, 0.26, 0, 8, 'soft');
     const head = new THREE.Group();
     group.add(head);
     group.userData.head = head;
 
-    if (tower.type === 'hedge') {
-      this.box(0.78, 0.6, 0.78, color, group, 0, 0.52, 0);
-      this.box(0.61, 0.16, 0.61, '#9ab77b', group, 0.02, 0.9, 0);
+    if (look.shape === 'wall') {
+      // A hedge is a solid block that fills its square, so a maze reads as a wall.
+      this.box(0.92, 0.66, 0.92, color, group, 0, 0.45, 0, 'soft');
+      this.box(0.72, 0.16, 0.72, '#79a45f', group, 0, 0.85, 0, 'soft');
+      this.box(0.2, 0.2, 0.96, '#3e6a2c', group, 0, 0.62, 0);
+      this.box(0.96, 0.2, 0.2, '#3e6a2c', group, 0, 0.62, 0);
     }
-    if (tower.type === 'thorn') {
-      this.box(0.44, 0.48, 0.44, '#b49c6b', head, 0, 0.57, 0);
-      this.cylinder(0.31, 0.37, 0.19, color, head, 0, 0.87, 0);
-      this.box(0.15, 0.15, 0.68, '#405e48', head, 0, 0.93, 0.24);
-      this.sphere(0.1, '#e3d49b', head, 0, 1.01, -0.12);
+    if (look.shape === 'needle') {
+      // A long barrel that swings toward its target, so the aim is visible from above.
+      this.cylinder(0.2, 0.26, 0.42, '#a37c46', head, 0, 0.5, 0, 6);
+      this.box(0.13, 0.13, 0.86, color, head, 0, 0.74, 0.3, 'soft');
+      this.cylinder(0.2, 0.2, 0.14, '#f6efd4', head, 0, 0.75, -0.1, 8);
+      this.sphere(0.11, color, head, 0, 0.9, 0.66, 'soft');
     }
-    if (tower.type === 'sap') {
-      this.cylinder(0.3, 0.36, 0.45, '#6e9d8d', head, 0, 0.58, 0);
-      this.sphere(0.29, color, head, 0, 0.96, 0);
-      this.cylinder(0.055, 0.08, 0.45, '#e2d4a3', head, 0, 1.25, 0);
-      this.sphere(0.11, '#c3e3b5', head, 0, 1.5, 0);
+    if (look.shape === 'well') {
+      // Concentric rings around a full basin, the only round tower on the board.
+      this.cylinder(0.4, 0.34, 0.36, '#3d6f68', head, 0, 0.48, 0, 24);
+      this.cylinder(0.34, 0.34, 0.08, color, head, 0, 0.68, 0, 24, 'gem');
+      this.cylinder(0.19, 0.19, 0.14, '#bdeade', head, 0, 0.74, 0, 20, 'gem');
+      this.sphere(0.1, '#e8f7ee', head, 0, 0.84, 0, 'gem');
     }
-    if (tower.type === 'bloom') {
-      this.cylinder(0.12, 0.19, 0.55, '#779862', head, 0, 0.57, 0);
-      for (let i = 0; i < 5; i++) {
-        const angle = (i * Math.PI * 2) / 5;
-        this.sphere(0.22, color, head, Math.cos(angle) * 0.23, 0.95, Math.sin(angle) * 0.23);
+    if (look.shape === 'flower') {
+      // Six petals in a wheel. Nothing else on the board is petalled.
+      this.cylinder(0.11, 0.16, 0.4, '#4f7a41', head, 0, 0.48, 0);
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI * 2) / 6;
+        const petal = this.sphere(0.19, color, head, 0, 0.72, 0, 'soft');
+        petal.position.set(Math.cos(angle) * 0.27, 0.72, Math.sin(angle) * 0.27);
+        petal.scale.set(1.15, 0.55, 1.15);
       }
-      this.sphere(0.2, '#efd899', head, 0, 1.05, 0);
+      this.cylinder(0.15, 0.15, 0.1, '#f7e39a', head, 0, 0.8, 0, 16, 'soft');
     }
-    if (tower.type === 'prism') {
-      this.box(0.4, 0.5, 0.4, '#9b94ad', head, 0, 0.58, 0);
-      this.mesh(new THREE.OctahedronGeometry(0.34), '#c4b9e4', head, 0, 1.12, 0);
-      this.cylinder(0.3, 0.3, 0.06, '#e8d79f', head, 0, 0.84, 0);
+    if (look.shape === 'gem') {
+      // A tall six sided crystal that catches the light, unlike anything else here.
+      this.cylinder(0.28, 0.34, 0.3, '#4a4066', head, 0, 0.45, 0, 6);
+      this.cylinder(0.26, 0.3, 0.5, color, head, 0, 0.83, 0, 6, 'gem');
+      this.cylinder(0.02, 0.26, 0.34, '#cfc0f2', head, 0, 1.24, 0, 6, 'gem');
+      this.sphere(0.07, '#f4eeff', head, 0, 1.42, 0, 'gem');
     }
-    // Ember is a stone brazier with a small fire sitting in it.
-    if (tower.type === 'ember') {
-      this.cylinder(0.34, 0.22, 0.5, '#9a8368', head, 0, 0.6, 0);
-      this.cylinder(0.36, 0.3, 0.16, '#7d6a55', head, 0, 0.9, 0);
-      this.sphere(0.2, color, head, 0, 1.03, 0);
+    if (look.shape === 'brazier') {
+      // A stone bowl with three flames standing up out of it.
+      this.cylinder(0.24, 0.34, 0.34, '#6d5a48', head, 0, 0.46, 0, 8);
+      this.cylinder(0.38, 0.3, 0.14, '#8a7358', head, 0, 0.68, 0, 8);
+      this.cylinder(0.3, 0.3, 0.06, color, head, 0, 0.76, 0, 16, 'soft');
       for (let i = 0; i < 3; i++) {
         const angle = (i * Math.PI * 2) / 3;
-        const flame = this.cylinder(0.01, 0.11, 0.34, '#f6d17a', head, 0, 1.2, 0);
-        flame.position.set(Math.cos(angle) * 0.12, 1.22, Math.sin(angle) * 0.12);
+        const flame = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 6), this.glow('#f3a83a'));
+        flame.position.set(Math.cos(angle) * 0.14, 0.98, Math.sin(angle) * 0.14);
+        head.add(flame);
       }
+      const core = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.5, 6), this.glow('#fbe08a'));
+      core.position.set(0, 1.05, 0);
+      head.add(core);
     }
-    // Lantern is a tall post with a glass box on top and a bright core inside it.
-    if (tower.type === 'lantern') {
-      this.cylinder(0.07, 0.1, 0.75, '#8d7a58', head, 0, 0.72, 0);
-      this.box(0.34, 0.36, 0.34, '#efe4bb', head, 0, 1.22, 0);
-      this.sphere(0.15, color, head, 0, 1.22, 0);
-      this.cylinder(0.05, 0.22, 0.18, '#8d7a58', head, 0, 1.47, 0);
-      this.sphere(0.07, '#f7ecc2', head, 0, 1.6, 0);
+    if (look.shape === 'lamp') {
+      // A square lamp on four posts with a lit core, the only square top on the board.
+      for (const [x, z] of [
+        [-0.22, -0.22],
+        [0.22, -0.22],
+        [-0.22, 0.22],
+        [0.22, 0.22],
+      ]) {
+        this.box(0.07, 0.6, 0.07, '#7d6a45', head, x, 0.6, z);
+      }
+      this.box(0.56, 0.1, 0.56, '#f6efd4', head, 0, 0.95, 0, 'soft');
+      const lens = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.34, 0.4), this.glow(color, 0.92));
+      lens.position.set(0, 1.17, 0);
+      head.add(lens);
+      this.cylinder(0.06, 0.3, 0.2, '#7d6a45', head, 0, 1.42, 0, 4);
+      const spark = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 1), this.glow('#fff6cc'));
+      spark.position.set(0, 1.17, 0);
+      head.add(spark);
     }
 
     for (let i = 1; i < tower.level; i++) {
-      this.box(0.12, 0.06, 0.12, '#f0cf76', group, -0.23 + (i - 1) * 0.23, 0.29, 0.42);
+      const pip = this.sphere(0.065, '#fff3bd', group, 0, 0.29, 0, 'soft');
+      pip.position.set(-0.2 + (i - 1) * 0.2, 0.29, 0.42);
     }
     group.userData.level = tower.level;
     group.userData.type = tower.type;
@@ -359,7 +458,7 @@ export class World {
     group.removeFromParent();
   }
 
-  // Redraw the dotted enemy route, but only when the maze layout actually changed.
+  // Redraw the enemy route as chevrons pointing at the exit, when the maze layout changed.
   setPath(towers) {
     const key = towers.map((tower) => `${tower.x},${tower.z}`).join(';');
     if (key === this.pathKey) return;
@@ -369,12 +468,51 @@ export class World {
     for (let i = 0; i < points.length - 1; i++) {
       const from = points[i],
         to = points[i + 1];
-      // Three dots per step, so the route reads as a dotted line.
-      for (let k = 0; k < 3; k++) {
-        const x = from.x + ((to.x - from.x) * k) / 3;
-        const z = from.z + ((to.z - from.z) * k) / 3;
-        this.cylinder(0.037, 0.037, 0.016, '#7d9569', this.route, x, 0.071, z, 6);
+      const heading = Math.atan2(to.x - from.x, to.z - from.z);
+      // Two chevrons per step. A chevron shows the direction a dot cannot.
+      for (const k of [0.15, 0.62]) {
+        const x = from.x + (to.x - from.x) * k;
+        const z = from.z + (to.z - from.z) * k;
+        const mark = new THREE.Mesh(
+          new THREE.ConeGeometry(0.15, 0.3, 3),
+          this.glow(SCENE.route, 0.85),
+        );
+        mark.position.set(x, 0.082, z);
+        mark.rotation.set(Math.PI / 2, 0, 0);
+        mark.rotation.z = -heading;
+        this.route.add(mark);
       }
+    }
+  }
+
+  // Ring every tower a Lantern is speeding up, and rope each one back to the Lantern.
+  setBoost(game, lantern) {
+    const key = lantern
+      ? lantern.id + ':' + game.towers.map((tower) => `${tower.x},${tower.z},${tower.level}`).join()
+      : '';
+    if (key === this.boostKey) return;
+    this.boostKey = key;
+    for (const child of [...this.boost.children]) this.disposeGroup(child);
+    if (!lantern) return;
+    const reach = game.stats(lantern).range;
+    for (const tower of game.towers) {
+      if (tower.id === lantern.id || tower.type === 'hedge' || tower.type === 'lantern') continue;
+      if (Math.hypot(tower.x - lantern.x, tower.z - lantern.z) > reach) continue;
+      const halo = this.flatRing(0.56, 0.72, TOWER_LOOK.lantern.color, 0.95, 24);
+      halo.position.set(tower.x, 0.1, tower.z);
+      this.boost.add(halo);
+      // A short bar from the Lantern to the tower it is helping.
+      const length = Math.hypot(tower.x - lantern.x, tower.z - lantern.z);
+      const rope = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.02, length),
+        this.glow(TOWER_LOOK.lantern.color, 0.7),
+      );
+      rope.position.set((tower.x + lantern.x) / 2, 0.1, (tower.z + lantern.z) / 2);
+      rope.rotation.y = Math.atan2(tower.x - lantern.x, tower.z - lantern.z);
+      this.boost.add(rope);
+      const pip = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1, 1), this.glow('#ffe985'));
+      pip.position.set(tower.x, 1.5, tower.z);
+      this.boost.add(pip);
     }
   }
 
@@ -382,6 +520,16 @@ export class World {
   showHover(cell, type, game, selected) {
     this.previewTowers = null;
     const valid = cell.x >= 0 && cell.x < 13 && cell.z >= 0 && cell.z < 9;
+    // While Sunburst is armed the pointer is a target, not a building site.
+    if (this.aiming) {
+      this.hover.visible = false;
+      this.range.visible = false;
+      this.burst.visible = valid;
+      this.burst.scale.setScalar(3);
+      if (valid) this.burst.position.set(cell.x, 0.1, cell.z);
+      return;
+    }
+    this.burst.visible = false;
     this.hover.visible = valid && !!type;
     if (valid) {
       this.hover.position.set(cell.x, 0.08, cell.z);
@@ -389,7 +537,7 @@ export class World {
         game.towers.some((tower) => tower.x === cell.x && tower.z === cell.z) ||
         !path([...game.towers, { x: cell.x, z: cell.z }]) ||
         ((cell.x === 0 || cell.x === 12) && cell.z === 4);
-      this.hover.material = this.mat(blocked ? '#cc8875' : '#e1edba');
+      this.hover.material = this.mat(blocked ? SCENE.hoverBlocked : SCENE.hoverOk, 'soft');
       if (type && !blocked) this.previewTowers = [...game.towers, { x: cell.x, z: cell.z }];
     }
     const ringFor = selected || (valid && type ? { type, x: cell.x, z: cell.z, level: 1 } : null);
@@ -398,12 +546,162 @@ export class World {
       const radius = game.stats(ringFor).range;
       this.range.scale.set(radius, radius, 1);
       this.range.position.set(ringFor.x, 0.09, ringFor.z);
+      this.range.material.color.set(TOWER_LOOK[ringFor.type].color);
     }
+  }
+
+  // A mesh that owns its own material, because an effect fades and shared materials cannot.
+  effectMesh(geometry, color, opacity = 1) {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity });
+    const mesh = new THREE.Mesh(geometry, material);
+    this.scene.add(mesh);
+    return mesh;
+  }
+
+  // Add one short lived mesh to the effect list, with an optional velocity.
+  spark(mesh, life, velocity) {
+    this.effects.push({
+      mesh,
+      life,
+      max: life,
+      v: this.calm ? null : velocity,
+      from: mesh.material.opacity,
+    });
+  }
+
+  // Turn one game event into meshes: a beam and flash for a shot, sparks for a kill.
+  playEvent(event, game) {
+    if (event.type === 'shot') {
+      const tower = game.towers.find((candidate) => candidate.id === event.tower),
+        group = this.towerMeshes.get(event.tower);
+      if (!tower) return;
+      if (group) {
+        group.userData.head.rotation.y = Math.atan2(event.x - tower.x, event.z - tower.z);
+      }
+      const color = TOWER_LOOK[event.towerType].color;
+      const from = new THREE.Vector3(tower.x, 0.85, tower.z),
+        to = new THREE.Vector3(event.x, 0.4, event.z);
+      const length = from.distanceTo(to);
+      // A solid bolt rather than a hairline, so a shot is visible at a glance.
+      const bolt = this.effectMesh(new THREE.BoxGeometry(0.08, 0.08, length), color, 0.95);
+      bolt.position.copy(from).lerp(to, 0.5);
+      bolt.lookAt(to);
+      this.spark(bolt, 0.14);
+      const flash = this.effectMesh(new THREE.IcosahedronGeometry(0.16, 1), '#fff8d8');
+      flash.position.copy(from);
+      this.spark(flash, 0.1);
+      const hit = this.effectMesh(new THREE.IcosahedronGeometry(0.18, 1), color, 0.9);
+      hit.position.copy(to);
+      this.spark(hit, 0.18);
+    }
+    // An ability throws a ring of sparks out from the square it was aimed at.
+    if (event.type === 'ability') {
+      const tint = event.id === 'rootgrip' ? '#5d8a4c' : '#f0a93c';
+      const shock = this.flatRing(0.3, 2.9, tint, 0.5, 48, true);
+      shock.position.set(event.x, 0.11, event.z);
+      this.scene.add(shock);
+      this.spark(shock, 0.5);
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * Math.PI * 2) / 12;
+        const bit = this.effectMesh(new THREE.IcosahedronGeometry(0.13, 1), tint);
+        bit.position.set(event.x, 0.4, event.z);
+        this.spark(bit, 0.55, new THREE.Vector3(Math.cos(angle) * 4, 0.6, Math.sin(angle) * 4));
+      }
+    }
+    if (event.type === 'kill') {
+      const puff = this.flatRing(0.05, 0.55, '#fff3bd', 0.8, 24, true);
+      puff.position.set(event.x, 0.1, event.z);
+      this.scene.add(puff);
+      this.spark(puff, 0.35);
+      for (let i = 0; i < 7; i++) {
+        const bit = this.effectMesh(new THREE.IcosahedronGeometry(0.08, 1), '#f0d05e');
+        bit.position.set(event.x, 0.35, event.z);
+        this.spark(bit, 0.4, new THREE.Vector3(Math.sin(i * 7) * 1.6, 1.4, Math.cos(i * 7) * 1.6));
+      }
+    }
+    // A leak flashes red at the heart tree, so losing a life is never silent.
+    if (event.type === 'leak') {
+      const alarm = this.flatRing(0.4, 2.2, '#c14a32', 0.65, 40, true);
+      alarm.position.set(12, 0.12, 4);
+      this.scene.add(alarm);
+      this.spark(alarm, 0.6);
+    }
+  }
+
+  // Build the mesh group for one enemy, with its shadow, eyes, legs and health bar.
+  makeEnemy(enemy) {
+    const group = new THREE.Group();
+    this.scene.add(group);
+    const look = ENEMY_LOOK[enemy.kind] || ENEMY_LOOK.grub;
+    // A dark disc under every creature. It is what makes them read against the tiles.
+    const blot = this.flatRing(0, look.size * 1.5, SCENE.shadow, 0.28, 20);
+    blot.position.y = -0.26;
+    group.add(blot);
+    const body = this.sphere(look.size, look.color, group, 0, 0.28, 0, 'soft');
+    body.scale.z = 1.25;
+    // A pale collar around the body, so a dark creature still has an edge on dark ground.
+    const collar = this.flatRing(look.size * 0.95, look.size * 1.2, '#f6f2d8', 0.75, 20);
+    collar.position.y = 0.12;
+    group.add(collar);
+    // A brood sac wears the litter it is about to release on its back.
+    if (enemy.kind === 'brood') {
+      for (const [x, z] of [
+        [-0.16, -0.1],
+        [0.16, -0.1],
+        [0, -0.24],
+      ]) {
+        this.sphere(0.12, '#c25b7d', group, x, 0.5, z, 'soft');
+      }
+    }
+    // A warden carries three shield plates that ride around it.
+    if (enemy.kind === 'warden') {
+      for (let i = 0; i < 3; i++) {
+        const angle = (i * Math.PI * 2) / 3;
+        const plate = this.box(0.05, 0.32, 0.28, '#8fc4ab', group, 0, 0.34, 0, 'gem');
+        plate.position.set(Math.cos(angle) * 0.36, 0.34, Math.sin(angle) * 0.36);
+        plate.rotation.y = -angle;
+      }
+    }
+    // A guardian wears a crown, because the boss should be obvious before it arrives.
+    if (enemy.kind === 'boss') {
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * Math.PI * 2) / 5;
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 4), this.glow('#f0d05e'));
+        spike.position.set(Math.cos(angle) * 0.24, 0.58, Math.sin(angle) * 0.24);
+        group.add(spike);
+      }
+    }
+    for (const x of [-0.085, 0.085]) {
+      this.sphere(0.05, '#fdf8e6', group, x, 0.37, 0.22, 'soft');
+      this.sphere(0.026, '#22261d', group, x, 0.37, 0.259);
+    }
+    if (enemy.flying) {
+      for (const x of [-0.3, 0.3]) {
+        const wing = this.sphere(0.26, '#e4dcf0', group, x, 0.32, 0, 'soft');
+        wing.scale.set(1, 0.12, 1.1);
+      }
+      group.userData.wings = group.children.slice(-2);
+    } else {
+      for (const x of [-0.23, 0.23]) {
+        for (const z of [-0.13, 0.13]) {
+          this.box(0.14, 0.07, 0.07, '#43382c', group, x, 0.14, z);
+        }
+      }
+    }
+    const track = this.box(0.54, 0.05, 0.06, '#2c3327', group, 0, 0.84, 0, 'soft');
+    track.castShadow = false;
+    const healthBar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.055, 0.05), this.glow('#8fce54'));
+    healthBar.position.set(0, 0.84, 0.01);
+    group.add(healthBar);
+    group.userData.hp = healthBar;
+    group.scale.setScalar(look.scale);
+    return group;
   }
 
   // Match the meshes to the current game state, play the queued effects, and draw one frame.
   sync(game, dt) {
     this.setPath(this.previewTowers || game.towers);
+    this.setBoost(game, this.boostFrom);
 
     // Drop tower meshes that no longer match a tower, then build any that are missing.
     for (const [id, group] of this.towerMeshes) {
@@ -431,135 +729,37 @@ export class World {
     for (const enemy of game.enemies) {
       let group = this.enemyMeshes.get(enemy.id);
       if (!group) {
-        group = new THREE.Group();
-        this.scene.add(group);
-        const color = {
-          grub: '#b87d68',
-          runner: '#d7aa60',
-          armor: '#788798',
-          moth: '#d8cee6',
-          boss: '#7d668b',
-          brood: '#a86a86',
-          grubling: '#c98f76',
-          warden: '#5f7f74',
-        }[enemy.kind];
-        const size = { boss: 0.48, brood: 0.34, grubling: 0.14, warden: 0.27 }[enemy.kind] || 0.23;
-        const body = this.sphere(size, color, group, 0, 0.28, 0);
-        body.scale.z = 1.25;
-        // A brood sac wears the litter it is about to release on its back.
-        if (enemy.kind === 'brood') {
-          for (const [x, z] of [
-            [-0.16, -0.1],
-            [0.16, -0.1],
-            [0, -0.24],
-          ]) {
-            this.sphere(0.12, '#d8a08c', group, x, 0.5, z);
-          }
-        }
-        // A warden carries three shield plates that ride around it.
-        if (enemy.kind === 'warden') {
-          for (let i = 0; i < 3; i++) {
-            const angle = (i * Math.PI * 2) / 3;
-            const plate = this.box(0.05, 0.3, 0.26, '#9fc0ac', group, 0, 0.34, 0);
-            plate.position.set(Math.cos(angle) * 0.36, 0.34, Math.sin(angle) * 0.36);
-            plate.rotation.y = -angle;
-          }
-        }
-        for (const x of [-0.085, 0.085]) {
-          this.sphere(0.048, '#fbf3dd', group, x, 0.37, 0.22);
-          this.sphere(0.024, '#3e4338', group, x, 0.37, 0.257);
-        }
-        if (enemy.flying) {
-          for (const x of [-0.3, 0.3]) {
-            const wing = this.sphere(0.25, '#eae1ec', group, x, 0.3, 0);
-            wing.scale.set(1, 0.12, 1.1);
-          }
-        } else {
-          for (const x of [-0.23, 0.23]) {
-            for (const z of [-0.13, 0.13]) {
-              this.box(0.14, 0.07, 0.07, '#675747', group, x, 0.14, z);
-            }
-          }
-        }
-        this.box(0.5, 0.035, 0.045, '#6f7260', group, 0, 0.8, 0);
-        const healthBar = this.box(0.5, 0.04, 0.05, '#d7e7a8', group, 0, 0.8, 0.005);
-        group.userData.hp = healthBar;
-        if (enemy.kind === 'boss') group.scale.setScalar(1.5);
-        if (enemy.kind === 'brood') group.scale.setScalar(1.2);
-        if (enemy.kind === 'grubling') group.scale.setScalar(0.62);
+        group = this.makeEnemy(enemy);
         this.enemyMeshes.set(enemy.id, group);
       }
       const bob = enemy.flying
-        ? 0.8 + Math.sin(game.time * 8) * 0.08
-        : Math.sin(game.time * 12 + enemy.id) * 0.025;
+        ? 0.8 + (this.calm ? 0 : Math.sin(game.time * 8) * 0.08)
+        : this.calm
+          ? 0
+          : Math.sin(game.time * 12 + enemy.id) * 0.025;
       group.position.set(enemy.x, bob, enemy.z);
-      group.userData.hp.scale.x = Math.max(0.01, enemy.hp / enemy.maxHp);
+      const share = Math.max(0.01, enemy.hp / enemy.maxHp);
+      group.userData.hp.scale.x = share;
+      group.userData.hp.position.x = -0.25 * (1 - share) * group.scale.x;
+      // Green while healthy, amber when worn down, red when nearly gone.
+      group.userData.hp.material = this.glow(
+        share > 0.6 ? '#8fce54' : share > 0.3 ? '#e8b62c' : '#d0492c',
+      );
       if (enemy.target) {
         group.rotation.y = Math.atan2(enemy.target.x - enemy.x, enemy.target.z - enemy.z);
       }
     }
 
-    // Turn this frame's game events into short lived beams and sparks.
-    for (const event of game.events) {
-      if (event.type === 'shot') {
-        const tower = game.towers.find((candidate) => candidate.id === event.tower),
-          group = this.towerMeshes.get(event.tower);
-        if (!tower) continue;
-        if (group) {
-          group.userData.head.rotation.y = Math.atan2(event.x - tower.x, event.z - tower.z);
-        }
-        const geometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(tower.x, 0.95, tower.z),
-          new THREE.Vector3(event.x, 0.4, event.z),
-        ]);
-        const beam = new THREE.Line(
-          geometry,
-          new THREE.LineBasicMaterial({
-            color: TOWERS[event.towerType].color,
-            transparent: true,
-            opacity: 0.95,
-          }),
-        );
-        this.scene.add(beam);
-        this.effects.push({ mesh: beam, life: 0.16, max: 0.16 });
-      }
-      // An ability throws a ring of sparks out from the square it was aimed at.
-      if (event.type === 'ability') {
-        const tint = event.id === 'rootgrip' ? '#9ac07a' : '#f2c76a';
-        for (let i = 0; i < 12; i++) {
-          const angle = (i * Math.PI * 2) / 12;
-          const spark = this.sphere(0.12, tint, this.scene, event.x, 0.4, event.z);
-          this.effects.push({
-            mesh: spark,
-            life: 0.55,
-            max: 0.55,
-            v: new THREE.Vector3(Math.cos(angle) * 4, 0.6, Math.sin(angle) * 4),
-          });
-        }
-      }
-      if (event.type === 'kill') {
-        for (let i = 0; i < 5; i++) {
-          const spark = this.sphere(0.07, '#e9d799', this.scene, event.x, 0.35, event.z);
-          this.effects.push({
-            mesh: spark,
-            life: 0.4,
-            max: 0.4,
-            v: new THREE.Vector3(Math.sin(i * 7) * 1.5, 1.2, Math.cos(i * 7) * 1.5),
-          });
-        }
-      }
-    }
+    for (const event of game.events) this.playEvent(event, game);
 
-    // Age the effects, fade the beams, and clean up anything that has expired.
+    // Age the effects, fade them out, and clean up anything that has expired.
     for (const effect of this.effects) {
       effect.life -= dt;
       if (effect.v) effect.mesh.position.addScaledVector(effect.v, dt);
-      if (effect.mesh.isLine) {
-        effect.mesh.material.opacity = Math.max(0, effect.life / effect.max);
-      }
+      effect.mesh.material.opacity = Math.max(0, effect.from * (effect.life / effect.max));
       if (effect.life <= 0) {
         effect.mesh.geometry.dispose();
-        if (effect.mesh.isLine) effect.mesh.material.dispose();
+        effect.mesh.material.dispose();
         effect.mesh.removeFromParent();
       }
     }
@@ -575,8 +775,12 @@ export class World {
     const aspect = width / height;
     const coarse = matchMedia('(pointer: coarse)').matches;
     const portrait = coarse && width < height;
-    const fitAspect = width / Math.max(100, height - (coarse ? 70 : 0));
-    const across = Math.max(portrait ? 11 : 15.5, (portrait ? 15.5 : 11) * fitAspect) / this.zoom;
+    // Fit the board to the shorter side, leaving a margin for the controls that float
+    // over it. Portrait turns the board, so the spans swap with it.
+    const pad = coarse ? 1.3 : 1.2;
+    const spanX = (portrait ? 9 : 13) + pad * 2;
+    const spanY = (portrait ? 13 : 9) + pad * 2;
+    const across = Math.max(spanX, spanY * aspect) / this.zoom;
     this.camera.left = -across / 2;
     this.camera.right = across / 2;
     this.camera.top = across / aspect / 2;

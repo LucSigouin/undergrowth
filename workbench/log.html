@@ -104,7 +104,7 @@ footer{padding:clamp(1.5rem,4vw,3rem) clamp(1rem,4vw,3rem); color:var(--soft)}
 </header>
 <div class="round-body"><p>v1 stays untouched at `personal/undergrowth/`. v2 is a verbatim clone at `personal/undergrowth-v2/` (git, baseline commit cd2659a). Four workstreams were agreed: make it winnable, make it richer, ship it, make it prettier. This round lays the floor the other three stand on.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
 <h3>Before and after</h3>
-<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/01-fresh-desktop.png" alt="Version 1: The board on opening the game." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/01-fresh-desktop.png" alt="Version 2: The board on opening the game." loading="lazy"></figure></div><p class="note">The board on opening the game.</p>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/01-fresh-desktop.png" alt="Version 1: The board on opening the game." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r3/01-fresh-desktop.png" alt="Version 2: The board on opening the game." loading="lazy"></figure></div><p class="note">The board on opening the game.</p>
 </section>
 <section id="r2">
 <header class="round-head">
@@ -143,25 +143,25 @@ gap   = max(0.35, 0.95 - stage * 0.045) for every wave in the game</code></pre>
 <p><code>tests/game.test.js</code> gained 11 tests: the wave table against the stage text, wave pacing and bursts, brood splitting, Bloom versus a litter, warden slow immunity and shields, Ember burning outside range, the Lantern rate ring and its refusal to shoot, Rootgrip hold plus refusal plus persistence, Sunburst targeting, the coins only first upgrade with the shortfall list, and both save migrations. <code>tests/sim.test.js</code> was updated to the r2 truths, including a check that every winning strategy bleeds across three or more stages.</p>
 <p><code>tools/balance-sim.mjs</code> gained an in wave hook so a strategy can use abilities, plus three strategies: <code>kit-maze</code> (the same maze slots built with Ember and Lantern), <code>kit-abilities</code> (the same, plus Rootgrip and Sunburst) and <code>naive-abilities</code>. The six r1 strategies keep their tower plans and spending rules unchanged. The experiment list was re-based on the r2 constants.</p></div>
 <h3>Before and after</h3>
-<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/02-midwave-desktop.png" alt="Version 1: A wave running, with a tower selected." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/02-midwave-desktop.png" alt="Version 2: A wave running, with a tower selected." loading="lazy"></figure></div><p class="note">A wave running, with a tower selected.</p>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/02-midwave-desktop.png" alt="Version 1: A wave running, with a tower selected." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r3/02-midwave-desktop.png" alt="Version 2: A wave running, with a tower selected." loading="lazy"></figure></div><p class="note">A wave running, with a tower selected.</p>
 </section>
 <section id="r3">
 <header class="round-head">
 <h2><span class="tag">r3</span> polish</h2>
-<div class="scoreline"><span class="verdict pending">not scored yet</span></div>
+<div class="scoreline"><span class="verdict">scored</span> <b></b> out of 10</div><div class="scroller"><table><thead><tr></tr></thead><tbody><tr></tr></tbody></table></div>
 </header>
 <div class="round-body"><p>Luc's fourth workstream: a visual and UX polish pass on the 3D scene and the UI, with zero change to game rules. Two lanes build the same brief on their own full copy of the project; a fresh scorer picks the winner; the orchestrator copies the winning src/ back into the main tree.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
 <h3>Before and after</h3>
-<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/03-missing-material.png" alt="Version 1: The panel of a tower that cannot afford its next level." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/03-missing-material.png" alt="Version 2: The panel of a tower that cannot afford its next level." loading="lazy"></figure></div><p class="note">The panel of a tower that cannot afford its next level.</p>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/03-missing-material.png" alt="Version 1: The panel of a tower that cannot afford its next level." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r3/03-missing-material.png" alt="Version 2: The panel of a tower that cannot afford its next level." loading="lazy"></figure></div><p class="note">The panel of a tower that cannot afford its next level.</p>
 </section>
 <section id="r4">
 <header class="round-head">
 <h2><span class="tag">r4</span> ship</h2>
-<div class="scoreline"><span class="verdict pending">not scored yet</span></div>
+<div class="scoreline"><span class="verdict">PASS</span> <b>9.25</b> out of 10</div><div class="scroller"><table><thead><tr><th>Item 1</th><th>Item 2</th><th>Item 3</th><th>Item 4</th><th>Item 5</th><th>Item 6</th></tr></thead><tbody><tr><td>9.5</td><td>9.5</td><td>9.5</td><td>9.5</td><td>8.5</td><td>9</td></tr></tbody></table></div>
 </header>
 <div class="round-body"><p>Luc's third workstream: make v2 deployable to Cloudflare Pages with a playable URL, and give the project the mission log Luc asked for (per round: what changed, before/after screenshots, balance numbers). Nothing is deployed this round; deploying needs Luc's go.</p><p class="note">This round changed no game rules, so it has no changelog entry.</p></div>
 <h3>Before and after</h3>
-<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/04-phone-portrait.png" alt="Version 1: The same game on a phone sized screen." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r2/04-phone-portrait.png" alt="Version 2: The same game on a phone sized screen." loading="lazy"></figure></div><p class="note">The same game on a phone sized screen.</p>
+<div class="shots"><figure><figcaption>Before, version 1</figcaption><img src="shots/v1/04-phone-portrait.png" alt="Version 1: The same game on a phone sized screen." loading="lazy"></figure><figure><figcaption>After, version 2</figcaption><img src="shots/r3/04-phone-portrait.png" alt="Version 2: The same game on a phone sized screen." loading="lazy"></figure></div><p class="note">The same game on a phone sized screen.</p>
 </section>
 <section id="balance">
 <header class="round-head"><h2><span class="tag">sim</span> The difficulty curve</h2></header>

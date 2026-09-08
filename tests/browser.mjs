@@ -8,9 +8,10 @@ import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 
 const URL = process.env.GARDEN_URL || 'http://localhost:5174';
-const SHOTS = 'fleet-r2-design/design/shots';
+// The smoke test writes into test-results/, which is disposable. A check must never
+// write into a frozen artifact directory.
+const SHOTS = 'test-results';
 mkdirSync(SHOTS, { recursive: true });
-mkdirSync('test-results', { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -56,7 +57,7 @@ await page.locator('[data-build="thorn"]').click();
 await clickCell(9, 3);
 assert.equal(await page.evaluate(() => window.__garden.game.towers.length), 3);
 await page.locator('#start').click();
-await page.evaluate(() => window.__garden.step(20));
+await page.evaluate(() => window.__garden.step(21));
 assert.ok(await page.evaluate(() => window.__garden.game.wood >= 12));
 await clickCell(3, 3);
 await page.locator('[data-upgrade="reach"]').click();
@@ -76,7 +77,9 @@ for (const i of [1, 2, 3]) {
   assert.equal(await page.locator(`[data-plot="${i}"] small`).textContent(), 'Not producing');
   await page.locator(`[data-farm="${i}"]`).click();
 }
-await page.evaluate(() => window.__garden.step(10));
+// A plot collects every 10 seconds. Stepping exactly 10 lands on the boundary, where
+// summing 300 slices of 1/30 falls a float short of it, so step a little past.
+await page.evaluate(() => window.__garden.step(11));
 assert.ok(await page.evaluate(() => window.__garden.game.diamond >= 1));
 await page.locator('#path').click();
 await page.locator('#help').click();
