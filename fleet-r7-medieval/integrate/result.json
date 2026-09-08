@@ -1,0 +1,273 @@
+{
+  "state": "done",
+  "taskId": "12E076D3-708F-4548-A879-4ED43ACE3AAA",
+  "model": {
+    "requested": "gpt-6-astra",
+    "effective": "gpt-6-astra",
+    "source": "spawn flag"
+  },
+  "files": [
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/apron-wood@512.webp",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-armor@192.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-boss@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-brood@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-grub@192.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-grubling@192.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-moth@192.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-runner@192.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/enemy-warden@192.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/gate-entry@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/gate-exit@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/ground-outer@512.webp",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-bloom@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-coin@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-diamond@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-ember@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-hedge@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-iron@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-lantern@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-life@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-prism@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-rock@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-sap@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-thorn@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/icon-wood@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-flowers-a@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-flowers-b@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-rock-a@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-rock-b@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-stump@160.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-tree-a@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-tree-b@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/prop-tree-c@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tile-meadow-a@256.webp",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tile-meadow-b@256.webp",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tile-meadow-c@256.webp",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tile-path@256.webp",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-bloom-l1@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-bloom-l2@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-bloom-l3@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-ember-l1@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-ember-l2@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-ember-l3@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-hedge-l1@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-hedge-l2@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-hedge-l3@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-lantern-l1@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-lantern-l2@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-lantern-l3@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-prism-l1@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-prism-l2@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-prism-l3@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-sap-l1@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-sap-l2@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-sap-l3@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-thorn-l1@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-thorn-l2@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/public/art/tower-thorn-l3@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/src/world.js",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/REPORT.md",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/art-audit.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/artifact-paths.mjs",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/build.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/extra-shots.mjs",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/fps.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/fps.mjs",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/balance.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/browser-results.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/browser.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/format-final.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/format.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/golden.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/integrated-r6.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/integrated-r7-final.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/integrated-r7.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/layout.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/mobile.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/server-stop.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/static-results.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/test.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/logs/theme.log",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/review-art.py",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/run-checks.py",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shot-manifest.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/01-fresh-desktop.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/02-midwave-desktop.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/03-before-idle-orientation.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/03-missing-material.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/04-phone-portrait.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/05-phone-landscape.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/06-all-engines-levels.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/07-facing-four-directions.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/08-many-creatures-desktop.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/09-many-creatures-portrait.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/10-many-creatures-landscape.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/11-fps-scene.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/extra-states.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/chromium-mobile-375.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/chromium-mobile-390.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/chromium-mobile-844.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/chromium-mobile-playing-375.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/chromium-mobile-playing-390.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/chromium-mobile-playing-844.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/combat.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/desktop-missing-material.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/desktop-new-towers.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/desktop.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/mobile.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/phone-missing-material.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/phone-new-towers.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/webkit-mobile-375.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/webkit-mobile-390.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/webkit-mobile-844.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/webkit-mobile-playing-375.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/webkit-mobile-playing-390.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/gates/webkit-mobile-playing-844.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/notes.md",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/repeat-apron-wood@512.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/repeat-ground-outer@512.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/repeat-tile-meadow-a@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/repeat-tile-meadow-b@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/repeat-tile-meadow-c@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/repeat-tile-path@256.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-enemies.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-gate-shots-1.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-gate-shots-2.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-gate-shots-3.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-gate-shots-4.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-gate-shots-5.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-icons.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-props.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/review-towers.png",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/shots/sprite-metrics.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/integrate/result.json"
+  ],
+  "verify": {
+    "cmd": "node /Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/check-integrate-r7.mjs",
+    "exit": 0
+  },
+  "unverified": [
+    "Frame rate on other physical devices and GPUs; phones were tested through Playwright profiles.",
+    "No private player save was supplied; migration fixtures and browser save/reload passed."
+  ],
+  "art": {
+    "count": 58,
+    "bytes": 4293849
+  },
+  "fps": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "frames": 301,
+    "fps": 60,
+    "medianMs": 16.7,
+    "p95Ms": 16.7,
+    "minTowers": 12,
+    "maxTowers": 12,
+    "minEnemies": 20,
+    "maxEnemies": 20,
+    "active": true,
+    "driver": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)"
+  },
+  "gates": [
+    {
+      "name": "test",
+      "command": [
+        "npm",
+        "--cache",
+        "/tmp/npmcache",
+        "test"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "golden",
+      "command": [
+        "node",
+        "tests/golden.mjs"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "balance",
+      "command": [
+        "node",
+        "tests/balance-gate.mjs"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "format",
+      "command": [
+        "npm",
+        "--cache",
+        "/tmp/npmcache",
+        "run",
+        "format:check"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "theme",
+      "command": [
+        "node",
+        "fleet-r7-medieval/check-theme.mjs"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "integrated-r6",
+      "command": [
+        "node",
+        "fleet-r6-art/check-integrated.mjs"
+      ],
+      "exit": 1,
+      "accepted": true
+    },
+    {
+      "name": "integrated-r7",
+      "command": [
+        "node",
+        "fleet-r7-medieval/check-integrate-r7.mjs"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "layout",
+      "command": [
+        "node",
+        "tests/layout-gate.mjs"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "browser",
+      "command": [
+        "node",
+        "tests/browser.mjs"
+      ],
+      "exit": 0,
+      "accepted": true
+    },
+    {
+      "name": "mobile",
+      "command": [
+        "node",
+        "tests/mobile-layout.mjs"
+      ],
+      "exit": 0,
+      "accepted": true
+    }
+  ],
+  "sourceEdit": "src/world.js: initial Ballista head rotation changed from Math.PI / 2 to -Math.PI / 2; no size or combat aiming changes.",
+  "serverStopped": true,
+  "costUsd": 0
+}

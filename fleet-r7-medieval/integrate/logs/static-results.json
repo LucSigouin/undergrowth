@@ -1,0 +1,70 @@
+[
+  {
+    "name": "test",
+    "command": [
+      "npm",
+      "--cache",
+      "/tmp/npmcache",
+      "test"
+    ],
+    "exit": 0,
+    "accepted": true
+  },
+  {
+    "name": "golden",
+    "command": [
+      "node",
+      "tests/golden.mjs"
+    ],
+    "exit": 0,
+    "accepted": true
+  },
+  {
+    "name": "balance",
+    "command": [
+      "node",
+      "tests/balance-gate.mjs"
+    ],
+    "exit": 0,
+    "accepted": true
+  },
+  {
+    "name": "format",
+    "command": [
+      "npm",
+      "--cache",
+      "/tmp/npmcache",
+      "run",
+      "format:check"
+    ],
+    "exit": 0,
+    "accepted": true
+  },
+  {
+    "name": "theme",
+    "command": [
+      "node",
+      "fleet-r7-medieval/check-theme.mjs"
+    ],
+    "exit": 0,
+    "accepted": true
+  },
+  {
+    "name": "integrated-r6",
+    "command": [
+      "node",
+      "fleet-r6-art/check-integrated.mjs"
+    ],
+    "exit": 1,
+    "accepted": true
+  },
+  {
+    "name": "integrated-r7",
+    "command": [
+      "node",
+      "fleet-r7-medieval/check-integrate-r7.mjs"
+    ],
+    "exit": 0,
+    "accepted": true
+  }
+]

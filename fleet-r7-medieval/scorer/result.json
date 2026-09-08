@@ -1,0 +1,20 @@
+{
+  "state": "done",
+  "taskId": "87BC8342-62C8-461B-9281-EA4E2A8DDF72",
+  "model": { "requested": "claude-fable-5", "effective": "claude-fable-5", "source": "spawn flag" },
+  "files": [
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/scorer/SCORE.md",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/scorer/score.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/scorer/result.json",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/scorer/extra-shots.mjs",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/scorer/extra-shots2.mjs",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/scorer/extra-shots3.mjs",
+    "/Users/ls/Claude-Workspace/personal/undergrowth-v2/fleet-r7-medieval/scorer/shots/"
+  ],
+  "verify": { "cmd": "test -f fleet-r7-medieval/scorer/SCORE.md -a -f fleet-r7-medieval/scorer/score.json", "exit": 0 },
+  "unverified": [
+    "60 fps was measured in headless Chromium with GPU (ANGLE Metal on Apple M5), not on a physical display",
+    "the 20-creature fps point was measured with 19 creatures continuously alive; the 20th kept dying to the towers",
+    "provider billing behind the art lanes' costs.jsonl rate tables"
+  ]
+}

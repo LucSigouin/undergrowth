@@ -1,0 +1,16 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "frames": 301,
+  "fps": 60,
+  "medianMs": 16.7,
+  "p95Ms": 16.7,
+  "minTowers": 12,
+  "maxTowers": 12,
+  "minEnemies": 20,
+  "maxEnemies": 20,
+  "active": true,
+  "driver": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)"
+}

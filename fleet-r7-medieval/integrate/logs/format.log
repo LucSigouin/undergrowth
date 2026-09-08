@@ -1,0 +1,6 @@
+
+> undergrowth-v2@2.0.0 format:check
+> prettier --check "src/**/*.{js,css}" "tests/*.{js,mjs}"
+
+Checking formatting...
+All matched files use Prettier code style!

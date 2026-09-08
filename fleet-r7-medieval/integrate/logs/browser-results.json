@@ -1,0 +1,29 @@
+[
+  {
+    "name": "layout",
+    "command": [
+      "node",
+      "tests/layout-gate.mjs"
+    ],
+    "exit": 0,
+    "accepted": true
+  },
+  {
+    "name": "browser",
+    "command": [
+      "node",
+      "tests/browser.mjs"
+    ],
+    "exit": 0,
+    "accepted": true
+  },
+  {
+    "name": "mobile",
+    "command": [
+      "node",
+      "tests/mobile-layout.mjs"
+    ],
+    "exit": 0,
+    "accepted": true
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "idleBallistaRadians": [
+    0,
+    0,
+    0
+  ],
+  "enemyPlaneSquares": {
+    "grub": 0.6,
+    "runner": 0.58,
+    "armor": 0.64,
+    "moth": 0.74,
+    "brood": 0.85,
+    "grubling": 0.38,
+    "warden": 0.72,
+    "boss": 1.15
+  },
+  "gates": [
+    {
+      "x": 0,
+      "z": 4
+    },
+    {
+      "x": 12,
+      "z": 4
+    }
+  ]
+}

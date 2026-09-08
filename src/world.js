@@ -473,7 +473,7 @@ export class World {
       // Inside the head group the sprite needs a fixed quarter turn: the head is aimed with
       // atan2(dx, dz) and a sprite points with atan2(dz, -dx), which differ by exactly 90.
       sprite.rotation.y = Math.PI / 2;
-      head.rotation.y = Math.PI / 2;
+      head.rotation.y = -Math.PI / 2;
       head.add(sprite);
     } else {
       group.add(sprite);

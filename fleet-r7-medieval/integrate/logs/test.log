@@ -1,0 +1,60 @@
+
+> undergrowth-v2@2.0.0 test
+> node --test tests/*.test.js
+
+✔ burn kills at the gate pay once without costing a life (2.159125ms)
+✔ engines prioritize remaining maze distance and account for flying enemies (3.064041ms)
+✔ target priority includes the unfinished movement segment (0.509959ms)
+✔ War banner growth and old power purchases use the same useful coverage path (0.57175ms)
+✔ maze reroutes and rejects a sealed exit without charging (2.003542ms)
+✔ cannot build under an enemy or its next movement target (0.264708ms)
+✔ the works start empty with only the sawmill available (1.393209ms)
+✔ money buys and upgrades payouts made after combat (5.664292ms)
+✔ locked resources unlock sequentially and do not produce until purchased (0.318125ms)
+✔ insufficient coins and maximum upgrades cannot charge or change a building (0.258ms)
+✔ old save migration preserves the siege and refunds replaced buildings (0.174125ms)
+✔ real combat earns kills and completes a wave (3.359ms)
+✔ flying enemies ignore the maze and armored enemies resist ballista bolts (1.032125ms)
+✔ save resumes a live wave deterministically (5.577375ms)
+✔ thirty cleared waves finish ten stages while preserving the keep (0.345208ms)
+✔ loss stops further simulation (0.1095ms)
+✔ engine shots retain their event type so the renderer can draw attacks (0.250208ms)
+✔ waves come from the hand written table and match the stage they belong to (0.156833ms)
+✔ a wave releases its enemies in table order at the pace the table asks for (0.475875ms)
+✔ a war wagon breaks open into three whelps where it died (0.090667ms)
+✔ a catapult clears a whole litter in one shot, which a ballista cannot (0.659875ms)
+✔ a paladin ignores tar and shields the enemy standing beside it (0.3055ms)
+✔ brazier burning keeps working after the shot and ignores armor and shields (0.34925ms)
+✔ a war banner never shoots and speeds up every engine inside its ring (0.324417ms)
+✔ the first upgrade costs coins only and the panel names what is missing (0.272ms)
+✔ a version 2 save loads as version 5 with towers, farms, stage and coins intact (0.093334ms)
+✔ a version 1 save still migrates all the way to version 5 (0.052291ms)
+✔ version 3 saves retain the live wave but discard retired ability state (0.295333ms)
+✔ waiting and dragging out combat never produce materials (0.0625ms)
+✔ midwave purchases and upgrades only affect the following payout, including after reload (0.073708ms)
+✔ a failed wave pays nothing and the final successful wave does (0.058125ms)
+✔ version 4 live saves discard timers and use saved works levels for one payout (0.074167ms)
+✔ selling refunds every coin spent on an engine and its upgrades exactly once (0.366708ms)
+✔ two runs of the simulator produce identical JSON (6919.57ms)
+✔ the simulator finishes far inside sixty seconds (6119.932958ms)
+✔ every strategy reports the fields the report is built from (6750.128459ms)
+✔ the naive strategy still loses, but only after it has seen most of the game (3818.73525ms)
+✔ naive reaches level 2 on coins alone and then stops, with no works (3201.440333ms)
+✔ the winners lose lives across three or more stages, not in one cliff (2695.091417ms)
+✔ at least one strategy clears all ten stages on the current constants (2815.013417ms)
+✔ current balance uses the engine-only reference and excludes retired ability strategies (2451.464708ms)
+✔ experiments restore the shared constant tables when they finish (31563.719292ms)
+✔ waiting between waves cannot improve the economy or strategy outcomes (4823.121958ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 71291.603583
+npm notice
+npm notice New major version of npm available! 11.16.0 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice

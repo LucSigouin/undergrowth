@@ -24,3 +24,9 @@ files); integrate runs after both.
 are stripped, golden untouched, all 15 new names present, 14 old names and 6 retired words absent from player text,
 materials keep their names, DM Sans replaced. Integrate: `fleet-r6-art/check-integrated.mjs` still applies (art stems
 shipped, renderer references) plus the full suite.
+
+## Verdict (2026-09-08)
+Scorer (fresh Fable 5, node Rubble): PASS 9.08, no killer floor. Cells: 9.5 / 9.0 / 8.5 / 9.5 / 9.5 / 8.5.
+Redo notes, none required: ground-outer shows a faint band in a 3x3 repeat; theme REPORT.md has em dashes in
+headings; tree props lean garden-teal. Art spend USD 15.92 (67 takes). Integrate (codex) fixed the idle Ballista
+orientation in src/world.js (one line). Save version 2 fixture still loads. 60 fps.

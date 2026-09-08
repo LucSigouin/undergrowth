@@ -1,0 +1,2 @@
+INTEGRATION GATE RED
+  - src/game.js differs from ad32fda; rules and the behaviour freeze are frozen this round

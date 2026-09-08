@@ -1,0 +1,23 @@
+{
+  "scores": { "1": 9.5, "2": 9.0, "3": 8.5, "4": 9.5, "5": 9.5, "6": 8.5 },
+  "average": 9.08,
+  "verdict": "PASS",
+  "killer_floor_hit": false,
+  "gates": {
+    "frozen_integrate_sha": 0,
+    "frozen_finals_sha": 0,
+    "check_assets_icons": 0,
+    "check_assets_towers": 0,
+    "check_assets_enemies": 0,
+    "check_assets_board": 0,
+    "check_integrate_r7": 0,
+    "check_theme": 0,
+    "npm_test": 0,
+    "golden": 0,
+    "balance_gate": 0,
+    "format_check": 0,
+    "layout_gate": 0,
+    "browser": 0,
+    "mobile_layout": 0
+  }
+}

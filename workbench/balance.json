@@ -20,7 +20,7 @@
   "strategies": [
     {
       "name": "naive",
-      "note": "A few Thorns beside the straight route. Upgrades when affordable. No farm.",
+      "note": "A few Ballistas beside the straight route. Upgrades when affordable. No works.",
       "lostAtStage": 6,
       "lostAtWave": 3,
       "won": false,
@@ -360,7 +360,7 @@
     },
     {
       "name": "maze",
-      "note": "Serpentine hedge walls with Thorn, Sap and Sunstone in the wall. Buys wood and rock so it can upgrade.",
+      "note": "Serpentine palisades with Ballista, Tar pit and Mage spire in the wall. Buys wood and rock so it can upgrade.",
       "lostAtStage": 8,
       "lostAtWave": 2,
       "won": false,
@@ -779,7 +779,7 @@
     },
     {
       "name": "maze-deep",
-      "note": "The maze plan plus the full garden from stage 5, the only way a Sunstone can reach level 3.",
+      "note": "The maze plan plus the full works from stage 5, the only way a Mage spire can reach level 3.",
       "lostAtStage": 9,
       "lostAtWave": 3,
       "won": false,
@@ -1251,7 +1251,7 @@
     },
     {
       "name": "farm-first",
-      "note": "Wood then rock then iron then diamond, fully upgraded, before any tower is bought.",
+      "note": "Wood then rock then iron then diamond, fully upgraded, before any engine is bought.",
       "lostAtStage": 0,
       "lostAtWave": 3,
       "won": false,
@@ -1301,7 +1301,7 @@
     },
     {
       "name": "farm-lite",
-      "note": "Two Thorns first, then the wood and rock plots, then the maze. Farming without going undefended.",
+      "note": "Two Ballistas first, then the sawmill and quarry, then the maze. Working without going undefended.",
       "lostAtStage": 8,
       "lostAtWave": 2,
       "won": false,
@@ -2101,7 +2101,7 @@
     },
     {
       "name": "kit-maze",
-      "note": "The r2 maze: the same walls and slots, but with two Embers and a Lantern. No abilities.",
+      "note": "The r2 maze: the same walls and slots, but with two Braziers and a War banner. No abilities.",
       "lostAtStage": null,
       "lostAtWave": null,
       "won": true,
