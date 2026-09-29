@@ -157,20 +157,29 @@ export const BOARD_ART = {
   },
 };
 
-// Scene colours. Only the few things that are still drawn as plain geometry use these:
-// the seam under the tile grid, the hover square, the route chevrons and the effects.
-// Castle stone and torchlight since r7.
+// Scene colours for the lit diorama (r8, "Cinematic depth"): a dusk siege under a warm low
+// sun, cool blue fill in the shadows, a red portal at the horde gate and gold torchlight at
+// the keep.
 export const SCENE = {
-  sky: '#3c3630',
-  soil: '#6b6357',
-  seam: '#463f36',
-  route: '#f0dfa6',
-  routeGlow: '#f4e6ae',
-  hoverOk: '#f0e6c4',
-  hoverBlocked: '#c05238',
-  ring: '#f9efc9',
-  timber: '#7a6444',
-  stone: '#6f6a61',
-  stoneLight: '#9a9288',
-  shadow: '#2a2520',
+  sky: '#0d0f15',
+  fog: '#161923',
+  skyLight: '#9aa8c4',
+  groundLight: '#3a2a1c',
+  sun: '#ffd4a0',
+  rim: '#6f8fff',
+  portal: '#ff3b1f',
+  torch: '#ffa04a',
+  outerTint: '#e8dcc0',
+  outerGlow: '#0c0d0a',
+  soil: '#3b2c20',
+  roof: '#5e2320',
+  banner: '#8e1c22',
+  bark: '#4a3424',
+  iron: '#3c3a38',
+  plinthCap: '#8b7f6c',
+  gold: '#d9a93e',
+  route: '#ffd98a',
+  hoverOk: '#ffe6a0',
+  hoverBlocked: '#ff4a32',
+  ring: '#ffefc4',
 };

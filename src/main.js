@@ -62,10 +62,22 @@ const worksStrip =
   '<div id="farms" class="works-plots"></div>' +
   '</section>';
 
+// Small inline icons for the HUD chrome. Decorative; every control carries its own label.
+const SVG = {
+  crest:
+    '<svg class="crest" viewBox="0 0 40 46" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe3a0"/><stop offset=".55" stop-color="#d9a93e"/><stop offset="1" stop-color="#7a5418"/></linearGradient></defs>' +
+    '<path d="M20 2l16 5v16c0 10-7 17-16 21C11 40 4 33 4 23V7z" fill="#1a1512" stroke="url(#cg)" stroke-width="2.4"/>' +
+    '<path d="M20 9l10 3v11c0 6-4 11-10 14-6-3-10-8-10-14V12z" fill="#7e1f28"/>' +
+    '<path d="M20 13v20M13 20h14" stroke="url(#cg)" stroke-width="3" stroke-linecap="round"/></svg>',
+  gear:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 000-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 00-1.7-1L15 3.5h-4l-.3 2.5a7.4 7.4 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 000 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 001.7 1l.3 2.5h4l.3-2.5a7.4 7.4 0 001.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg>',
+  sword:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 2.5l-.6 4.2L10.6 16l-2.6-2.6 9.3-9.3zM6.3 13.8l3.9 3.9-1.4 1.4-1.1-1.1-2.3 2.3a1.5 1.5 0 11-1.4-1.4L6.3 16.6l-1.1-1.1z"/></svg>',
+};
+
 const mapStatus =
   '<div class="map-status">' +
-  '<span>Stage <b id="stage-number">01</b><span class="status-muted"> / 30</span></span>' +
-  '<span class="status-divider"></span>' +
+  '<span class="stage-medal"><small>Stage</small><b id="stage-number">01</b><span class="status-muted">/30</span></span>' +
   '<span class="heart">' +
   icon(LIFE, 'life-icon') +
   '<b id="lives">20 / 20</b></span>' +
@@ -74,19 +86,21 @@ const mapStatus =
 // Gold and materials share a top-right header; material buttons open their works controls.
 const materialHud =
   '<header class="resource-header" aria-label="Game status and resources">' +
-  '<span class="game-title">Undergrowth</span>' +
+  `<span class="game-title">${SVG.crest}<span class="title-text">Undergrowth</span></span>` +
   mapStatus +
+  '<div class="treasury">' +
   '<span class="gold-total" aria-label="Gold">' +
   icon(COIN, 'coin-icon') +
   '<b id="coins">200</b></span>' +
   MATERIALS.map(
     (material, i) =>
       `<button class="material-chip" data-hud-works="${i}"` +
-      ` aria-label="${material.name}, open the works">` +
-      chip(MATERIAL_LOOK[material.id]) +
+      ` aria-label="${material.name}, open the works" title="${material.name}">` +
+      icon(MATERIAL_LOOK[material.id], 'material-icon') +
       `<b id="${material.id}">0</b></button>`,
   ).join('') +
-  '<button id="settings" aria-label="Settings" title="Settings">⚙</button></header>';
+  '</div>' +
+  `<button id="settings" aria-label="Settings" title="Settings">${SVG.gear}</button></header>`;
 
 const mapControls =
   '<div class="map-controls">' +
@@ -116,18 +130,19 @@ const towerCards = Object.entries(TOWERS)
   .join('');
 
 const defensesSection =
-  '<section class="defenses"><h2>War engines</h2>' +
+  '<section class="defenses"><h2><span>War engines</span></h2>' +
   `<div class="cards">${towerCards}</div>` +
   '<div id="detail" class="detail" hidden></div></section>';
 
 const waveControls =
-  '<div class="wave-controls"><button class="primary" id="start">Start ↗</button>' +
+  '<div class="wave-controls"><button class="primary" id="start">Begin stage</button>' +
   '<button id="pause" aria-label="Pause" title="Pause">Ⅱ</button>' +
   '<button id="speed" aria-label="Speed: 1×" title="Game speed">1×</button></div>';
 
 const overlays =
   '<div id="hover-note" class="hover-note" role="tooltip" hidden></div>' +
   '<div id="toast" role="status" aria-live="polite"></div>' +
+  '<div id="banner" class="stage-banner" aria-hidden="true"></div>' +
   '<dialog id="modal"></dialog>' +
   '<dialog id="works-modal" class="works-sheet"><div class="sheet-heading">' +
   '<button id="close-works" aria-label="Close the works">×</button></div>' +
@@ -147,6 +162,28 @@ query('#app').innerHTML = `<main class="game-shell">
     ${waveControls}
   </aside>
 </main>${overlays}`;
+
+let lastCoins = Math.floor(game.coins),
+  lastLives = game.lives;
+
+// Restart a one-shot CSS animation on an element.
+function pulse(selector, name) {
+  const element = query(selector);
+  element.classList.remove(name);
+  void element.offsetWidth;
+  element.classList.add(name);
+}
+
+// The big stage card that sweeps across the board when a stage starts or is won.
+function banner(kicker, title, subtitle, tone = '') {
+  const element = query('#banner');
+  element.className = `stage-banner ${tone}`;
+  element.innerHTML =
+    `<span class="banner-kicker">${kicker}</span><span class="banner-title">${title}</span>` +
+    `<span class="banner-rule"></span><span class="banner-sub">${subtitle}</span>`;
+  void element.offsetWidth;
+  element.classList.add('show');
+}
 
 // Show a short message at the bottom of the screen.
 function toast(msg) {
@@ -476,14 +513,21 @@ function render() {
   );
   query('#start').disabled = (game.active && !paused) || game.lost || game.won;
   query('#start').textContent = game.won
-    ? 'Keep held ✓'
+    ? 'Keep held'
     : game.lost
       ? 'The keep has fallen'
       : game.active
         ? paused
-          ? 'Resume ▶'
-          : 'Playing'
-        : 'Start ↗';
+          ? 'Resume'
+          : 'Battle raging'
+        : `Begin stage ${String(stageNumber).padStart(2, '0')}`;
+  query('#start').classList.toggle('raging', game.active && !paused);
+  // Counters that change pulse once, so a payout or a lost life is seen, not just read.
+  const coinsNow = Math.floor(game.coins);
+  if (coinsNow > lastCoins) pulse('.gold-total', 'gain');
+  if (game.lives < lastLives) pulse('.heart', 'hurt');
+  lastCoins = coinsNow;
+  lastLives = game.lives;
   document.querySelectorAll('[data-build]').forEach((button) => {
     button.classList.toggle('selected', button.dataset.build === build);
     button.setAttribute('aria-pressed', String(button.dataset.build === build));
@@ -779,6 +823,20 @@ query('#start').onclick = () => {
   }
   if (game.start()) {
     persist();
+    const kinds = game.queue.map((entry) => entry.kind || entry);
+    const number = String(game.stage * 3 + game.wave).padStart(2, '0');
+    banner(
+      'Stage',
+      number,
+      kinds.includes('boss')
+        ? 'The Warlord marches'
+        : kinds.includes('moth')
+          ? 'Gargoyles on the wind'
+          : kinds.includes('warden')
+            ? 'Paladins at the gate'
+            : 'The horde approaches',
+      kinds.includes('boss') ? 'boss' : '',
+    );
   }
   render();
 };
@@ -842,9 +900,7 @@ function frame(now) {
   }
   world.sync(game, dt);
   for (const event of game.events) {
-    if (event.type === 'wave') {
-      toast('Stage cleared');
-    }
+    if (event.type === 'wave' && !game.won) banner('Stage', 'Held', 'The works pay out', 'held');
     if (event.type === 'won') modal('The keep holds', WON_TEXT);
     if (event.type === 'lost') modal('The keep has fallen', LOST_TEXT);
   }
