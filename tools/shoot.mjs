@@ -182,7 +182,11 @@ async function shoot(page, name) {
   say(`${name}`);
 }
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  // GPU=1 renders on the real graphics card instead of the software fallback.
+  args: process.env.GPU ? ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] : [],
+});
 const allProblems = [];
 
 // 01 and 02: desktop, fresh board then mid wave with a tower selected.

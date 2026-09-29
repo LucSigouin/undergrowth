@@ -1712,3 +1712,126 @@ dialog .outline {
     transition: none !important;
   }
 }
+
+/* ------------------------------------------------------------------ r9 feel */
+
+/* A coin flying from a fallen creature into the treasury. */
+.coin-fly {
+  position: fixed;
+  z-index: 7;
+  width: 20px;
+  height: 20px;
+  background: url('/art/icon-coin@160.png') center / contain no-repeat;
+  filter: drop-shadow(0 0 6px rgba(255, 190, 70, 0.9));
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+/* The scouts report: what the next stage sends, hung under the stage medal between stages. */
+.scouts {
+  position: fixed;
+  top: calc(var(--hud-h) + 8px);
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px 10px;
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(180deg, rgba(14, 12, 16, 0.94), rgba(22, 18, 22, 0.88));
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 226, 160, 0.08);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -14px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.scouts.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.scouts-kicker {
+  font-family: var(--display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.scouts-list {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scouts-list li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.scouts-list img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.7));
+}
+.scouts-list span {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+.scouts-list b {
+  font-family: var(--display);
+  color: var(--gold-hi);
+}
+.scouts-list em {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ember-hi);
+}
+@media (max-width: 700px), (max-width: 1000px) and (pointer: coarse) {
+  .scouts {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scouts {
+    transition: opacity 0.2s;
+  }
+}
+
+/* Engine cards: the painted icon lifts toward the pointer and settles when pressed. */
+.tower-card .chip {
+  transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.3), filter 0.2s;
+}
+.tower-card:hover .chip {
+  transform: translateY(-2px) scale(1.07);
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.55));
+}
+.tower-card:active .chip {
+  transform: translateY(0) scale(0.97);
+}
+.tower-card.selected .chip {
+  filter: drop-shadow(0 0 10px rgba(255, 190, 80, 0.45));
+}
+@media (prefers-reduced-motion: reduce) {
+  .tower-card .chip {
+    transition: none;
+  }
+  .tower-card:hover .chip {
+    transform: none;
+  }
+}

@@ -157,25 +157,29 @@ export const BOARD_ART = {
   },
 };
 
-// Scene colours for the lit diorama (r8, "Cinematic depth"): a dusk siege under a warm low
-// sun, cool blue fill in the shadows, a red portal at the horde gate and gold torchlight at
-// the keep.
+// Scene colours for the lit diorama. Round r9 moved the hour on: blue dusk over the keep, a
+// cool moonlit key, and warm pools of torchlight at the gates and along the walls. The red
+// portal still marks the horde gate and gold light the keep.
 export const SCENE = {
-  sky: '#0d0f15',
-  fog: '#161923',
-  skyLight: '#9aa8c4',
-  groundLight: '#3a2a1c',
-  sun: '#ffd4a0',
-  rim: '#6f8fff',
+  sky: '#0a0e18',
+  fog: '#141b2a',
+  skyLight: '#8fa6d8',
+  groundLight: '#33261c',
+  sun: '#ffe2bc',
+  rim: '#5d7fff',
   portal: '#ff3b1f',
-  torch: '#ffa04a',
-  outerTint: '#e8dcc0',
-  outerGlow: '#0c0d0a',
+  torch: '#ff9a40',
+  outerTint: '#c9c6b4',
+  outerGlow: '#07090c',
   soil: '#3b2c20',
+  road: '#e2d3bc',
+  water: '#0a161e',
   roof: '#5e2320',
   banner: '#8e1c22',
+  tent: ['#5a2a22', '#4a3526', '#6b4a2e', '#3e2c24'],
   bark: '#4a3424',
   iron: '#3c3a38',
+  oak: '#5a3a22',
   plinthCap: '#8b7f6c',
   gold: '#d9a93e',
   route: '#ffd98a',

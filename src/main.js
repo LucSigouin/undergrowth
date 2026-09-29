@@ -4,9 +4,9 @@
 // holds the one Game instance and the one World instance and wires them together. Game
 // rules live in game.js and the 3D scene lives in world.js.
 import './style.css';
-import { Game, TOWERS, MATERIALS } from './game.js';
+import { Game, TOWERS, MATERIALS, ENEMIES } from './game.js';
 import { World } from './world.js';
-import { TOWER_LOOK, MATERIAL_LOOK } from './look.js';
+import { TOWER_LOOK, MATERIAL_LOOK, ENEMY_LOOK } from './look.js';
 
 // Short name for document.querySelector, used all over this file.
 const query = (selector) => document.querySelector(selector),
@@ -143,6 +143,7 @@ const overlays =
   '<div id="hover-note" class="hover-note" role="tooltip" hidden></div>' +
   '<div id="toast" role="status" aria-live="polite"></div>' +
   '<div id="banner" class="stage-banner" aria-hidden="true"></div>' +
+  '<aside id="scouts" class="scouts" aria-label="Scouts report"></aside>' +
   '<dialog id="modal"></dialog>' +
   '<dialog id="works-modal" class="works-sheet"><div class="sheet-heading">' +
   '<button id="close-works" aria-label="Close the works">×</button></div>' +
@@ -557,6 +558,42 @@ function render() {
   if (!build || game.lost || game.won) world.clearTowerPreview();
   renderWorks();
   renderDetail();
+  renderScouts();
+}
+
+// What each creature brings, in two words, for the scouts report.
+const TRAITS = {
+  runner: 'Fast',
+  armor: 'Armored',
+  moth: 'Flies over walls',
+  brood: 'Splits apart',
+  warden: 'Shields allies',
+  boss: 'Warlord',
+};
+
+// Between stages, a card under the stage medal names what the scouts saw coming.
+let scoutsKey = '';
+function renderScouts() {
+  const card = query('#scouts');
+  const entry = !game.active && !game.lost && !game.won ? game.waveEntry(game.stage, game.wave + 1) : null;
+  const key = entry ? `${game.stage}:${game.wave}` : '';
+  card.classList.toggle('show', !!entry);
+  if (key === scoutsKey) return;
+  scoutsKey = key;
+  if (!entry) return;
+  const number = String(game.stage * 3 + game.wave + 1).padStart(2, '0');
+  card.innerHTML =
+    `<span class="scouts-kicker">Scouts report · Stage ${number}</span><ul class="scouts-list">` +
+    entry.enemies
+      .map(
+        ([kind, count]) =>
+          `<li><img src="${ENEMY_LOOK[kind].art}" alt="" draggable="false">` +
+          `<span><b>${count}</b> ${ENEMIES[kind].name}${count > 1 && !/s$/.test(ENEMIES[kind].name) ? 's' : ''}` +
+          (TRAITS[kind] ? `<em>${TRAITS[kind]}</em>` : '') +
+          '</span></li>',
+      )
+      .join('') +
+    '</ul>';
 }
 
 // Redraw the works summary chips and the four building cards, skipping unchanged work.

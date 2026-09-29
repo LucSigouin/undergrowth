@@ -34,11 +34,20 @@ const SPRITE_GEOMETRY = new THREE.PlaneGeometry(1, 1);
 SPRITE_GEOMETRY.rotateX(-Math.PI / 2);
 SPRITE_GEOMETRY.rotateY(Math.PI / 2);
 
+// A standing card for creatures, anchored at its feet and facing the camera.
+const STAND_GEOMETRY = new THREE.PlaneGeometry(1, 1).translate(0, 0.46, 0);
+// How tall a standing creature is, per square of its old floor sprite.
+const STAND = 1.95;
+// The sunken road the horde walks on.
+const ROAD_Y = -0.17;
+
 // Shared geometry. Nothing in this list is ever disposed.
 const GEO = {
-  tile: new THREE.BoxGeometry(0.955, 0.34, 0.955).translate(0, -0.17, 0),
+  tile: new THREE.BoxGeometry(0.97, 0.34, 0.97).translate(0, -0.17, 0),
+  road: new THREE.BoxGeometry(1.0, 0.34, 1.0).translate(0, -0.17, 0),
   plinth: new THREE.CylinderGeometry(0.43, 0.48, 1, 8).translate(0, 0.5, 0),
   plinthCap: new THREE.CylinderGeometry(0.46, 0.44, 0.06, 8).translate(0, 0.03, 0),
+  footing: new THREE.CylinderGeometry(0.5, 0.54, 0.08, 8).translate(0, 0.04, 0),
   trim: new THREE.TorusGeometry(0.455, 0.028, 6, 24).rotateX(Math.PI / 2),
   wall: new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0),
   crystal: new THREE.OctahedronGeometry(0.17, 0),
@@ -71,13 +80,15 @@ function seeded(seed) {
   };
 }
 
-// Ground height outside the ramparts: a dip under the walls, rolling hills further out.
+// Ground height outside the ramparts: a flooded moat hard against the walls, a steep bank,
+// then rolling hills further out.
 function terrainHeight(x, z) {
   const dx = Math.max(-1.6 - x, x - 13.6, 0),
     dz = Math.max(-1.6 - z, z - 9.6, 0);
   const out = Math.hypot(dx, dz);
-  const rise = THREE.MathUtils.smoothstep(out, 1.5, 16);
-  return -0.62 + rise * (1.4 + wave2(x, z) * 1.3) + wave2(x * 2.3, z * 2.1) * 0.08;
+  const bank = THREE.MathUtils.smoothstep(out, 0.55, 1.25);
+  const rise = THREE.MathUtils.smoothstep(out, 1.8, 16);
+  return -1.0 + bank * 1.0 + rise * (1.3 + wave2(x, z) * 1.2) + wave2(x * 2.3, z * 2.1) * 0.07 * bank;
 }
 
 // A procedural cut-stone texture, drawn once. Used for the ramparts, towers and plinths.
@@ -115,9 +126,10 @@ function stoneCanvas(tone = [118, 110, 98]) {
   return canvas;
 }
 
-// The courtyard floor, painted once in code: every square split into a few flagstones with
-// bevelled edges, grit, cracks and moss, and grass creeping up through the joints. It is
-// mapped by world position, so square (x, z) always shows the same stones.
+// The courtyard floor, painted once in code. Round r9 calmed it down: one large dressed
+// flagstone per square, in one stone, with only a whisper of tone change, so the joints read
+// as a quiet grid and the eye can rest. Wear, a hairline crack and a little moss come in at
+// low contrast. It is mapped by world position, so square (x, z) always shows the same stone.
 const CELL_PX = 112;
 function courtyardCanvas() {
   const canvas = document.createElement('canvas');
@@ -125,114 +137,129 @@ function courtyardCanvas() {
   canvas.height = 9 * CELL_PX;
   const g = canvas.getContext('2d');
   const rand = seeded(4242);
-  g.fillStyle = '#2a241d';
+  // Grout.
+  g.fillStyle = '#3a342c';
   g.fillRect(0, 0, canvas.width, canvas.height);
-  const stone = (x, y, w, h) => {
-    const warm = rand();
-    const base = [108 + warm * 12, 102 + warm * 6, 92 - warm * 2].map((c) => c * (0.9 + rand() * 0.12));
-    const [r, gr, b] = base.map(Math.round);
-    const gradient = g.createLinearGradient(x, y, x + w, y + h);
-    gradient.addColorStop(0, `rgb(${r + 22},${gr + 20},${b + 16})`);
-    gradient.addColorStop(1, `rgb(${r - 18},${gr - 18},${b - 16})`);
-    g.fillStyle = gradient;
-    const round = 5 + rand() * 6;
-    g.beginPath();
-    g.roundRect(x + 3, y + 3, w - 6, h - 6, round);
-    g.fill();
-    // Bevel: lit top-left rim, shadowed bottom-right rim.
-    g.lineWidth = 2;
-    g.strokeStyle = 'rgba(255,240,210,0.22)';
-    g.beginPath();
-    g.moveTo(x + 5, y + h - 6);
-    g.lineTo(x + 5, y + 5);
-    g.lineTo(x + w - 6, y + 5);
-    g.stroke();
-    g.strokeStyle = 'rgba(0,0,0,0.35)';
-    g.beginPath();
-    g.moveTo(x + w - 5, y + 6);
-    g.lineTo(x + w - 5, y + h - 5);
-    g.lineTo(x + 6, y + h - 5);
-    g.stroke();
-    // Grit and pitting.
-    for (let i = 0; i < (w * h) / 60; i++) {
-      const light = rand() > 0.55;
-      g.fillStyle = light ? 'rgba(255,245,220,0.08)' : 'rgba(20,14,8,0.14)';
-      g.fillRect(x + 4 + rand() * (w - 8), y + 4 + rand() * (h - 8), 1 + rand() * 2.5, 1 + rand() * 2.5);
-    }
-    // Soft mottling.
-    for (let i = 0; i < 3; i++) {
-      const cx = x + rand() * w,
-        cy = y + rand() * h,
-        rad = 8 + rand() * 20;
-      const blot = g.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      blot.addColorStop(0, rand() > 0.5 ? 'rgba(0,0,0,0.10)' : 'rgba(255,240,210,0.07)');
-      blot.addColorStop(1, 'rgba(0,0,0,0)');
-      g.fillStyle = blot;
-      g.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
-    }
-    // A crack now and then.
-    if (rand() < 0.22) {
-      g.strokeStyle = 'rgba(25,18,12,0.55)';
-      g.lineWidth = 1.2;
-      g.beginPath();
-      let cx = x + rand() * w,
-        cy = y + 4;
-      g.moveTo(cx, cy);
-      for (let k = 0; k < 5; k++) {
-        cx += (rand() - 0.5) * 14;
-        cy += h / 5;
-        g.lineTo(cx, Math.min(y + h - 4, cy));
-      }
-      g.stroke();
-    }
-    // Moss hugging one corner.
-    if (rand() < 0.35) {
-      const cx = x + (rand() < 0.5 ? 6 : w - 6),
-        cy = y + (rand() < 0.5 ? 6 : h - 6),
-        rad = 10 + rand() * 18;
-      const moss = g.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      moss.addColorStop(0, 'rgba(78,96,46,0.6)');
-      moss.addColorStop(0.6, 'rgba(70,92,40,0.35)');
-      moss.addColorStop(1, 'rgba(60,80,30,0)');
-      g.fillStyle = moss;
-      g.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
-    }
-  };
   for (let cx = 0; cx < 13; cx++) {
     for (let cz = 0; cz < 9; cz++) {
       const x = cx * CELL_PX,
         y = cz * CELL_PX,
         s = CELL_PX;
-      const split = rand();
-      if (split < 0.3) stone(x, y, s, s);
-      else if (split < 0.6) {
-        const k = 0.35 + rand() * 0.3;
-        stone(x, y, s * k, s);
-        stone(x + s * k, y, s * (1 - k), s);
-      } else if (split < 0.85) {
-        const k = 0.35 + rand() * 0.3;
-        stone(x, y, s, s * k);
-        stone(x, y + s * k, s, s * (1 - k));
-      } else {
-        stone(x, y, s / 2, s / 2);
-        stone(x + s / 2, y, s / 2, s / 2);
-        stone(x, y + s / 2, s, s / 2);
+      const shade = 0.97 + rand() * 0.05;
+      const [r, gr, b] = [126, 117, 100].map((c) => Math.round(c * shade));
+      const gradient = g.createLinearGradient(x, y, x + s, y + s);
+      gradient.addColorStop(0, `rgb(${r + 8},${gr + 7},${b + 6})`);
+      gradient.addColorStop(1, `rgb(${r - 8},${gr - 8},${b - 7})`);
+      g.fillStyle = gradient;
+      g.beginPath();
+      g.roundRect(x + 3, y + 3, s - 6, s - 6, 7);
+      g.fill();
+      // A soft bevel: a faint lit rim top-left, a faint shade bottom-right.
+      g.lineWidth = 2;
+      g.strokeStyle = 'rgba(255,240,215,0.10)';
+      g.beginPath();
+      g.moveTo(x + 5, y + s - 7);
+      g.lineTo(x + 5, y + 5);
+      g.lineTo(x + s - 7, y + 5);
+      g.stroke();
+      g.strokeStyle = 'rgba(0,0,0,0.18)';
+      g.beginPath();
+      g.moveTo(x + s - 5, y + 7);
+      g.lineTo(x + s - 5, y + s - 5);
+      g.lineTo(x + 7, y + s - 5);
+      g.stroke();
+      // Fine tooling marks, kept faint.
+      for (let i = 0; i < 170; i++) {
+        g.fillStyle = rand() > 0.5 ? 'rgba(255,245,225,0.035)' : 'rgba(20,14,8,0.05)';
+        g.fillRect(x + 5 + rand() * (s - 10), y + 5 + rand() * (s - 10), 1 + rand() * 2, 1 + rand() * 2);
+      }
+      // A worn, slightly polished middle where feet have crossed.
+      const wear = g.createRadialGradient(x + s / 2, y + s / 2, 4, x + s / 2, y + s / 2, s * 0.55);
+      wear.addColorStop(0, 'rgba(255,244,222,0.045)');
+      wear.addColorStop(1, 'rgba(0,0,0,0.035)');
+      g.fillStyle = wear;
+      g.fillRect(x + 3, y + 3, s - 6, s - 6);
+      if (rand() < 0.1) {
+        g.strokeStyle = 'rgba(30,22,14,0.28)';
+        g.lineWidth = 1;
+        g.beginPath();
+        let px = x + 12 + rand() * (s - 24),
+          py = y + 6;
+        g.moveTo(px, py);
+        for (let k = 0; k < 4; k++) {
+          px += (rand() - 0.5) * 16;
+          py += s / 5;
+          g.lineTo(px, py);
+        }
+        g.stroke();
       }
     }
   }
-  // Grass blades in the joints.
-  g.lineCap = 'round';
-  for (let i = 0; i < 1400; i++) {
+  // Moss creeping along a few joints, never across a stone face.
+  for (let i = 0; i < 90; i++) {
     const onColumn = rand() < 0.5;
     const along = rand() * (onColumn ? canvas.height : canvas.width);
-    const across = Math.round(rand() * (onColumn ? 13 : 9)) * CELL_PX + (rand() - 0.5) * 6;
+    const across = Math.round(rand() * (onColumn ? 13 : 9)) * CELL_PX;
     const [x, y] = onColumn ? [across, along] : [along, across];
-    g.strokeStyle = `rgba(${90 + rand() * 40},${120 + rand() * 40},${50 + rand() * 20},${0.5 + rand() * 0.4})`;
-    g.lineWidth = 1 + rand() * 1.5;
-    g.beginPath();
-    g.moveTo(x, y);
-    g.lineTo(x + (rand() - 0.5) * 10, y + (rand() - 0.5) * 10);
-    g.stroke();
+    const rad = 6 + rand() * 12;
+    const moss = g.createRadialGradient(x, y, 0, x, y, rad);
+    moss.addColorStop(0, 'rgba(70,88,44,0.42)');
+    moss.addColorStop(1, 'rgba(60,80,30,0)');
+    g.fillStyle = moss;
+    g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  // A broad, low-contrast cloud of weathering so the sheet never looks stamped.
+  for (let i = 0; i < 26; i++) {
+    const x = rand() * canvas.width,
+      y = rand() * canvas.height,
+      rad = 80 + rand() * 160;
+    const blot = g.createRadialGradient(x, y, 0, x, y, rad);
+    blot.addColorStop(0, rand() > 0.5 ? 'rgba(30,24,18,0.07)' : 'rgba(255,240,215,0.04)');
+    blot.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = blot;
+    g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  return canvas;
+}
+
+// The horde road: small dark cobbles set in packed earth, tileable, so the sunken route reads
+// as a different surface from the flagstones at a glance.
+function roadCanvas() {
+  const size = 256,
+    canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#2b2119';
+  g.fillRect(0, 0, size, size);
+  const rand = seeded(733);
+  const rows = 8,
+    h = size / rows;
+  for (let r = 0; r < rows; r++) {
+    let x = (r % 2) * h * 0.55;
+    const end = x + size;
+    while (x < end - 4) {
+      const w = Math.min(end - x, h * (0.75 + rand() * 0.6));
+      const shade = 0.72 + rand() * 0.4;
+      const [cr, cg, cb] = [84, 74, 62].map((c) => Math.round(c * shade));
+      const jy = (rand() - 0.5) * 3;
+      // Draw each cobble twice across the seam so the tile wraps cleanly.
+      for (const dx of [-size, 0]) {
+        const cx = x + dx,
+          cy = r * h + jy;
+        const gradient = g.createLinearGradient(cx, cy, cx + w * 0.6, cy + h);
+        gradient.addColorStop(0, `rgb(${cr + 22},${cg + 19},${cb + 15})`);
+        gradient.addColorStop(1, `rgb(${cr - 18},${cg - 17},${cb - 15})`);
+        g.fillStyle = gradient;
+        g.beginPath();
+        g.roundRect(cx + 2, cy + 2, w - 4, h - 4, 6 + rand() * 5);
+        g.fill();
+      }
+      x += w;
+    }
+  }
+  for (let i = 0; i < 1800; i++) {
+    g.fillStyle = rand() > 0.5 ? 'rgba(255,240,210,0.05)' : 'rgba(0,0,0,0.14)';
+    g.fillRect(rand() * size, rand() * size, 1 + rand() * 2, 1 + rand() * 2);
   }
   return canvas;
 }
@@ -283,13 +310,14 @@ const GradeShader = {
     void main() {
       vec3 c = texture2D(tDiffuse, vUv).rgb;
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-      // Split tone: cool, slightly blue shadows and warm amber highlights.
-      c = mix(c, c * vec3(0.86, 0.95, 1.16) + vec3(0.004, 0.008, 0.02), smoothstep(0.32, 0.0, l) * 0.6);
-      c *= mix(vec3(1.0), vec3(1.07, 1.0, 0.88), smoothstep(0.15, 0.9, l));
-      c = max(mix(vec3(l), c, 1.06), 0.0);
+      // Blue hour: deep teal-blue shadows, neutral mids, warm amber torchlit highlights.
+      c = mix(c, c * vec3(0.78, 0.92, 1.24) + vec3(0.003, 0.009, 0.026), smoothstep(0.36, 0.0, l) * 0.75);
+      c *= mix(vec3(1.0), vec3(1.1, 1.0, 0.84), smoothstep(0.2, 0.95, l));
+      c = max(mix(vec3(l), c, 1.1), 0.0);
       vec2 d = (vUv - uCenter) * vec2(uAspect, 1.0);
-      float v = smoothstep(1.05, 0.28, length(d));
-      c *= mix(0.32, 1.0, v);
+      float v = smoothstep(1.15, 0.3, length(d));
+      c *= mix(0.28, 1.0, v);
+      c = mix(c * vec3(0.9, 0.95, 1.12), c, v);
       // A red pulse when the keep takes a hit.
       c = mix(c, c * vec3(1.5, 0.45, 0.4) + vec3(0.06, 0.0, 0.0), uFlash * (1.0 - v * 0.6));
       gl_FragColor = vec4(c, 1.0);
@@ -345,7 +373,13 @@ export class World {
     this.software = /swiftshader|llvmpipe|software/i.test(
       info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : '',
     );
-    this.pixelRatio = this.software ? 1 : Math.min(devicePixelRatio, coarse ? 1.5 : 1.75);
+    // Resolution is adaptive: it starts at the cap and steps down when frames run long, then
+    // climbs back when there is headroom. A software GL starts low and may go lower.
+    this.maxRatio = this.software ? 0.7 : Math.min(devicePixelRatio, coarse ? 1.5 : 1.75);
+    this.minRatio = this.software ? 0.4 : Math.min(this.maxRatio, 0.85);
+    this.pixelRatio = this.maxRatio;
+    this.frameCost = 1 / 60;
+    this.frameCount = 0;
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -400,6 +434,7 @@ export class World {
     this.pointer = new THREE.Vector2();
     this.ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.buildHover();
+    this.buildGrid();
     this.buildRange();
     this.zoom = 1;
     this.boostFrom = null;
@@ -670,8 +705,10 @@ export class World {
     this.buildTiles();
     this.buildLightMap();
     this.buildRamparts();
+    this.buildMoat();
     this.buildGates();
     this.plantScenery();
+    this.buildFog();
   }
 
   buildTerrain() {
@@ -698,7 +735,7 @@ export class World {
     this.board.add(ground);
     // The raised foundation the board is built on.
     const base = new THREE.Mesh(
-      worldUV(new THREE.BoxGeometry(14.8, 1.2, 10.8).translate(6, -0.62, 4), 0.3),
+      worldUV(new THREE.BoxGeometry(14.8, 1.2, 10.8).translate(6, -0.96, 4), 0.3),
       this.stone('foundation', [92, 86, 78]),
     );
     base.receiveShadow = true;
@@ -709,15 +746,16 @@ export class World {
   // Every square is a shallow block of turf; the enemy road is sunk below them. One
   // instanced mesh per painting, so the whole board is four draw calls.
   buildTiles() {
-    const side = new THREE.MeshStandardMaterial({ color: SCENE.soil, roughness: 1 });
+    // The sides of every square are dressed stone, so the sunken road shows a real curb.
+    const side = this.stone('curb', [104, 97, 88]);
     const floor = new THREE.CanvasTexture(courtyardCanvas());
     floor.colorSpace = THREE.SRGBColorSpace;
     floor.anisotropy = this.anisotropy;
     const courtyard = new THREE.MeshStandardMaterial({
       map: floor,
       bumpMap: floor,
-      bumpScale: 0.9,
-      roughness: 0.82,
+      bumpScale: 0.45,
+      roughness: 0.8,
     });
     // Sample the floor by world position rather than per-box UVs.
     courtyard.onBeforeCompile = (shader) => {
@@ -737,8 +775,8 @@ export class World {
         );
     };
     this.tileSets = [...BOARD_ART.meadow, BOARD_ART.path].map((file, index) => {
-      const top = index === 3 ? this.paint(file, { cutout: false, rough: 0.95, bump: 3 }) : courtyard;
-      const mesh = new THREE.InstancedMesh(GEO.tile, [side, side, top, side, side, side], 117);
+      const top = index === 3 ? this.roadMaterial() : courtyard;
+      const mesh = new THREE.InstancedMesh(index === 3 ? GEO.road : GEO.tile, [side, side, top, side, side, side], 117);
       mesh.receiveShadow = true;
       mesh.castShadow = index !== 3;
       mesh.count = 0;
@@ -746,6 +784,13 @@ export class World {
       return mesh;
     });
     this.layoutTiles([]);
+  }
+
+  roadMaterial() {
+    const map = new THREE.CanvasTexture(roadCanvas());
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.anisotropy = this.anisotropy;
+    return new THREE.MeshStandardMaterial({ map, bumpMap: map, bumpScale: 2.2, roughness: 0.9, color: SCENE.road });
   }
 
   layoutTiles(points) {
@@ -764,19 +809,19 @@ export class World {
           const here = points[step],
             next = points[step + 1] || points[step - 1] || here;
           set = 3;
-          y = -0.1;
+          y = -0.17;
           angle = Math.atan2(next.x - here.x, next.z - here.z);
         } else {
           const index = (x + z) % 2 ? ((x * 7 + z * 11) % 2) + 2 : (x * 5 + z) % 2;
           set = index % 3;
-          y = wave2(x * 3.1, z * 2.7) * 0.022;
+          y = wave2(x * 3.1, z * 2.7) * 0.004;
           angle = ((x * 3 + z * 5) % 4) * (Math.PI / 2);
         }
         turn.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, angle);
         spot.set(x, y, z);
         matrix.compose(spot, turn, one);
         // A small warm or cool shift per square keeps the flagstones from reading as one sheet.
-        const shade = 0.94 + (wave2(x * 5.3, z * 4.1) * 0.5 + 0.5) * 0.08;
+        const shade = 0.97 + (wave2(x * 5.3, z * 4.1) * 0.5 + 0.5) * 0.03;
         tint.setRGB(shade, shade, shade);
         this.tileSets[set].setColorAt(counts[set], tint);
         this.tileSets[set].setMatrixAt(counts[set]++, matrix);
@@ -833,6 +878,39 @@ export class World {
     plane.position.set(6, 0.004, 4);
     plane.renderOrder = 1;
     this.board.add(plane);
+
+    // Warm torchlight pools, baked: under every wall torch, both gates and the braziers.
+    const warm = document.createElement('canvas');
+    warm.width = 300;
+    warm.height = 220;
+    const w = warm.getContext('2d');
+    w.fillStyle = '#000';
+    w.fillRect(0, 0, 300, 220);
+    // Canvas u runs along world x from -1.5, v along world z from -1.5, 20 px per square.
+    const glow = (x, z, radius, color) => {
+      const u = (x + 1.5) * 20,
+        v = (z + 1.5) * 20;
+      const gradient = w.createRadialGradient(u, v, 0, u, v, radius * 20);
+      gradient.addColorStop(0, color);
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+      w.fillStyle = gradient;
+      w.fillRect(0, 0, 300, 220);
+    };
+    for (const x of [2.5, 6.5, 10.5]) {
+      glow(x, -0.4, 2.2, 'rgba(255,150,70,0.34)');
+      glow(x, 8.4, 2.2, 'rgba(255,150,70,0.34)');
+    }
+    glow(-0.4, 4, 2.6, 'rgba(255,70,30,0.55)');
+    glow(12.9, 4, 2.4, 'rgba(255,170,80,0.45)');
+    const warmMap = new THREE.CanvasTexture(warm);
+    warmMap.colorSpace = THREE.SRGBColorSpace;
+    const pools = new THREE.Mesh(
+      new THREE.PlaneGeometry(15, 11).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ map: warmMap, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false }),
+    );
+    pools.position.set(6, 0.006, 4);
+    pools.renderOrder = 1;
+    this.board.add(pools);
   }
 
   // Stone ramparts on three sides, a low parapet on the near side so nothing hides a square.
@@ -918,38 +996,94 @@ export class World {
     tower(-0.95, 5.4, 0.55, 1.45, true);
   }
 
-  // The horde gate: an arch over a burning portal. The keep gate: two braziers and a glow.
+  // The horde gate: a real gatehouse. A stone block with an arched opening, a portcullis
+  // hauled up into the arch, a tunnel lit red from the fire beyond, torches on both jambs and
+  // a bridge over the moat. The keep gate: two stone posts with fire bowls, open oak doors and
+  // a drawbridge, all lit gold.
   buildGates() {
-    const arch = this.add(
-      worldUV(new THREE.BoxGeometry(0.55, 0.4, 2.3), 0.34),
-      this.stone('rampart'),
-      this.board,
-      -1.05,
-      1.12,
-      4,
+    const stone = this.stone('rampart');
+    // Gatehouse, drawn in the (z, y) plane and pushed through the wall along world -x.
+    const face = new THREE.Shape();
+    face.moveTo(-1.02, -0.6);
+    face.lineTo(1.02, -0.6);
+    face.lineTo(1.02, 1.28);
+    face.lineTo(-1.02, 1.28);
+    face.lineTo(-1.02, -0.6);
+    const hole = new THREE.Path();
+    hole.moveTo(-0.6, -0.6);
+    hole.lineTo(0.6, -0.6);
+    hole.lineTo(0.6, 0.48);
+    hole.absarc(0, 0.48, 0.6, 0, Math.PI, false);
+    hole.lineTo(-0.6, -0.6);
+    face.holes.push(hole);
+    const house = new THREE.ExtrudeGeometry(face, { depth: 0.9, bevelEnabled: false, curveSegments: 18 });
+    house.rotateY(-Math.PI / 2).translate(-0.45, 0, 4);
+    const pieces = [house];
+    // Merlons on the gatehouse roof and a keystone over the arch.
+    for (const z of [3.1, 3.55, 4.0, 4.45, 4.9]) pieces.push(new THREE.BoxGeometry(0.3, 0.2, 0.26).translate(-0.6, 1.38, z));
+    pieces.push(new THREE.BoxGeometry(0.12, 0.24, 0.22).translate(-0.42, 1.08, 4));
+    const gatehouse = new THREE.Mesh(worldUV(mergeGeometries(pieces.map((g) => (g.index ? g.toNonIndexed() : g))), 0.34), stone);
+    gatehouse.castShadow = gatehouse.receiveShadow = true;
+    this.board.add(gatehouse);
+    // The fire beyond the tunnel: a dark back wall with a hot glow rising from its foot.
+    const inferno = document.createElement('canvas');
+    inferno.width = 64;
+    inferno.height = 128;
+    const ig = inferno.getContext('2d');
+    const fire = ig.createLinearGradient(0, 128, 0, 0);
+    fire.addColorStop(0, 'rgba(255,190,90,1)');
+    fire.addColorStop(0.25, 'rgba(255,80,30,0.95)');
+    fire.addColorStop(0.7, 'rgba(90,10,6,0.9)');
+    fire.addColorStop(1, 'rgba(10,2,2,1)');
+    ig.fillStyle = fire;
+    ig.fillRect(0, 0, 64, 128);
+    const back = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.25, 1.1).rotateY(Math.PI / 2),
+      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(inferno), color: hot('#ffffff', 1.6), fog: false }),
     );
-    arch.castShadow = true;
-    const portalTexture = new THREE.CanvasTexture(glowCanvas('rgba(255,120,60,1)', 'rgba(60,0,0,0)'));
-    const portal = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.8, 1.9),
+    back.position.set(-1.3, -0.05, 4);
+    this.board.add(back);
+    this.portal = back;
+    const heat = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 0.9).rotateY(Math.PI / 2),
       new THREE.MeshBasicMaterial({
-        map: portalTexture,
-        color: hot(SCENE.portal, 2.4),
+        map: new THREE.CanvasTexture(glowCanvas('rgba(255,110,50,0.9)', 'rgba(255,40,10,0)')),
+        color: hot(SCENE.portal, 1.6),
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         fog: false,
       }),
     );
-    portal.rotation.y = Math.PI / 2;
-    portal.position.set(-1.25, 0.45, 4);
-    this.board.add(portal);
-    this.portal = portal;
-    // A dark doorway behind the glow, so the portal reads as a hole in the wall.
-    const door = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.4), new THREE.MeshBasicMaterial({ color: '#0b0706' }));
-    door.rotation.y = Math.PI / 2;
-    door.position.set(-1.33, 0.3, 4);
-    this.board.add(door);
+    heat.position.set(-0.9, 0.05, 4);
+    this.board.add(heat);
+    this.portalHeat = heat;
+    // Portcullis, hauled most of the way up: iron bars with spiked feet.
+    const iron = this.mat(SCENE.iron, 'metal');
+    const bars = [];
+    for (const z of [-0.45, -0.22, 0, 0.22, 0.45]) {
+      bars.push(new THREE.BoxGeometry(0.05, 0.9, 0.05).translate(0, 0.45, z));
+      bars.push(new THREE.ConeGeometry(0.04, 0.12, 4).rotateX(Math.PI).translate(0, -0.05, z));
+    }
+    for (const y of [0.15, 0.5, 0.85]) bars.push(new THREE.BoxGeometry(0.05, 0.05, 1.1).translate(0, y, 0));
+    const gate = new THREE.Mesh(mergeGeometries(bars.map((g) => g.toNonIndexed())), iron);
+    gate.position.set(-0.62, 0.62, 4);
+    gate.castShadow = true;
+    this.board.add(gate);
+    // The moat bridge and the road out to the war camp.
+    const oak = this.mat(SCENE.oak);
+    const planks = [];
+    for (let x = -4.4; x < -1.3; x += 0.2) planks.push(new THREE.BoxGeometry(0.18, 0.06, 1.2).translate(x, -0.22, 4));
+    for (const z of [3.38, 4.62]) {
+      planks.push(new THREE.BoxGeometry(3.1, 0.06, 0.06).translate(-2.85, 0.02, z));
+      for (let x = -4.3; x < -1.3; x += 0.75) planks.push(new THREE.BoxGeometry(0.07, 0.34, 0.07).translate(x, -0.12, z));
+    }
+    const keepPlanks = [];
+    for (let x = 13.5; x < 16.6; x += 0.2) keepPlanks.push(new THREE.BoxGeometry(0.18, 0.06, 1.2).translate(x, -0.22, 4));
+    for (const z of [3.38, 4.62]) keepPlanks.push(new THREE.BoxGeometry(3.1, 0.06, 0.06).translate(15.05, 0.02, z));
+    const bridge = new THREE.Mesh(mergeGeometries([...planks, ...keepPlanks].map((g) => g.toNonIndexed())), oak);
+    bridge.castShadow = bridge.receiveShadow = true;
+    this.board.add(bridge);
 
     // Light pools on the ground at both gates.
     const pool = (x, color, size, power) => {
@@ -969,68 +1103,326 @@ export class World {
       this.board.add(mesh);
       return mesh;
     };
-    this.entryPool = pool(-0.5, SCENE.portal, 1.1, 0.22);
-    this.exitPool = pool(12.7, SCENE.torch, 1.1, 0.25);
+    this.entryPool = pool(-0.2, SCENE.portal, 1.5, 0.3);
+    this.exitPool = pool(12.7, SCENE.torch, 1.4, 0.28);
 
     this.flames = [];
-    const brazier = (x, z) => {
-      this.add(new THREE.CylinderGeometry(0.16, 0.2, 0.42, 8), this.stone('rampart'), this.board, x, 0.0, z);
-      this.add(new THREE.CylinderGeometry(0.2, 0.12, 0.12, 8), this.mat(SCENE.iron, 'metal'), this.board, x, 0.26, z);
-      const flame = this.add(GEO.flame, this.glow(SCENE.torch, 4), this.board, x, 0.3, z);
-      flame.castShadow = false;
-      this.flames.push(flame);
+    const flame = (x, y, z, scale = 1) => {
+      const mesh = this.add(GEO.flame, this.glow(SCENE.torch, 4), this.board, x, y, z);
+      mesh.scale.setScalar(scale);
+      mesh.castShadow = false;
+      this.flames.push(mesh);
+      const halo = new THREE.Sprite(this.haloMaterial());
+      halo.position.set(x, y + 0.14 * scale, z);
+      halo.scale.setScalar(0.9 * scale);
+      this.board.add(halo);
+      return mesh;
     };
-    brazier(12.95, 3.05);
-    brazier(12.95, 4.95);
-    // Wall torches on the far gate towers.
-    for (const z of [2.6, 5.4]) {
-      const flame = this.add(GEO.flame, this.glow(SCENE.torch, 4), this.board, -0.35, 0.95, z);
-      flame.scale.setScalar(0.7);
-      flame.castShadow = false;
-      this.flames.push(flame);
+    this.flame = flame;
+    // Keep gate: stone posts with fire bowls, and the oak doors swung open.
+    for (const z of [3.18, 4.82]) {
+      this.add(new THREE.BoxGeometry(0.34, 0.95, 0.34).translate(0, 0.475 - 0.3, 0), stone, this.board, 12.95, 0, z);
+      this.add(new THREE.BoxGeometry(0.42, 0.08, 0.42), this.mat(SCENE.gold, 'metal'), this.board, 12.95, 0.68, z);
+      this.add(new THREE.CylinderGeometry(0.2, 0.12, 0.14, 8), iron, this.board, 12.95, 0.79, z);
+      flame(12.95, 0.84, z, 1.05);
+    }
+    const doorMat = new THREE.MeshStandardMaterial({ color: SCENE.oak, roughness: 0.8 });
+    for (const [z, turn] of [
+      [3.25, 0.95],
+      [4.75, -0.95],
+    ]) {
+      const leaf = new THREE.Group();
+      leaf.position.set(13.1, 0, z);
+      leaf.rotation.y = turn;
+      this.board.add(leaf);
+      const side = z < 4 ? 1 : -1;
+      this.add(new THREE.BoxGeometry(0.06, 0.62, 0.62).translate(0.03, 0.31 - 0.05, side * 0.31), doorMat, leaf);
+      for (const y of [0.08, 0.46]) this.add(new THREE.BoxGeometry(0.075, 0.05, 0.64).translate(0.03, y, side * 0.31), iron, leaf);
+    }
+    // Torches on the far gate's jambs and along the inner faces of both side walls.
+    for (const z of [2.6, 5.4]) flame(-0.35, 0.95, z, 0.75);
+    const bracket = this.mat(SCENE.iron, 'metal');
+    for (const x of [2.5, 6.5, 10.5]) {
+      for (const z of [-0.42, 8.42]) {
+        this.add(new THREE.BoxGeometry(0.08, 0.08, 0.16), bracket, this.board, x, 0.5, z + (z < 4 ? 0.02 : -0.02));
+        this.add(new THREE.CylinderGeometry(0.06, 0.04, 0.12, 6), bracket, this.board, x, 0.58, z + (z < 4 ? 0.08 : -0.08));
+        flame(x, 0.62, z + (z < 4 ? 0.08 : -0.08), 0.6);
+      }
     }
   }
 
-  // Trees, rocks and flowers on the hills around the ramparts, seeded so every run matches.
+  haloMaterial() {
+    if (!this.materials.has('halo')) {
+      this.materials.set(
+        'halo',
+        new THREE.SpriteMaterial({
+          map: new THREE.CanvasTexture(glowCanvas('rgba(255,170,80,0.55)', 'rgba(255,120,40,0)')),
+          color: hot(SCENE.torch, 1.4),
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          transparent: true,
+          fog: false,
+        }),
+      );
+    }
+    return this.materials.get('halo');
+  }
+
+  // The moat: dark water around the walls, rippled by a scrolling normal map.
+  buildMoat() {
+    const size = 128,
+      canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const g = canvas.getContext('2d');
+    const image = g.createImageData(size, size);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const u = (x / size) * Math.PI * 2,
+          v = (y / size) * Math.PI * 2;
+        const nx = Math.cos(u * 3 + Math.sin(v * 2) * 1.5) * 0.5 + Math.cos(u * 7 + v * 5) * 0.25;
+        const ny = Math.sin(v * 4 + Math.cos(u * 2) * 1.3) * 0.5 + Math.sin(v * 9 - u * 3) * 0.2;
+        const i = (y * size + x) * 4;
+        image.data[i] = 128 + nx * 90;
+        image.data[i + 1] = 128 + ny * 90;
+        image.data[i + 2] = 255;
+        image.data[i + 3] = 255;
+      }
+    }
+    g.putImageData(image, 0, 0);
+    const normal = new THREE.CanvasTexture(canvas);
+    normal.wrapS = normal.wrapT = THREE.RepeatWrapping;
+    normal.repeat.set(14, 14);
+    this.water = new THREE.Mesh(
+      new THREE.PlaneGeometry(90, 90).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({
+        color: SCENE.water,
+        roughness: 0.22,
+        metalness: 0.35,
+        normalMap: normal,
+        normalScale: new THREE.Vector2(0.35, 0.35),
+        transparent: true,
+        opacity: 0.94,
+      }),
+    );
+    this.water.position.set(6, -0.44, 4);
+    this.water.receiveShadow = true;
+    this.board.add(this.water);
+  }
+
+  // Forest on every side, a horde war camp on the far flank, rocks and flowers between. The
+  // canopies and trunks are instanced, so a few hundred trees cost a handful of draw calls.
   plantScenery() {
     const rand = seeded(17);
     const { tree, rock, flowers, stump } = BOARD_ART.props;
     const bark = this.mat(SCENE.bark);
-    const lanes = [
-      { x: [-9, -2.2], z: [-9, 17], count: 22 },
-      { x: [14.8, 22], z: [-9, 17], count: 14 },
-      { x: [-2, 15], z: [-10, -2.4], count: 14 },
-      { x: [-2, 15], z: [10.4, 18], count: 14 },
+    const outside = (x, z) => Math.hypot(Math.max(-1.6 - x, x - 13.6, 0), Math.max(-1.6 - z, z - 9.6, 0));
+    const inCamp = (x, z) => z > 10.4 && z < 16 && x > -2.5 && x < 13.5;
+    const onRoad = (x, z) => Math.abs(z - 4) < 1.3 && (x < -1 || x > 13);
+    const trees = [];
+    let guard = 0;
+    // A software renderer (headless tests) gets a thin wood; a real GPU gets the forest.
+    const want = this.software ? 60 : 240;
+    while (trees.length < want && guard++ < 6000) {
+      const x = -14 + rand() * 42,
+        z = -16 + rand() * 40;
+      const out = outside(x, z);
+      if (out < 1.15 || inCamp(x, z) || onRoad(x, z)) continue;
+      // Thicker woods further from the walls.
+      if (rand() > 0.62 + Math.min(0.38, out / 6)) continue;
+      const size = 1.9 + rand() * 1.5,
+        height = 1.0 + rand() * 1.1;
+      // Height reads as screen-up, so a tree beyond the keep wall must not climb over the board.
+      if (x > 12 && z > -2.5 && z < 10.5 && x - 1.3 * (height + size * 0.5) < 13.9) continue;
+      trees.push({ x, z, y: terrainHeight(x, z), size, height, art: Math.floor(rand() * tree.length), turn: (rand() - 0.5) * 1.2 });
+    }
+    const matrix = new THREE.Matrix4(),
+      turn = new THREE.Quaternion(),
+      spot = new THREE.Vector3(),
+      size = new THREE.Vector3(),
+      tint = new THREE.Color();
+    // The woods stand outside the key light's shadow box, so they cast nothing: that keeps the
+    // shadow pass to the keep itself.
+    const trunks = new THREE.InstancedMesh(GEO.trunk, bark, trees.length);
+    trees.forEach((t, i) => {
+      matrix.compose(spot.set(t.x, t.y, t.z), turn.identity(), size.set(1.3, t.height, 1.3));
+      trunks.setMatrixAt(i, matrix);
+    });
+    this.board.add(trunks);
+    tree.forEach((art, index) => {
+      const mine = trees.filter((t) => t.art === index);
+      const canopies = new THREE.InstancedMesh(SPRITE_GEOMETRY, this.paint(art), mine.length);
+      canopies.receiveShadow = true;
+      mine.forEach((t, i) => {
+        turn.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, t.turn);
+        matrix.compose(spot.set(t.x, t.y + t.height, t.z), turn, size.set(t.size, 1, t.size));
+        canopies.setMatrixAt(i, matrix);
+        // Blue hour: the woods fall a little cooler and darker the further they stand.
+        const shade = 0.75 + rand() * 0.25 - Math.min(0.25, outside(t.x, t.z) / 40);
+        canopies.setColorAt(i, tint.setRGB(shade * 0.92, shade, shade * 1.05));
+      });
+      this.board.add(canopies);
+    });
+    // Rocks, flowers and stumps along the banks.
+    for (let i = 0; i < 40; i++) {
+      const x = -8 + rand() * 30,
+        z = -9 + rand() * 26;
+      const out = outside(x, z);
+      if (out < 1.2 || out > 6 || inCamp(x, z) || onRoad(x, z)) continue;
+      const roll = rand();
+      const art = roll < 0.55 ? rock[Math.floor(rand() * rock.length)] : roll < 0.9 ? flowers[Math.floor(rand() * flowers.length)] : stump[0];
+      const prop = this.sprite(art, roll < 0.55 ? 1 + rand() * 0.6 : 0.9);
+      prop.position.set(x, terrainHeight(x, z) + 0.05 + i * 0.001, z);
+      prop.rotation.y = (rand() - 0.5) * 0.9;
+      this.board.add(prop);
+    }
+    this.buildCamp(rand);
+  }
+
+  // The horde's war camp on the far flank: tents, a stake line, siege engines, banners and
+  // campfires that throw real light.
+  buildCamp(rand) {
+    const tents = [];
+    for (let i = 0; i < 16; i++) {
+      const x = -1.5 + rand() * 13.5,
+        z = 11.1 + rand() * 4.2;
+      if (tents.some((t) => Math.hypot(t.x - x, t.z - z) < 1.3)) continue;
+      tents.push({ x, z, r: 0.5 + rand() * 0.3, h: 0.7 + rand() * 0.35, color: SCENE.tent[i % SCENE.tent.length], turn: rand() * Math.PI });
+    }
+    const cone = new THREE.ConeGeometry(1, 1, 4).translate(0, 0.5, 0);
+    const cloth = new THREE.InstancedMesh(cone, new THREE.MeshStandardMaterial({ roughness: 0.85 }), tents.length);
+    cloth.receiveShadow = true;
+    const matrix = new THREE.Matrix4(),
+      turn = new THREE.Quaternion(),
+      spot = new THREE.Vector3(),
+      size = new THREE.Vector3(),
+      tint = new THREE.Color();
+    tents.forEach((t, i) => {
+      turn.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, t.turn);
+      matrix.compose(spot.set(t.x, terrainHeight(t.x, t.z) - 0.02, t.z), turn, size.set(t.r, t.h, t.r));
+      cloth.setMatrixAt(i, matrix);
+      cloth.setColorAt(i, tint.set(t.color));
+    });
+    this.board.add(cloth);
+    // A line of sharpened stakes facing the walls.
+    const stake = new THREE.ConeGeometry(0.06, 0.5, 5).translate(0, 0.2, 0).rotateX(-0.5);
+    const stakes = new THREE.InstancedMesh(stake, this.mat(SCENE.bark), 60);
+    for (let i = 0; i < 60; i++) {
+      const x = -2.2 + i * 0.26,
+        z = 10.65 + Math.sin(i * 1.7) * 0.06;
+      matrix.compose(spot.set(x, terrainHeight(x, z), z), turn.identity(), size.set(1, 1, 1));
+      stakes.setMatrixAt(i, matrix);
+    }
+    this.board.add(stakes);
+    // Siege engines parked between the tents.
+    const engines = [
+      [TOWER_LOOK.bloom.levels[1], 2.4, 12.4, 0.4],
+      [TOWER_LOOK.thorn.levels[2], 8.6, 12.9, -0.3],
+      [TOWER_LOOK.bloom.levels[0], 5.4, 15.0, 0.2],
     ];
-    for (const lane of lanes) {
-      for (let i = 0; i < lane.count; i++) {
-        const x = lane.x[0] + rand() * (lane.x[1] - lane.x[0]);
-        const z = lane.z[0] + rand() * (lane.z[1] - lane.z[0]);
-        const y = terrainHeight(x, z);
-        const roll = rand();
-        if (roll < 0.62) {
-          // A canopy lifted on its trunk, so it throws a real shadow on the ground below.
-          const size = 2.1 + rand() * 1.3;
-          const height = 1.1 + rand() * 0.9;
-          const trunk = this.add(GEO.trunk, bark, this.board, x, y, z);
-          trunk.scale.set(1.3, height, 1.3);
-          const canopy = this.sprite(tree[Math.floor(rand() * tree.length)], size);
-          canopy.position.set(x, y + height, z);
-          canopy.rotation.y = (rand() - 0.5) * 1.2;
-          this.board.add(canopy);
-        } else {
-          const art =
-            roll < 0.8
-              ? rock[Math.floor(rand() * rock.length)]
-              : roll < 0.95
-                ? flowers[Math.floor(rand() * flowers.length)]
-                : stump[0];
-          const prop = this.sprite(art, roll < 0.8 ? 1.2 + rand() * 0.6 : 1);
-          prop.position.set(x, y + 0.05 + i * 0.001, z);
-          prop.rotation.y = (rand() - 0.5) * 0.9;
-          this.board.add(prop);
-        }
+    for (const [art, x, z, angle] of engines) {
+      const engine = this.sprite(art, 1.25);
+      engine.position.set(x, terrainHeight(x, z) + 0.08, z);
+      engine.rotation.y = angle;
+      this.board.add(engine);
+    }
+    // Horde banners on tall poles.
+    const pole = this.mat(SCENE.iron, 'metal');
+    const flag = new THREE.MeshStandardMaterial({ color: '#2a1512', roughness: 0.8, side: THREE.DoubleSide, emissive: '#1a0402' });
+    this.flags = [];
+    for (const [x, z] of [
+      [0.5, 11.0],
+      [4.5, 10.9],
+      [9.5, 11.1],
+      [12.4, 11.0],
+      [-3.2, 3.0],
+      [-3.2, 5.0],
+    ]) {
+      const y = terrainHeight(x, z);
+      const stick = this.add(GEO.pole, pole, this.board, x, y, z);
+      stick.scale.y = 1.9;
+      const cloth = this.add(new THREE.PlaneGeometry(0.42, 0.62).translate(0, -0.31, 0.21).rotateY(Math.PI / 2), flag, this.board, x, y + 1.85, z);
+      this.flags.push(cloth);
+    }
+    // Campfires: a glowing heart, a ring of stones, a warm pool on the ground and real light.
+    this.campfires = [];
+    const stones = this.stone('rampart');
+    for (const [x, z] of [
+      [1.2, 11.7],
+      [6.4, 12.0],
+      [10.8, 11.6],
+      [3.8, 14.2],
+    ]) {
+      const y = terrainHeight(x, z);
+      for (let k = 0; k < 7; k++) {
+        const a = (k / 7) * Math.PI * 2;
+        this.add(new THREE.DodecahedronGeometry(0.07, 0), stones, this.board, x + Math.cos(a) * 0.2, y + 0.03, z + Math.sin(a) * 0.2);
       }
+      this.flame(x, y + 0.02, z, 1.25);
+      const glowPool = new THREE.Mesh(
+        GEO.disc,
+        new THREE.MeshBasicMaterial({
+          map: new THREE.CanvasTexture(glowCanvas('rgba(255,255,255,0.8)', 'rgba(255,255,255,0)')),
+          color: hot(SCENE.torch, 0.35),
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          fog: false,
+        }),
+      );
+      glowPool.scale.setScalar(1.6);
+      glowPool.position.set(x, y + 0.05, z);
+      this.board.add(glowPool);
+      this.campfires.push({ x, y, z });
+    }
+    if (!this.software) {
+      const light = new THREE.PointLight(SCENE.torch, 5, 6, 1.6);
+      light.position.set(5.5, terrainHeight(5.5, 12) + 1.1, 12);
+      light.userData.base = 5;
+      this.scene.add(light);
+      this.torches.push(light);
+    }
+  }
+
+  // Thin mist that drifts across the courtyard and hangs heavier over the moat and the woods.
+  buildFog() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const g = canvas.getContext('2d');
+    const rand = seeded(55);
+    for (let i = 0; i < 70; i++) {
+      const x = 40 + rand() * 176,
+        y = 60 + rand() * 136,
+        r = 20 + rand() * 50;
+      const puff = g.createRadialGradient(x, y, 0, x, y, r);
+      puff.addColorStop(0, 'rgba(255,255,255,0.16)');
+      puff.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = puff;
+      g.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    const map = new THREE.CanvasTexture(canvas);
+    this.wisps = [];
+    for (let i = 0; i < (this.software ? 4 : 16); i++) {
+      const material = new THREE.MeshBasicMaterial({ map, color: '#b7c8e8', transparent: true, depthWrite: false, opacity: 0 });
+      const wisp = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), material);
+      const width = 4 + rand() * 4;
+      wisp.scale.set(width * 0.55, 1, width);
+      wisp.position.set(-4 + rand() * 15, 0.35 + rand() * 0.5, -8 + rand() * 24);
+      wisp.userData.speed = 0.12 + rand() * 0.18;
+      wisp.renderOrder = 2;
+      this.scene.add(wisp);
+      this.wisps.push(wisp);
+    }
+  }
+
+  updateFog(dt) {
+    for (const wisp of this.wisps) {
+      if (!this.calm) wisp.position.z -= wisp.userData.speed * dt;
+      if (wisp.position.z < -9) wisp.position.z += 26;
+      const { x, z } = wisp.position;
+      // Barely there over the squares, so the board stays readable; thicker outside the walls.
+      const over = x > -0.5 && x < 12.5 && z > -0.5 && z < 8.5;
+      const edge = Math.min(1, Math.max(0, (z + 9) / 3), Math.max(0, (17 - z) / 3));
+      wisp.material.opacity = (over ? 0.05 : 0.1) * edge;
     }
   }
 
@@ -1073,6 +1465,39 @@ export class World {
     }));
     this.pNext = 0;
     this.moteTimer = 0;
+    // Muzzle flashes: a small pool of additive cards that always face the camera.
+    const flashMap = new THREE.CanvasTexture(glowCanvas('rgba(255,255,255,1)', 'rgba(255,255,255,0)'));
+    this.flashes = Array.from({ length: 16 }, () => {
+      const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: flashMap, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }),
+      );
+      sprite.visible = false;
+      sprite.userData.life = 0;
+      this.scene.add(sprite);
+      return sprite;
+    });
+    this.flashNext = 0;
+  }
+
+  muzzle(x, y, z, color, size) {
+    const sprite = this.flashes[this.flashNext];
+    this.flashNext = (this.flashNext + 1) % this.flashes.length;
+    sprite.position.set(x, y, z);
+    sprite.material.color.copy(hot(color, 3));
+    sprite.userData.life = 0.12;
+    sprite.userData.size = size;
+    sprite.visible = true;
+  }
+
+  updateFlashes(dt) {
+    for (const sprite of this.flashes) {
+      if (!sprite.visible) continue;
+      sprite.userData.life -= dt;
+      const k = Math.max(0, sprite.userData.life / 0.12);
+      sprite.scale.setScalar(sprite.userData.size * (0.5 + k * 0.7));
+      sprite.material.opacity = k;
+      if (k <= 0) sprite.visible = false;
+    }
   }
 
   // Launch one particle. Colours are linear and may exceed 1 so they bloom.
@@ -1160,6 +1585,41 @@ export class World {
     );
   }
 
+  // Coins that fly from a fallen creature into the gold counter in the header.
+  coinFly(x, y, z, count) {
+    if (this.calm || !this.renderer.domElement.isConnected) return;
+    const goal = document.querySelector('.gold-total .coin-icon');
+    if (!goal) return;
+    const end = goal.getBoundingClientRect();
+    const from = this.worldScreen(x, y, z);
+    for (let i = 0; i < count && this.flying < 16; i++) {
+      const coin = document.createElement('span');
+      coin.className = 'coin-fly';
+      coin.style.left = `${from.x}px`;
+      coin.style.top = `${from.y}px`;
+      document.body.append(coin);
+      this.flying = (this.flying || 0) + 1;
+      const dx = end.left + end.width / 2 - from.x,
+        dy = end.top + end.height / 2 - from.y;
+      const side = (i % 2 ? 1 : -1) * (30 + i * 14);
+      const run = coin.animate(
+        [
+          { transform: 'translate(-50%,-50%) scale(0.4)', opacity: 0 },
+          { transform: `translate(calc(-50% + ${side}px), calc(-50% - 46px)) scale(1.1)`, opacity: 1, offset: 0.25 },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.6)`, opacity: 0.9 },
+        ],
+        { duration: 820 + i * 90, easing: 'cubic-bezier(.45,0,.7,1)', delay: i * 50 },
+      );
+      run.onfinish = () => {
+        coin.remove();
+        this.flying--;
+        goal.parentElement?.classList.remove('gain');
+        void goal.offsetWidth;
+        goal.parentElement?.classList.add('gain');
+      };
+    }
+  }
+
   buildHover() {
     const frame = [];
     for (const [w, d, x, z] of [
@@ -1185,6 +1645,52 @@ export class World {
     this.hover.add(fill);
     this.hover.visible = false;
     this.scene.add(this.hover);
+  }
+
+  // The build grid: faint gold lines on the squares that can take an engine, strongest
+  // around the pointer, only while the player is placing. The road and built squares stay dark.
+  buildGrid() {
+    this.openCells = new Uint8Array(13 * 9);
+    this.openTexture = new THREE.DataTexture(this.openCells, 13, 9, THREE.RedFormat, THREE.UnsignedByteType);
+    this.openTexture.magFilter = this.openTexture.minFilter = THREE.NearestFilter;
+    this.gridMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uOpen: { value: this.openTexture },
+        uHover: { value: new THREE.Vector2(-9, -9) },
+        uAlpha: { value: 0 },
+        uColor: { value: hot('#ffd98a', 1.4) },
+      },
+      vertexShader: `varying vec2 vCell; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vCell = w.xz + 0.5; gl_Position = projectionMatrix * viewMatrix * w; }`,
+      fragmentShader: `
+        uniform sampler2D uOpen; uniform vec2 uHover; uniform float uAlpha; uniform vec3 uColor;
+        varying vec2 vCell;
+        void main() {
+          vec2 idx = floor(vCell);
+          float open = texture2D(uOpen, (idx + 0.5) / vec2(13.0, 9.0)).r;
+          vec2 f = fract(vCell);
+          float edge = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y));
+          float line = 1.0 - smoothstep(0.012, 0.045, edge);
+          float d = distance(idx, uHover);
+          float near = exp(-d * d / 6.0);
+          float a = uAlpha * open * (line * (0.07 + near * 0.32) + near * 0.035);
+          gl_FragColor = vec4(uColor * a, a);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(13, 9).rotateX(-Math.PI / 2), this.gridMaterial);
+    plane.position.set(6, 0.01, 4);
+    plane.renderOrder = 3;
+    this.scene.add(plane);
+    this.gridPlane = plane;
+  }
+
+  updateOpenCells(points, towers) {
+    this.openCells.fill(255);
+    for (const p of points) this.openCells[p.z * 13 + p.x] = 0;
+    for (const t of towers) if (t.x >= 0 && t.x < 13 && t.z >= 0 && t.z < 9) this.openCells[t.z * 13 + t.x] = 0;
+    this.openTexture.needsUpdate = true;
   }
 
   buildRange() {
@@ -1226,7 +1732,8 @@ export class World {
       body = this.add(GEO.wall, this.paint(BOARD_ART.apron, { cutout: false }), group);
       body.scale.set(1.0, top, 1.0);
     } else {
-      top = 0.12 + level * 0.07;
+      top = 0.2 + level * 0.1;
+      this.add(GEO.footing, this.stone('footing', [96, 90, 80]), group);
       body = this.add(GEO.plinth, this.stone('plinth', [150, 140, 124]), group);
       body.scale.set(1, top, 1);
       this.add(GEO.plinthCap, this.mat(SCENE.plinthCap, 'soft'), group, 0, top - 0.02, 0);
@@ -1236,11 +1743,16 @@ export class World {
       }
     }
     group.userData.body = body;
+    // A soft contact shadow grounds the engine on the flagstones.
+    const contact = new THREE.Mesh(GEO.blob, this.softShadow());
+    contact.scale.setScalar(0.78);
+    contact.position.y = 0.006;
+    group.add(contact);
     head.position.y = top + 0.005;
     group.add(head);
-    const size = look.shape === 'wall' ? 1.02 : 0.98;
+    const size = look.shape === 'wall' ? 1.02 : 1.04;
     const sprite = this.sprite(look.levels[level - 1], size);
-    if (look.shape === 'needle') {
+    if (look.shape === 'needle' || look.shape === 'catapult') {
       sprite.rotation.y = Math.PI / 2;
       head.rotation.y = -Math.PI / 2;
     }
@@ -1277,10 +1789,17 @@ export class World {
     group.userData.type = tower.type;
     group.userData.top = top;
     group.userData.recoil = 0;
+    group.userData.aim = head.rotation.y;
+    group.userData.lastShot = -9;
     return group;
   }
 
   disposeGroup(group) {
+    group.removeFromParent();
+  }
+
+  disposeEnemy(group) {
+    group.userData.sprite.material.dispose();
     group.removeFromParent();
   }
 
@@ -1292,6 +1811,7 @@ export class World {
     this.route.clear();
     const points = path(towers) || [];
     this.layoutTiles(points);
+    this.updateOpenCells(points, towers);
     const material = this.glow(SCENE.route, 1.6, 0.75);
     let index = 0;
     for (let i = 0; i < points.length - 1; i++) {
@@ -1300,7 +1820,7 @@ export class World {
       const heading = Math.atan2(to.x - from.x, to.z - from.z);
       for (const k of [0.25, 0.75]) {
         const mark = new THREE.Mesh(GEO.chevron, material);
-        mark.position.set(from.x + (to.x - from.x) * k, -0.05, from.z + (to.z - from.z) * k);
+        mark.position.set(from.x + (to.x - from.x) * k, -0.14, from.z + (to.z - from.z) * k);
         mark.rotation.y = heading;
         mark.userData.index = index++;
         this.route.add(mark);
@@ -1386,6 +1906,7 @@ export class World {
               !path(trial, enemy.target || { x: Math.round(enemy.x), z: Math.round(enemy.z) })),
         ));
     this.hover.visible = valid && !!type;
+    this.gridMaterial.uniforms.uHover.value.set(cell.x, cell.z);
     if (valid) {
       this.hover.position.set(cell.x, 0.02, cell.z);
       const color = blocked ? SCENE.hoverBlocked : SCENE.hoverOk;
@@ -1424,14 +1945,20 @@ export class World {
       const color = TOWER_LOOK[type].color;
       const top = group ? group.userData.top + 0.25 : 0.6;
       if (group) {
-        if (type === 'thorn')
-          group.userData.head.rotation.y = Math.atan2(event.x - tower.x, event.z - tower.z);
+        if (type === 'thorn' || type === 'bloom')
+          group.userData.aim = Math.atan2(event.x - tower.x, event.z - tower.z);
         group.userData.recoil = 1;
+        group.userData.lastShot = this.clock;
       }
       const from = new THREE.Vector3(tower.x, top, tower.z),
         to = new THREE.Vector3(event.x, 0.3, event.z);
-      // Muzzle flash.
-      this.burst(from.x, from.y, from.z, '#ffe2a8', 4, 1.4, 0.16, 0.16, 0, 4);
+      // Muzzle flash: a bright bloom card and a few sparks thrown toward the target.
+      const flashTint = { thorn: '#ffe2a8', sap: '#7af0d6', bloom: '#ffb070', prism: '#d7b8ff', ember: '#ff9a3c' }[type] || '#ffe2a8';
+      this.muzzle(from.x, from.y, from.z, flashTint, type === 'bloom' ? 1.1 : 0.8);
+      const aimX = (event.x - tower.x) * 1.6,
+        aimZ = (event.z - tower.z) * 1.6;
+      for (let i = 0; i < (this.calm ? 2 : 6); i++)
+        this.emit(from.x, from.y, from.z, aimX * (0.4 + i * 0.12) + Math.sin(i * 2.1) * 0.5, 0.6 + (i % 3) * 0.3, aimZ * (0.4 + i * 0.12) + Math.cos(i * 2.1) * 0.5, hot(flashTint, 4), 0.1, 0.22, -3, 3);
       if (type === 'prism') {
         // An instant arcane beam.
         const beam = new THREE.Mesh(GEO.bolt, this.glow('#c9a2ff', 5, 0.9));
@@ -1457,15 +1984,19 @@ export class World {
             : new THREE.Mesh(GEO.glob, this.glow(type === 'sap' ? '#3bd6b4' : '#ffb070', type === 'sap' ? 2.2 : 2.8));
         const arc = type === 'bloom' ? 1.6 : type === 'sap' ? 0.8 : 0;
         const flight = type === 'thorn' ? 0.1 : 0.26;
-        if (type === 'thorn') mesh.scale.set(1, 1, 0.45);
+        if (type === 'thorn') mesh.scale.set(1.3, 1.3, 0.6);
         if (type === 'bloom') mesh.scale.setScalar(1.3);
         const spot = new THREE.Vector3();
+        const trail = hot(type === 'thorn' ? '#ffd9a0' : type === 'sap' ? '#3bd6b4' : '#ff9a50', type === 'sap' ? 1.8 : 2.6);
         this.effect(mesh, flight, (t) => {
           const k = 1 - t;
           spot.copy(from).lerp(to, k);
           spot.y += Math.sin(k * Math.PI) * arc;
           if (type === 'thorn') mesh.lookAt(to);
           mesh.position.copy(spot);
+          if (!this.calm && t > 0) {
+            this.emit(spot.x, spot.y, spot.z, 0, type === 'bloom' ? 0.3 : 0, 0, trail, type === 'bloom' ? 0.2 : 0.11, type === 'thorn' ? 0.14 : 0.3, type === 'sap' ? -2 : 0, 2);
+          }
           if (t <= 0) this.impact(to, color, type === 'bloom' ? 14 : 7, type === 'bloom' ? 0.45 : 0.25);
           if (type === 'bloom' && t <= 0) this.kick(0.08);
         });
@@ -1479,7 +2010,13 @@ export class World {
       this.burst(event.x, 0.35, event.z, '#ffcf6a', big ? 28 : 14, big ? 3.4 : 2.4, 0.16, 0.55, -5, 3);
       this.burst(event.x, 0.3, event.z, look.color, big ? 16 : 8, 1.6, 0.3, 0.5, -3, 1.2);
       this.shockwave(event.x, event.z, '#ffe2a0', big ? 1.4 : 0.7, 0.35);
-      if (reward) this.floatText(event.x, 0.7, event.z, `+${reward}`, 'coin');
+      if (reward) {
+        this.floatText(event.x, 0.9, event.z, `+${reward}`, 'coin');
+        this.coinFly(event.x, 0.5, event.z, big ? 4 : reward >= 4 ? 2 : 1);
+      }
+      // A pale wisp rises from where it fell.
+      for (let i = 0; i < (this.calm ? 1 : 5); i++)
+        this.emit(event.x + Math.sin(i * 2.4) * 0.15, 0.3, event.z + Math.cos(i * 2.4) * 0.15, 0, 0.7 + i * 0.12, 0, hot('#c8d4ff', 0.9), 0.3, 0.8, 0, 1.2);
       if (event.kind === 'boss') this.kick(0.6);
       else if (big) this.kick(0.18);
     }
@@ -1498,7 +2035,7 @@ export class World {
   shockwave(x, z, color, size, life) {
     const ring = new THREE.Mesh(
       GEO.ring,
-      new THREE.MeshBasicMaterial({ color: hot(color, 2.5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }),
+      new THREE.MeshBasicMaterial({ color: hot(color, 1.3), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }),
     );
     ring.position.set(x, 0.06, z);
     this.effect(ring, life, (t) => {
@@ -1528,35 +2065,37 @@ export class World {
     }
   }
 
+  // One creature: the painted figure stood up on a card that always faces the camera, so it
+  // reads as a figure marching at the player rather than a decal on the floor. Its own
+  // material copy carries the hit flash, the burn and the tar tint. A soft contact shadow sits
+  // under the feet, and the card casts a real shadow from the key light.
   makeEnemy(enemy) {
     const group = new THREE.Group();
     this.scene.add(group);
     const look = ENEMY_LOOK[enemy.kind] || ENEMY_LOOK.grub;
-    const blob = new THREE.Mesh(
-      GEO.blob,
-      this.materials.get('blob') ||
-        this.materials
-          .set('blob', new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.35, depthWrite: false }))
-          .get('blob'),
-    );
-    blob.scale.setScalar((look.sprite * 0.36) / look.scale);
+    const blob = new THREE.Mesh(GEO.blob, this.softShadow());
+    blob.scale.setScalar((look.sprite * 0.62) / look.scale);
     blob.position.y = 0.012;
     group.add(blob);
     group.userData.blob = blob;
-    const size = (look.sprite * 1.55) / look.scale;
+    // Flyers keep their wingspan in check so they do not swallow the squares under them.
+    const size = (look.sprite * STAND * (enemy.flying ? 0.72 : 1)) / look.scale;
     const body = new THREE.Group();
-    // Lean the painted creature up toward the camera so it reads as a figure, not a decal.
-    const lean = new THREE.Group();
-    lean.rotation.z = -0.6;
-    body.add(lean);
+    body.quaternion.copy(this.camera.quaternion);
     group.add(body);
-    const sprite = this.sprite(look.art, size);
-    lean.add(sprite);
+    const material = this.paint(look.art).clone();
+    material.emissive = new THREE.Color(0, 0, 0);
+    const sprite = new THREE.Mesh(STAND_GEOMETRY, material);
+    sprite.scale.set(size, size, 1);
+    sprite.castShadow = true;
+    body.add(sprite);
     group.userData.body = body;
     group.userData.sprite = sprite;
+    group.userData.size = size;
+    group.userData.flash = 0;
+    group.userData.step = (enemy.id * 1.37) % 6.28;
     // A health bar that always faces the camera.
     const bar = new THREE.Group();
-    bar.position.set(-size * 0.35, 0.55 + size * 0.3, 0);
     bar.quaternion.copy(this.camera.quaternion);
     const track = new THREE.Mesh(GEO.bar, this.glow('#0d0a08', 1, 0.85));
     track.scale.set(0.5, 0.075, 1);
@@ -1566,11 +2105,51 @@ export class World {
     bar.add(track, fill);
     bar.renderOrder = 5;
     fill.renderOrder = 6;
+    bar.visible = false;
     group.add(bar);
     group.userData.bar = bar;
     group.userData.hp = fill;
     group.scale.setScalar(look.scale);
     return group;
+  }
+
+  softShadow() {
+    if (!this.materials.has('soft-shadow')) {
+      this.materials.set(
+        'soft-shadow',
+        new THREE.MeshBasicMaterial({
+          map: new THREE.CanvasTexture(glowCanvas('rgba(0,0,0,0.75)', 'rgba(0,0,0,0)')),
+          transparent: true,
+          depthWrite: false,
+          fog: false,
+        }),
+      );
+    }
+    return this.materials.get('soft-shadow');
+  }
+
+  // A creature that has left the board: flash white, crumple and fade, then go.
+  dropEnemy(group) {
+    const { sprite, body, bar, blob } = group.userData;
+    bar.visible = false;
+    sprite.castShadow = false;
+    sprite.material.transparent = true;
+    sprite.material.depthWrite = false;
+    const scale = sprite.scale.x;
+    this.effects.push({
+      mesh: group,
+      life: 0.34,
+      max: 0.34,
+      step: (t) => {
+        const k = 1 - t;
+        sprite.material.emissive.setScalar(Math.max(0, 1.4 - k * 3));
+        sprite.material.opacity = t;
+        sprite.scale.set(scale * (1 + k * 0.35), scale * (1 - k * 0.7), 1);
+        body.position.y -= 0.004;
+        blob.material = this.softShadow();
+        if (t <= 0) sprite.material.dispose();
+      },
+    });
   }
 
   // Match the meshes to the game, play its events, animate, and draw one frame.
@@ -1606,9 +2185,11 @@ export class World {
       }
     }
 
+    const alive = new Set(game.enemies.map((enemy) => enemy.id));
     for (const [id, group] of this.enemyMeshes) {
-      if (!game.enemies.some((enemy) => enemy.id === id)) {
-        this.disposeGroup(group);
+      if (!alive.has(id)) {
+        if (this.ready) this.dropEnemy(group);
+        else this.disposeEnemy(group);
         this.enemyMeshes.delete(id);
         this.enemyHp.delete(id);
       }
@@ -1619,35 +2200,68 @@ export class World {
         group = this.makeEnemy(enemy);
         this.enemyMeshes.set(enemy.id, group);
         this.enemyHp.set(enemy.id, { hp: enemy.hp, pending: 0, timer: 0 });
-        if (this.ready && enemy.x < 1) this.burst(enemy.x, 0.3, enemy.z, SCENE.portal, 6, 1.2, 0.22, 0.4, 0, 2.5);
+        if (this.ready && enemy.x < 1) this.burst(enemy.x, 0.3, enemy.z, SCENE.portal, 10, 1.4, 0.26, 0.5, 0, 2.5);
       }
-      const height = enemy.flying ? 0.95 : 0.12;
-      const bob = this.calm
-        ? 0
-        : enemy.flying
-          ? Math.sin(t * 6 + enemy.id) * 0.08
-          : Math.abs(Math.sin(t * 9 + enemy.id)) * 0.05;
-      group.position.set(enemy.x, 0, enemy.z);
-      group.userData.body.position.y = height + bob;
-      group.userData.bar.position.y = 0.55 + height * 0.8 + (ENEMY_LOOK[enemy.kind]?.sprite || 0.6) * 0.3;
-      group.userData.blob.material.opacity = enemy.flying ? 0.18 : 0.35;
+      const data = group.userData;
+      const look = ENEMY_LOOK[enemy.kind] || ENEMY_LOOK.grub;
+      const ground = enemy.flying ? 0 : ROAD_Y;
+      const lift = enemy.flying ? 0.85 : 0;
+      // March: a bounce per step, a little side to side rock, and a squash on each footfall.
+      const pace = (enemy.slow > 0 ? 0.5 : 1) * (ENEMIES[enemy.kind]?.speed || 1);
+      if (!this.calm) data.step += dt * (enemy.flying ? 9 : 7.5) * (0.6 + pace * 0.5);
+      const beat = Math.sin(data.step);
+      const bounce = this.calm ? 0 : enemy.flying ? beat * 0.07 : Math.abs(beat) * 0.07;
+      group.position.set(enemy.x, ground, enemy.z);
+      data.body.position.y = lift + bounce;
+      const punch = 1 + data.flash * 0.12;
+      const squash = enemy.flying ? 1 : 1 - (1 - Math.abs(beat)) * 0.05;
+      const flap = enemy.flying && !this.calm ? 1 + Math.sin(data.step * 1.9) * 0.07 : 1;
+      data.sprite.scale.set(data.size * punch * flap, data.size * punch * squash, 1);
+      // Lean into the direction of travel across the screen (screen-right is world -z).
+      let lean = this.calm ? 0 : beat * 0.05;
+      if (enemy.target) {
+        const dz = enemy.target.z - enemy.z;
+        lean += THREE.MathUtils.clamp(dz, -1, 1) * 0.12;
+      }
+      data.sprite.rotation.z = THREE.MathUtils.lerp(data.sprite.rotation.z, lean, Math.min(1, dt * 10));
+      data.bar.position.y = lift + data.size * 0.98 + 0.1;
+      data.blob.material = this.softShadow();
+      data.blob.scale.setScalar(((look.sprite * 0.62) / look.scale) * (enemy.flying ? 0.7 : 1 - bounce));
+      data.blob.position.y = 0.012;
       const share = Math.max(0.01, enemy.hp / enemy.maxHp);
-      const fill = group.userData.hp;
+      data.bar.visible = share < 0.999;
+      const fill = data.hp;
       fill.scale.x = 0.47 * share;
       fill.position.x = -0.235 * (1 - share);
       fill.material = this.glow(share > 0.6 ? '#6fc443' : share > 0.3 ? '#f0b030' : '#ff4a2c', 1.2);
-      if (enemy.target) {
-        const dx = enemy.target.x - enemy.x,
-          dz = enemy.target.z - enemy.z;
-        if (dx || dz) group.userData.sprite.rotation.y = Math.atan2(dz, -dx);
-      }
       // Damage numbers, gathered per creature so a fast engine does not spray digits.
       const record = this.enemyHp.get(enemy.id);
-      if (enemy.hp < record.hp) record.pending += record.hp - enemy.hp;
+      if (enemy.hp < record.hp - 0.01) {
+        record.pending += record.hp - enemy.hp;
+        // Burning ticks every frame; only a real hit gets the full white flash.
+        data.flash = Math.max(data.flash, record.hp - enemy.hp > enemy.maxHp * 0.02 ? 1 : 0.25);
+      }
       record.hp = enemy.hp;
       record.timer -= dt;
+      data.flash = Math.max(0, data.flash - dt * 7);
+      // Status tints: a white flash on a hit, embers while burning, cold tar teal when slowed.
+      const burning = enemy.burnTime > 0;
+      const glowing = data.sprite.material.emissive;
+      glowing.setRGB(data.flash * 1.2, data.flash * 1.2, data.flash * 1.1);
+      if (burning) {
+        glowing.r += 0.35 + Math.sin(t * 20 + enemy.id) * 0.12;
+        glowing.g += 0.1;
+      }
+      if (enemy.slow > 0) {
+        glowing.g += 0.08;
+        glowing.b += 0.12;
+      }
+      if (burning && !this.calm && Math.sin(t * 13 + enemy.id * 3) > 0.6)
+        this.emit(enemy.x + Math.sin(t * 7 + enemy.id) * 0.12, ground + lift + data.size * 0.5, enemy.z, 0, 0.9, 0, hot('#ff8a30', 3), 0.1, 0.45, 0, 0.6);
+      if (enemy.slow > 0 && !this.calm && Math.sin(t * 9 + enemy.id * 5) > 0.85)
+        this.emit(enemy.x, ground + lift + data.size * 0.3, enemy.z, 0, -0.4, 0, hot('#3bd6b4', 1.6), 0.08, 0.4, -2, 0.4);
       if (record.pending >= 1 && record.timer <= 0) {
-        this.floatText(enemy.x, height + 0.5, enemy.z, String(Math.round(record.pending)), 'hit');
+        this.floatText(enemy.x, ground + lift + data.size + 0.25, enemy.z, String(Math.round(record.pending)), 'hit');
         record.pending = 0;
         record.timer = 0.35;
       }
@@ -1684,7 +2298,15 @@ export class World {
       }
       if (data.recoil > 0) {
         data.recoil = Math.max(0, data.recoil - dt * 7);
-        data.head.scale.setScalar(1 + data.recoil * 0.07);
+        data.head.scale.setScalar(1 + data.recoil * 0.1);
+        data.head.position.y = data.top + 0.005 - data.recoil * 0.025;
+      }
+      // Aiming engines swing toward their target, and scan slowly when nothing is in range.
+      if (data.type === 'thorn' || data.type === 'bloom') {
+        let aim = data.aim;
+        if (!calm && t - data.lastShot > 1.6) aim += Math.sin(t * 0.7 + group.position.x * 1.3) * 0.35;
+        const turn = Math.atan2(Math.sin(aim - data.head.rotation.y), Math.cos(aim - data.head.rotation.y));
+        data.head.rotation.y += turn * Math.min(1, dt * (t - data.lastShot < 0.2 ? 30 : 4));
       }
       const accent = data.accent.userData;
       if (accent.spin && !calm) {
@@ -1703,7 +2325,19 @@ export class World {
     for (const light of this.torches) {
       light.intensity = light.userData.base * (calm ? 1 : 0.88 + Math.sin(t * 11 + light.position.z) * 0.08 + Math.sin(t * 23) * 0.05);
     }
-    this.portal.material.opacity = calm ? 1 : 0.82 + Math.sin(t * 2.4) * 0.18;
+    const gridGoal = this.hover.visible ? 1 : 0;
+    this.gridMaterial.uniforms.uAlpha.value += (gridGoal - this.gridMaterial.uniforms.uAlpha.value) * Math.min(1, dt * 8);
+    this.gridPlane.visible = this.gridMaterial.uniforms.uAlpha.value > 0.01;
+    // The fire beyond the horde gate breathes; the camp banners stir.
+    const breath = calm ? 1 : 0.85 + Math.sin(t * 2.4) * 0.1 + Math.sin(t * 7.3) * 0.05;
+    this.portal.material.color.setScalar(1.6 * breath);
+    this.portalHeat.material.opacity = breath;
+    this.entryPool.material.opacity = 0.8 + (breath - 0.85) * 1.5;
+    if (!calm) for (const [i, flag] of this.flags.entries()) flag.rotation.y = Math.sin(t * 1.7 + i * 1.3) * 0.25;
+    this.updateFog(dt);
+    if (this.water.material.normalMap && !calm) {
+      this.water.material.normalMap.offset.set(t * 0.012, t * 0.007);
+    }
     if (this.route.visible) {
       for (const mark of this.route.children) {
         const pulse = calm ? 0.5 : Math.max(0, Math.sin(t * 3 - mark.userData.index * 0.45));
@@ -1732,6 +2366,7 @@ export class World {
     }
     this.effects = this.effects.filter((effect) => effect.life > 0);
     this.updateParticles(dt);
+    this.updateFlashes(dt);
 
     // Screen shake: a decaying offset on the camera, never on the board itself.
     this.camera.position.copy(this.target).add(VIEW);
@@ -1744,6 +2379,19 @@ export class World {
     this.flash = Math.max(0, this.flash - dt * 1.4);
     this.grade.uniforms.uFlash.value = this.flash;
     this.composer.render(dt);
+    this.adaptResolution(dt);
+  }
+
+  adaptResolution(dt) {
+    this.frameCost += (Math.min(dt, 0.25) - this.frameCost) * 0.08;
+    if (++this.frameCount % 45) return;
+    let next = this.pixelRatio;
+    if (this.frameCost > 1 / 45) next = Math.max(this.minRatio, this.pixelRatio * 0.85);
+    else if (this.frameCost < 1 / 57) next = Math.min(this.maxRatio, this.pixelRatio * 1.08);
+    if (Math.abs(next - this.pixelRatio) < 0.01) return;
+    this.pixelRatio = next;
+    this.renderer.setPixelRatio(next);
+    this.resize();
   }
 
   // Fit the board into its own box on the page. The canvas may be larger than that box (on
@@ -1807,7 +2455,10 @@ export class World {
     this.particleMaterial.uniforms.uScale.value = (this.pixelRatio / scale) * 1;
     this.grade.uniforms.uCenter.value.set(fitX / width, 1 - fitY / height);
     this.grade.uniforms.uAspect.value = width / height;
-    for (const group of this.enemyMeshes.values()) group.userData.bar.quaternion.copy(this.camera.quaternion);
+    for (const group of this.enemyMeshes.values()) {
+      group.userData.bar.quaternion.copy(this.camera.quaternion);
+      group.userData.body.quaternion.copy(this.camera.quaternion);
+    }
   }
 
   // Where a world point sits on screen, in page coordinates.
