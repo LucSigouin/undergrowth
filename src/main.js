@@ -10,12 +10,12 @@ import { TOWER_LOOK, MATERIAL_LOOK, ENEMY_LOOK } from './look.js';
 
 // Short name for document.querySelector, used all over this file.
 const query = (selector) => document.querySelector(selector),
-  SAVE = 'undergrowth-save-v2';
+  SAVE = 'undergrowth-save-v3';
 
 // Load the saved keep if it looks sane, otherwise start fresh.
 let game;
 try {
-  const raw = JSON.parse(localStorage.getItem(SAVE) || localStorage.getItem('undergrowth-save-v1'));
+  const raw = JSON.parse(localStorage.getItem(SAVE));
   const usable =
     [1, 2, 3, 4, 5].includes(raw?.version) &&
     Array.isArray(raw.towers) &&
