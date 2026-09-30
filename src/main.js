@@ -184,6 +184,8 @@ function banner(kicker, title, subtitle, tone = '') {
     `<span class="banner-rule"></span><span class="banner-sub">${subtitle}</span>`;
   void element.offsetWidth;
   element.classList.add('show');
+  // Drop the class once it has faded, so the scouts report can come back.
+  element.onanimationend = () => element.classList.remove('show');
 }
 
 // Show a short message at the bottom of the screen.

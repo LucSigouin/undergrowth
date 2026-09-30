@@ -1115,40 +1115,50 @@ dialog .primary {
 }
 
 /* The stage card that sweeps across the board. */
+/* Round r10: the stage call is a slim ribbon under the top bar. It slides down, holds about
+   two seconds and fades. It never takes a click, hides while a panel is open, and holds the
+   scouts report back until it has gone, so it cannot sit on a range ring or a card. */
 .stage-banner {
   position: fixed;
-  top: 36%;
+  top: calc(var(--hud-h) + 14px);
   left: calc((100vw - var(--rail) - var(--gap) * 2) / 2);
   z-index: 4;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -24px);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 16px;
+  padding: 10px 64px 11px;
   pointer-events: none;
   opacity: 0;
   font-family: var(--display);
   text-transform: uppercase;
   white-space: nowrap;
-}
-.stage-banner::before {
-  content: '';
-  position: absolute;
-  inset: -40px -180px;
-  background: radial-gradient(closest-side, rgba(8, 6, 8, 0.72), transparent);
-  z-index: -1;
+  background:
+    linear-gradient(90deg, transparent, rgba(232, 184, 90, 0.75) 22%, rgba(232, 184, 90, 0.75) 78%, transparent) top / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent, rgba(232, 184, 90, 0.5) 22%, rgba(232, 184, 90, 0.5) 78%, transparent) bottom / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent, rgba(12, 10, 14, 0.9) 18%, rgba(12, 10, 14, 0.9) 82%, transparent);
+  transition: filter 0.25s ease;
 }
 .stage-banner.show {
-  animation: banner 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: banner 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+body:has(#detail:not([hidden])) .stage-banner,
+body:has(#placement:not([hidden])) .stage-banner,
+body:has(dialog[open]) .stage-banner {
+  filter: opacity(0);
+}
+body:has(#banner.show) .scouts.show {
+  opacity: 0;
+  transform: translate(-50%, -14px);
 }
 .banner-kicker {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.6em;
+  letter-spacing: 0.42em;
   color: var(--muted);
 }
 .banner-title {
-  font-size: clamp(56px, 8vw, 104px);
+  font-size: clamp(34px, 3.4vw, 46px);
   font-weight: 900;
   line-height: 1;
   letter-spacing: 0.06em;
@@ -1156,19 +1166,21 @@ dialog .primary {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 22px rgba(255, 160, 60, 0.55)) drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 0 14px rgba(255, 160, 60, 0.5)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6));
 }
 .banner-rule {
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold-hi), transparent);
-  animation: rule 2.6s ease-out forwards;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  transform: rotate(45deg);
+  background: var(--gold-hi);
+  box-shadow: 0 0 10px rgba(255, 190, 90, 0.8);
 }
 .banner-sub {
   font-family: var(--body);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.26em;
   color: var(--text);
   text-shadow: 0 2px 8px #000;
 }
@@ -1176,38 +1188,27 @@ dialog .primary {
   background: linear-gradient(180deg, #ffe0d0 0%, #ff8a5a 40%, #c8252a 75%, #5a0e0e 100%);
   -webkit-background-clip: text;
   background-clip: text;
-  filter: drop-shadow(0 0 26px rgba(255, 60, 30, 0.7)) drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 0 18px rgba(255, 60, 30, 0.7)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6));
 }
-.stage-banner.held .banner-title {
-  font-size: clamp(44px, 6vw, 80px);
+.stage-banner.boss .banner-rule {
+  background: #ff6a3a;
 }
 @keyframes banner {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.35);
-    filter: blur(6px);
+    transform: translate(-50%, -24px);
   }
-  14% {
+  12% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-    filter: none;
+    transform: translate(-50%, 0);
   }
-  78% {
+  84% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(0.98);
+    transform: translate(-50%, 0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -58%) scale(0.96);
-  }
-}
-@keyframes rule {
-  10% {
-    width: 0;
-  }
-  35%,
-  100% {
-    width: 340px;
+    transform: translate(-50%, -10px);
   }
 }
 
@@ -1596,16 +1597,19 @@ dialog .outline {
   }
   .stage-banner {
     left: 50%;
-    top: 40%;
+    top: 25%;
+    gap: 10px;
+    padding: 8px 36px 9px;
   }
   .banner-title {
-    font-size: 64px;
+    font-size: 30px;
+  }
+  .banner-kicker {
+    font-size: 10px;
   }
   .banner-sub {
-    font-size: 13px;
-  }
-  .stage-banner::before {
-    inset: -30px -60px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
   }
   dialog {
     max-height: 85dvh;

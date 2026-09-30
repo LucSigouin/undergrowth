@@ -37,7 +37,15 @@ SPRITE_GEOMETRY.rotateY(Math.PI / 2);
 // A standing card for creatures, anchored at its feet and facing the camera.
 const STAND_GEOMETRY = new THREE.PlaneGeometry(1, 1).translate(0, 0.46, 0);
 // How tall a standing creature is, per square of its old floor sprite.
-const STAND = 1.95;
+const STAND = 2.2;
+// Road dust kicked up by heavy footfalls, made once so marching never allocates.
+const BOSS_DUST = new THREE.Color('#a08a6a').multiplyScalar(0.9);
+const BROOD_DUST = new THREE.Color('#8a7a60').multiplyScalar(0.6);
+// Where rank pennants stand on a plinth: the two far corners, clear of the painted engine.
+const PENNANT_CORNERS = [
+  [-0.34, 0.34],
+  [-0.34, -0.34],
+];
 // The sunken road the horde walks on.
 const ROAD_Y = -0.17;
 
@@ -62,6 +70,19 @@ const GEO = {
   blob: new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2),
   bar: new THREE.PlaneGeometry(1, 1),
   trunk: new THREE.CylinderGeometry(0.07, 0.11, 1, 6).translate(0, 0.5, 0),
+  // A swallow-tailed pennant hanging off its pole, facing the camera (world +x).
+  pennant: new THREE.ShapeGeometry(
+    new THREE.Shape([
+      new THREE.Vector2(0, 0),
+      new THREE.Vector2(0.2, 0),
+      new THREE.Vector2(0.2, -0.26),
+      new THREE.Vector2(0.1, -0.18),
+      new THREE.Vector2(0, -0.26),
+    ]),
+  ).rotateY(Math.PI / 2),
+  finial: new THREE.OctahedronGeometry(0.045, 0),
+  rim: new THREE.TorusGeometry(0.47, 0.018, 6, 32).rotateX(Math.PI / 2),
+  pillar: new THREE.CylinderGeometry(0.42, 0.5, 1, 20, 1, true).translate(0, 0.5, 0),
 };
 
 // A colour pushed past 1 so the bloom pass picks it up.
@@ -1479,6 +1500,57 @@ export class World {
     this.flashNext = 0;
   }
 
+  // Upgrade light: a small pool of gold columns that shoot up from a promoted engine and fade.
+  pillar(x, z) {
+    if (!this.pillars) {
+      // Bright at the plinth, gone by the top.
+      const fade = document.createElement('canvas');
+      fade.width = 4;
+      fade.height = 64;
+      const paint = fade.getContext('2d');
+      const ramp = paint.createLinearGradient(0, 0, 0, 64);
+      ramp.addColorStop(0, '#000');
+      ramp.addColorStop(0.7, '#555');
+      ramp.addColorStop(1, '#fff');
+      paint.fillStyle = ramp;
+      paint.fillRect(0, 0, 4, 64);
+      const material = new THREE.MeshBasicMaterial({
+        alphaMap: new THREE.CanvasTexture(fade),
+        color: hot('#ffc860', 2.4),
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        fog: false,
+      });
+      this.pillars = Array.from({ length: 3 }, () => {
+        const mesh = new THREE.Mesh(GEO.pillar, material.clone());
+        mesh.visible = false;
+        mesh.userData.life = 0;
+        this.scene.add(mesh);
+        return mesh;
+      });
+      this.pillarNext = 0;
+    }
+    const mesh = this.pillars[this.pillarNext];
+    this.pillarNext = (this.pillarNext + 1) % this.pillars.length;
+    mesh.position.set(x, 0, z);
+    mesh.userData.life = 0.8;
+    mesh.visible = true;
+  }
+
+  updatePillars(dt) {
+    if (!this.pillars) return;
+    for (const mesh of this.pillars) {
+      if (!mesh.visible) continue;
+      mesh.userData.life -= dt;
+      const k = Math.max(0, mesh.userData.life / 0.8);
+      mesh.scale.set(1 - (1 - k) * 0.3, 0.4 + (1 - k * k) * 2.6, 1 - (1 - k) * 0.3);
+      mesh.material.opacity = k * 0.85;
+      if (k <= 0) mesh.visible = false;
+    }
+  }
+
   muzzle(x, y, z, color, size) {
     const sprite = this.flashes[this.flashNext];
     this.flashNext = (this.flashNext + 1) % this.flashes.length;
@@ -1732,7 +1804,8 @@ export class World {
       body = this.add(GEO.wall, this.paint(BOARD_ART.apron, { cutout: false }), group);
       body.scale.set(1.0, top, 1.0);
     } else {
-      top = 0.2 + level * 0.1;
+      // Round r10: taller carved plinths so each engine stands as a built structure.
+      top = 0.26 + level * 0.12;
       this.add(GEO.footing, this.stone('footing', [96, 90, 80]), group);
       body = this.add(GEO.plinth, this.stone('plinth', [150, 140, 124]), group);
       body.scale.set(1, top, 1);
@@ -1743,14 +1816,14 @@ export class World {
       }
     }
     group.userData.body = body;
-    // A soft contact shadow grounds the engine on the flagstones.
-    const contact = new THREE.Mesh(GEO.blob, this.softShadow());
-    contact.scale.setScalar(0.78);
-    contact.position.y = 0.006;
+    // A dark contact shadow grounds the engine, pushed away from the key light.
+    const contact = new THREE.Mesh(GEO.blob, this.softShadow('tower'));
+    contact.scale.setScalar(0.9 + level * 0.05);
+    contact.position.set(-0.1, 0.006, -0.08);
     group.add(contact);
     head.position.y = top + 0.005;
     group.add(head);
-    const size = look.shape === 'wall' ? 1.02 : 1.04;
+    const size = look.shape === 'wall' ? 1.02 : 1.1;
     const sprite = this.sprite(look.levels[level - 1], size);
     if (look.shape === 'needle' || look.shape === 'catapult') {
       sprite.rotation.y = Math.PI / 2;
@@ -1783,6 +1856,26 @@ export class World {
       orb.castShadow = false;
       accent.userData.pulse = orb;
     }
+    // Rank: level 2 raises two crimson pennants; level 3 taller ones with gold finials and a glowing rim.
+    const pennants = [];
+    if (look.shape !== 'wall' && level > 1) {
+      const tall = level > 2 ? 0.2 : 0;
+      for (const [x, z] of PENNANT_CORNERS) {
+        const pole = this.add(GEO.pole, this.mat(SCENE.gold, 'metal'), group, x, top - 0.04, z);
+        pole.scale.y = 0.7 + tall;
+        const cloth = this.add(GEO.pennant, this.pennantMaterial(), group, x, top + 0.64 + tall, z);
+        cloth.castShadow = false;
+        cloth.scale.setScalar(level > 2 ? 1.5 : 1.3);
+        pennants.push(cloth);
+        if (level > 2) this.add(GEO.finial, this.glow('#ffd36a', 3), group, x, top + 0.7 + tall, z).castShadow = false;
+      }
+      if (level > 2) {
+        const rim = this.add(GEO.rim, this.glow('#ffc24a', 2.6), group, 0, top - 0.02, 0);
+        rim.castShadow = false;
+        group.userData.rim = rim;
+      }
+    }
+    group.userData.pennants = pennants;
     group.userData.accent = accent;
     group.userData.head = head;
     group.userData.level = level;
@@ -2060,8 +2153,19 @@ export class World {
         this.emit(tower.x + Math.cos(angle) * 0.4, 0.2 + i * 0.03, tower.z + Math.sin(angle) * 0.4, -Math.sin(angle) * 0.9, 1.6 + (i % 4) * 0.3, Math.cos(angle) * 0.9, hot('#ffd36a', 4), 0.14, 0.9, 0, 1.2);
       }
       this.floatText(tower.x, 1.1, tower.z, `Level ${tower.level}`, 'level');
+      this.pillar(tower.x, tower.z);
+      this.kick(0.06);
     } else {
       this.burst(tower.x, 0.1, tower.z, '#d9c3a0', 16, 1.8, 0.28, 0.5, -2, 0.7);
+      // A low ring of dust rolls out from the footing as the stones settle.
+      const dust = hot('#9c8a6c', 0.8);
+      for (let i = 0; i < (this.calm ? 6 : 20); i++) {
+        const angle = (i / 20) * Math.PI * 2;
+        const c = Math.cos(angle),
+          s = Math.sin(angle);
+        this.emit(tower.x + c * 0.5, 0.06, tower.z + s * 0.5, c * 1.3, 0.18, s * 1.3, dust, 0.34, 0.7, 0, 2.6);
+      }
+      this.kick(0.04);
     }
   }
 
@@ -2109,23 +2213,57 @@ export class World {
     group.add(bar);
     group.userData.bar = bar;
     group.userData.hp = fill;
+    // The big ones walk inside a smouldering ring so they read as threats from across the board.
+    if (enemy.kind === 'boss' || enemy.kind === 'brood' || enemy.kind === 'warden') {
+      const aura = new THREE.Mesh(GEO.ring, this.auraMaterial(enemy.kind === 'boss' ? '#ff3a1c' : enemy.kind === 'warden' ? '#ffd36a' : '#c86a2a'));
+      aura.position.y = 0.02;
+      aura.scale.setScalar(enemy.kind === 'boss' ? 0.62 : 0.42);
+      aura.renderOrder = 2;
+      group.add(aura);
+      group.userData.aura = aura;
+      group.userData.auraSize = aura.scale.x;
+    }
+    group.userData.foot = 0;
+    group.userData.heavy = enemy.kind === 'boss' || enemy.kind === 'brood';
     group.scale.setScalar(look.scale);
     return group;
   }
 
-  softShadow() {
-    if (!this.materials.has('soft-shadow')) {
+  auraMaterial(color) {
+    const key = `aura|${color}`;
+    if (!this.materials.has(key)) {
       this.materials.set(
-        'soft-shadow',
+        key,
+        new THREE.MeshBasicMaterial({ color: hot(color, 1.4), transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }),
+      );
+    }
+    return this.materials.get(key);
+  }
+
+  pennantMaterial() {
+    if (!this.materials.has('pennant')) {
+      this.materials.set(
+        'pennant',
+        new THREE.MeshStandardMaterial({ color: SCENE.banner, roughness: 0.75, side: THREE.DoubleSide, emissive: '#3a0608' }),
+      );
+    }
+    return this.materials.get('pennant');
+  }
+
+  softShadow(kind = 'soft') {
+    const key = `${kind}-shadow`;
+    if (!this.materials.has(key)) {
+      this.materials.set(
+        key,
         new THREE.MeshBasicMaterial({
-          map: new THREE.CanvasTexture(glowCanvas('rgba(0,0,0,0.75)', 'rgba(0,0,0,0)')),
+          map: new THREE.CanvasTexture(glowCanvas(kind === 'tower' ? 'rgba(0,0,0,0.92)' : 'rgba(0,0,0,0.75)', 'rgba(0,0,0,0)')),
           transparent: true,
           depthWrite: false,
           fog: false,
         }),
       );
     }
-    return this.materials.get('soft-shadow');
+    return this.materials.get(key);
   }
 
   // A creature that has left the board: flash white, crumple and fade, then go.
@@ -2136,17 +2274,23 @@ export class World {
     sprite.material.transparent = true;
     sprite.material.depthWrite = false;
     const scale = sprite.scale.x;
+    const fall = sprite.rotation.z >= 0 ? 1 : -1;
+    const { aura } = group.userData;
     this.effects.push({
       mesh: group,
-      life: 0.34,
-      max: 0.34,
+      life: 0.5,
+      max: 0.5,
       step: (t) => {
         const k = 1 - t;
-        sprite.material.emissive.setScalar(Math.max(0, 1.4 - k * 3));
-        sprite.material.opacity = t;
-        sprite.scale.set(scale * (1 + k * 0.35), scale * (1 - k * 0.7), 1);
-        body.position.y -= 0.004;
+        // A white-hot flash, then it keels over, crumples and fades into the stones.
+        sprite.material.emissive.setScalar(Math.max(0, 2 - k * 4));
+        sprite.material.opacity = Math.min(1, t * 1.6);
+        sprite.scale.set(scale * (1 + k * 0.3), scale * (1 - k * 0.55), 1);
+        sprite.rotation.z = fall * k * k * 1.2;
+        body.position.y = Math.max(-0.1, body.position.y - 0.006);
         blob.material = this.softShadow();
+        blob.scale.multiplyScalar(0.985);
+        if (aura) aura.scale.multiplyScalar(1.04);
         if (t <= 0) sprite.material.dispose();
       },
     });
@@ -2213,6 +2357,20 @@ export class World {
       const bounce = this.calm ? 0 : enemy.flying ? beat * 0.07 : Math.abs(beat) * 0.07;
       group.position.set(enemy.x, ground, enemy.z);
       data.body.position.y = lift + bounce;
+      if (data.aura) data.aura.scale.setScalar(data.auraSize * (1 + (this.calm ? 0 : Math.sin(t * 3 + enemy.id) * 0.06)));
+      // Heavy creatures stamp: a puff of road dust on every footfall, and the boss shakes the view.
+      if (data.heavy && !enemy.flying && !this.calm) {
+        const foot = Math.floor(data.step / Math.PI);
+        if (foot !== data.foot) {
+          data.foot = foot;
+          const dust = enemy.kind === 'boss' ? BOSS_DUST : BROOD_DUST;
+          for (let i = 0; i < 4; i++) {
+            const a = foot * 1.3 + i * 1.57;
+            this.emit(enemy.x + Math.cos(a) * 0.2, ground + 0.05, enemy.z + Math.sin(a) * 0.2, Math.cos(a) * 0.6, 0.25, Math.sin(a) * 0.6, dust, 0.3, 0.55, 0, 2.4);
+          }
+          if (enemy.kind === 'boss') this.kick(0.035);
+        }
+      }
       const punch = 1 + data.flash * 0.12;
       const squash = enemy.flying ? 1 : 1 - (1 - Math.abs(beat)) * 0.05;
       const flap = enemy.flying && !this.calm ? 1 + Math.sin(data.step * 1.9) * 0.07 : 1;
@@ -2283,18 +2441,27 @@ export class World {
     for (const group of this.towerMeshes.values()) {
       const data = group.userData;
       if (data.born !== undefined) {
-        const age = (t - data.born) / 0.42;
+        const age = (t - data.born) / 0.55;
         if (age >= 1) {
           delete data.born;
           group.scale.setScalar(1);
+          group.position.y = 0;
         } else {
-          // Ease out with a small overshoot.
+          // Rise out of the flagstones, overshoot, and settle.
           const c = 1.9,
             k = age - 1;
           const s = 1 + (c + 1) * k * k * k + c * k * k;
-          group.scale.set(1, Math.max(0.05, s), 1);
-          group.position.y = (1 - age) * 0.25;
+          group.scale.set(1 + (1 - s) * 0.15, Math.max(0.05, s), 1 + (1 - s) * 0.15);
+          group.position.y = -(1 - Math.min(1, age * 2.2)) * data.top * 0.6;
         }
+      }
+      if (!calm) {
+        for (let i = 0; i < data.pennants.length; i++) {
+          const cloth = data.pennants[i];
+          cloth.rotation.y = Math.sin(t * 2.1 + i * 1.7 + group.position.x) * 0.35;
+          cloth.rotation.x = Math.sin(t * 3.3 + i) * 0.06;
+        }
+        if (data.rim) data.rim.scale.setScalar(1 + Math.sin(t * 2.6 + group.position.z) * 0.015);
       }
       if (data.recoil > 0) {
         data.recoil = Math.max(0, data.recoil - dt * 7);
@@ -2359,14 +2526,18 @@ export class World {
   }
 
   render(dt) {
+    // Step effects and compact the list in place, so no array is made per frame.
+    let kept = 0;
     for (const effect of this.effects) {
       effect.life -= dt;
       effect.step(Math.max(0, effect.life / effect.max));
       if (effect.life <= 0) effect.mesh.removeFromParent();
+      else this.effects[kept++] = effect;
     }
-    this.effects = this.effects.filter((effect) => effect.life > 0);
+    this.effects.length = kept;
     this.updateParticles(dt);
     this.updateFlashes(dt);
+    this.updatePillars(dt);
 
     // Screen shake: a decaying offset on the camera, never on the board itself.
     this.camera.position.copy(this.target).add(VIEW);
